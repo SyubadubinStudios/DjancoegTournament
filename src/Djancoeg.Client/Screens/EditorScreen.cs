@@ -35,6 +35,19 @@ public sealed class EditorScreen : Screen
     private Vector3 _hoverPoint;
     private bool _hoverValid;
 
+    // Gizmo drag state.
+    private int _hoverAxis = -1, _dragAxis = -1;
+    private Vector2 _dragStartMouse, _dragScreenDir;
+    private float _dragPixelsPerUnit, _dragApplied;
+    private bool _dragResize;
+    /// <summary>Gizmo arrows keep roughly the same size on screen.</summary>
+    private float GizmoLength => MathF.Max(1.2f, Vector3.Distance(_cam.Position, GizmoOrigin()) * 0.13f);
+    private static readonly Vector3[] Axes = [Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ];
+
+    // Opening other arenas (F6): saved editor arenas first, then copies of every other arena.
+    private int _openIndex = -1;
+    private float _confirmOpenUntil;
+
     public EditorScreen(App app, string? arenaId = null) : base(app)
     {
         var saved = ArenaEditor.LoadSaved(App.ModsDir);
@@ -119,7 +132,8 @@ public sealed class EditorScreen : Screen
         else if (ray.Direction.Y < -0.01f) _hoverPoint = ray.Position + ray.Direction * (-ray.Position.Y / ray.Direction.Y);
 
         bool overPanel = GetMousePosition().X > GetScreenWidth() - PanelWidth;
-        if (IsMouseButtonPressed(MouseButton.Left) && !overPanel)
+        UpdateGizmo(ctrl);
+        if (IsMouseButtonPressed(MouseButton.Left) && !overPanel && _dragAxis < 0 && _hoverAxis < 0)
         {
             if (_tool == Tool.Select) _ed.Selection = hit;
             else if (_hoverValid)
@@ -161,6 +175,9 @@ public sealed class EditorScreen : Screen
             Status(S.T("ed.env") + ": " + (S.Lang == Core.Localization.Language.Indonesian ? env.Id : env.En));
         }
         if (ctrl && IsKeyPressed(KeyboardKey.E)) Export();
+        if (ctrl && IsKeyPressed(KeyboardKey.C) && _ed.Copy()) Status(S.T("ed.copied"));
+        if (ctrl && IsKeyPressed(KeyboardKey.V) && _hoverValid && !_ed.Paste(_hoverPoint).IsNone) _dirty = true;
+        if (IsKeyPressed(KeyboardKey.F6)) OpenNext(shift ? -1 : 1);
         if (IsKeyPressed(KeyboardKey.Delete) || IsKeyPressed(KeyboardKey.Backspace)) _ed.Delete();
         if (ctrl && IsKeyPressed(KeyboardKey.D)) _ed.Duplicate();
         if (ctrl && IsKeyPressed(KeyboardKey.Z)) _ed.Undo();
@@ -219,6 +236,124 @@ public sealed class EditorScreen : Screen
         App.Achievements.OnEditorSaved();
         Status(S.T("ed.saved") + " " + Path.GetFileName(path));
         return true;
+    }
+
+    private void UpdateGizmo(bool ctrl)
+    {
+        var mouse = GetMousePosition();
+        if (_dragAxis >= 0)
+        {
+            if (IsMouseButtonDown(MouseButton.Left))
+            {
+                float units = Vector2.Dot(mouse - _dragStartMouse, _dragScreenDir) / MathF.Max(1f, _dragPixelsPerUnit);
+                float snapped = _ed.Snap(units);
+                float diff = snapped - _dragApplied;
+                if (MathF.Abs(diff) > 1e-4f)
+                {
+                    var d = Axes[_dragAxis] * diff;
+                    if (_dragResize) _ed.Resize(d); else _ed.Move(d);
+                    _dragApplied = snapped;
+                    _dirty = true;
+                }
+            }
+            else { _ed.EndGesture(); _dragAxis = -1; }
+            return;
+        }
+        _hoverAxis = -1;
+        if (_ed.Selection.IsNone || !_ed.IsValid(_ed.Selection) || IsMouseButtonDown(MouseButton.Right)) return;
+        var c = GizmoOrigin();
+        var c2 = GetWorldToScreen(c, _cam);
+        float best = 12f * U;
+        for (int a = 0; a < 3; a++)
+        {
+            var tip = GetWorldToScreen(c + Axes[a] * GizmoLength, _cam);
+            float dist = DistanceToSegment(mouse, c2, tip);
+            if (dist < best && Vector2.Distance(c2, tip) > 8) { best = dist; _hoverAxis = a; }
+        }
+        if (_hoverAxis >= 0 && IsMouseButtonPressed(MouseButton.Left))
+        {
+            var tip = GetWorldToScreen(c + Axes[_hoverAxis] * GizmoLength, _cam);
+            var dir = tip - c2;
+            _dragAxis = _hoverAxis;
+            _dragStartMouse = mouse;
+            _dragPixelsPerUnit = dir.Length() / GizmoLength;
+            _dragScreenDir = Vector2.Normalize(dir);
+            _dragApplied = 0;
+            _dragResize = ctrl;
+            _ed.BeginGesture();
+        }
+    }
+
+    private Vector3 GizmoOrigin()
+    {
+        var b = _ed.Bounds(_ed.Selection);
+        return _dragResize && _dragAxis >= 0 ? b.Max : (b.Min + b.Max) * 0.5f;
+    }
+
+    private static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+    {
+        var ab = b - a;
+        float t = Math.Clamp(Vector2.Dot(p - a, ab) / MathF.Max(1e-4f, ab.LengthSquared()), 0, 1);
+        return Vector2.Distance(p, a + ab * t);
+    }
+
+    private void DrawGizmo()
+    {
+        if (_ed.Selection.IsNone || !_ed.IsValid(_ed.Selection)) return;
+        var c = GizmoOrigin();
+        Color[] colors = [Theme.Cabe, Theme.Daun, Theme.TarpLight];
+        Rlgl.DrawRenderBatchActive();
+        Rlgl.DisableDepthTest();
+        float L = GizmoLength, k = L / 2f;
+        for (int a = 0; a < 3; a++)
+        {
+            bool hot = a == _hoverAxis || a == _dragAxis;
+            var col = hot ? Theme.Kuning : colors[a];
+            var tip = c + Axes[a] * L;
+            DrawCylinderEx(c, tip - Axes[a] * 0.3f * k, (hot ? 0.07f : 0.045f) * k, (hot ? 0.07f : 0.045f) * k, 6, col);
+            if (IsKeyDown(KeyboardKey.LeftControl) || _dragResize && _dragAxis == a) DrawCube(tip - Axes[a] * 0.15f * k, 0.28f * k, 0.28f * k, 0.28f * k, col);
+            else DrawCylinderEx(tip - Axes[a] * 0.35f * k, tip, 0.16f * k, 0f, 8, col);
+        }
+        DrawSphere(c, 0.09f * k, Theme.Kapur);
+        Rlgl.DrawRenderBatchActive();
+        Rlgl.EnableDepthTest();
+    }
+
+    /// <summary>Opens the next saved editor arena, or an editable copy of a built-in/mod arena.</summary>
+    private void OpenNext(int dir)
+    {
+        if (_dirty && _time > _confirmOpenUntil)
+        {
+            _confirmOpenUntil = _time + 3f;
+            Status(S.T("ed.unsavedOpen"));
+            return;
+        }
+        var saved = ArenaEditor.LoadSaved(App.ModsDir);
+        var others = App.Content.Arenas.Where(a => saved.All(s => s.Id != a.Id)).ToList();
+        int total = saved.Count + others.Count;
+        if (total == 0) return;
+        _openIndex = ((_openIndex + dir) % total + total) % total;
+        ArenaDef next;
+        if (_openIndex < saved.Count) next = saved[_openIndex];
+        else
+        {
+            var src = others[_openIndex - saved.Count];
+            var original = App.Content.Arenas.First(a => a.Id == src.Id);
+            // Copies keep the unsplit boxes so breakable pieces are recomputed on load.
+            next = ArenaEditor.CopyOf(Unsplit(original), FreeId(saved), "Copy of " + original.Name.En, "Salinan " + original.Name.Id);
+        }
+        _ed = new ArenaEditor(next);
+        _builtVersion = -1;
+        _dirty = _openIndex >= saved.Count;
+        _confirmOpenUntil = 0;
+        Status(S.T("ed.opened") + " " + S.T(next.Name));
+    }
+
+    /// <summary>Built-in arenas in the registry are already cut into breakable pieces; the editor works on whole boxes.</summary>
+    private static ArenaDef Unsplit(ArenaDef registered)
+    {
+        var builtIn = BuiltInArenas.All.FirstOrDefault(a => a.Id == registered.Id);
+        return builtIn ?? registered;
     }
 
     /// <summary>Saves, then packs the editor mod into a shareable .djmod and opens the folder.</summary>
@@ -287,7 +422,7 @@ public sealed class EditorScreen : Screen
         App.Sky.Draw(arena, _cam, _time);
         BeginShaderMode(shader.Shader);
         _renderer.Draw(shader);
-        _renderer.DrawDestructibles(shader, 0);
+        _renderer.DrawDestructibles(shader, UInt128.Zero);
         foreach (var pad in arena.JumpPads) Primitives.JumpPad(pad.MinV, pad.MaxV, _time);
         foreach (var p in arena.Props) DrawCubeV(p.PositionV, p.HalfExtentsV * 2, Theme.Rgba(ColorUtil.ParseRgba(p.Color)));
         EndShaderMode();
@@ -319,6 +454,7 @@ public sealed class EditorScreen : Screen
             DrawCubeWiresV(center, b.Max - b.Min + new Vector3(pulse * 4), Theme.Kuning);
             DrawCubeWiresV(center, b.Max - b.Min + new Vector3(0.12f + pulse * 4), Theme.Aspal);
         }
+        DrawGizmo();
         if (_tool != Tool.Select && _hoverValid)
         {
             var p = _ed.Snap(_hoverPoint);

@@ -189,6 +189,8 @@ public sealed record ArenaDef
     public List<float[]> FlagBases { get; set; } = [];
     /// <summary>Optional goal for Panjat Pinang; the zone centre is used when empty.</summary>
     public float[]? RaceGoal { get; set; }
+    /// <summary>True once breakable boxes have been cut into pieces (<see cref="ArenaPieces"/>). Not saved.</summary>
+    [JsonIgnore] public bool PiecesSplit { get; init; }
 
     [JsonIgnore] public Vector3 ZoneCenterV => new(ZoneCenter[0], ZoneCenter[1], ZoneCenter[2]);
 }

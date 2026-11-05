@@ -46,6 +46,80 @@ public sealed class ArenaEditor
 
     public static readonly string[] Palette = ["#8D6E63", "#ECEFF1", "#FFC21A", "#E3242B", "#1FA64A", "#1D3FBB", "#455A64", "#FF7043", "#7CB342", "#4FC3F7"];
 
+    /// <summary>Copied item, shared by every editor instance so it can be pasted into another arena.</summary>
+    public static ArenaDef? Clipboard { get; private set; }
+    public static EditorItem ClipboardKind { get; private set; }
+
+    /// <summary>Copies the selection (deep copy) to <see cref="Clipboard"/>.</summary>
+    public bool Copy()
+    {
+        if (!IsValid(Selection)) return false;
+        int i = Selection.Index;
+        var holder = new ArenaDef { Id = "clipboard" };
+        switch (Selection.Kind)
+        {
+            case EditorItem.Box: holder.Boxes.Add(Arena.Boxes[i]); break;
+            case EditorItem.Spawn: holder.Spawns.Add(Arena.Spawns[i]); break;
+            case EditorItem.Pickup: holder.Pickups.Add(Arena.Pickups[i]); break;
+            case EditorItem.JumpPad: holder.JumpPads.Add(Arena.JumpPads[i]); break;
+            case EditorItem.Prop: holder.Props.Add(Arena.Props[i]); break;
+            default: holder.Lights.Add(Arena.Lights[i]); break;
+        }
+        Clipboard = Clone(holder);
+        ClipboardKind = Selection.Kind;
+        return true;
+    }
+
+    /// <summary>Pastes the clipboard item so its bottom centre lands on <paramref name="at"/> (snapped). Selects it.</summary>
+    public EditorSelection Paste(Vector3 at)
+    {
+        if (Clipboard is null) return EditorSelection.None;
+        var c = Clone(Clipboard);
+        Checkpoint();
+        var p = Snap(at);
+        switch (ClipboardKind)
+        {
+            case EditorItem.Box:
+            {
+                var b = c.Boxes[0];
+                var size = b.MaxV - b.MinV;
+                Arena.Boxes.Add(b with { Min = [p.X - size.X / 2, p.Y, p.Z - size.Z / 2], Max = [p.X + size.X / 2, p.Y + size.Y, p.Z + size.Z / 2] });
+                return Selection = new(EditorItem.Box, Arena.Boxes.Count - 1);
+            }
+            case EditorItem.Spawn:
+                Arena.Spawns.Add(c.Spawns[0] with { Position = [p.X, p.Y, p.Z] });
+                return Selection = new(EditorItem.Spawn, Arena.Spawns.Count - 1);
+            case EditorItem.Pickup:
+                Arena.Pickups.Add(c.Pickups[0] with { Position = [p.X, p.Y + 0.5f, p.Z] });
+                return Selection = new(EditorItem.Pickup, Arena.Pickups.Count - 1);
+            case EditorItem.JumpPad:
+            {
+                var j = c.JumpPads[0];
+                var size = j.MaxV - j.MinV;
+                Arena.JumpPads.Add(j with { Min = [p.X - size.X / 2, p.Y, p.Z - size.Z / 2], Max = [p.X + size.X / 2, p.Y + size.Y, p.Z + size.Z / 2] });
+                return Selection = new(EditorItem.JumpPad, Arena.JumpPads.Count - 1);
+            }
+            case EditorItem.Prop:
+            {
+                var pr = c.Props[0];
+                Arena.Props.Add(pr with { Position = [p.X, p.Y + pr.HalfExtents[1], p.Z] });
+                return Selection = new(EditorItem.Prop, Arena.Props.Count - 1);
+            }
+            default:
+                Arena.Lights.Add(c.Lights[0] with { Position = [p.X, p.Y + 3, p.Z] });
+                return Selection = new(EditorItem.Light, Arena.Lights.Count - 1);
+        }
+    }
+
+    /// <summary>An editable copy of any arena (for example a built-in one) under a new id.</summary>
+    public static ArenaDef CopyOf(ArenaDef source, string newId, string nameEn, string nameId)
+    {
+        var a = Clone(source);
+        a.Id = newId;
+        a.Name = new(nameEn, nameId);
+        return a;
+    }
+
     /// <summary>A starter arena: floor, four walls, four spawns and a few pickups.</summary>
     public static ArenaDef NewArena(string id) => new()
     {
@@ -77,8 +151,16 @@ public sealed class ArenaEditor
 
     // ------------------------------------------------------------------ history
 
+    private bool _gesture, _gestureSaved;
+
+    /// <summary>Starts a continuous edit (a gizmo drag): all changes until <see cref="EndGesture"/> undo as one step.</summary>
+    public void BeginGesture() { _gesture = true; _gestureSaved = false; }
+    public void EndGesture() { _gesture = false; _gestureSaved = false; }
+
     private void Checkpoint()
     {
+        if (_gesture && _gestureSaved) { Version++; return; }
+        if (_gesture) _gestureSaved = true;
         _undo.Push(Serialize(Arena));
         if (_undo.Count > MaxUndo)
         {
@@ -431,7 +513,7 @@ public sealed class ArenaEditor
         var m = new ModManifest { Id = ModId, Name = new("My Arenas", "Arena Buatanku"), Arenas = [Arena] };
         var list = ModLoader.Validate(m).ToList();
         if (Arena.Boxes.Count == 0) list.Add("Arena has no boxes.");
-        if (Arena.Boxes.Count(b => b.Solid && b.Health > 0) > 64) list.Add("At most 64 destructible boxes.");
+        if (ArenaPieces.CountPieces(Arena) > Djancoeg.Core.Simulation.GameWorld.MaxDestructibles) list.Add($"At most {Djancoeg.Core.Simulation.GameWorld.MaxDestructibles} breakable pieces (long breakable boxes count as several).");
         return list;
     }
 

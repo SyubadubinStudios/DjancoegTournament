@@ -784,6 +784,7 @@ public sealed partial class GameView : IDisposable
     {
         _session.Client.ArenaChanged -= OnArena;
         _arena?.Dispose();
+        FreeRagdollFrames();
         if (_hasTarget) UnloadRenderTexture(_target);
     }
 }

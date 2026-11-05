@@ -6,7 +6,7 @@ namespace Djancoeg.Core.Simulation;
 /// <summary>Destructible arena boxes: stalls, counters, benches and water tanks break and come back later.</summary>
 public sealed partial class GameWorld
 {
-    public const int MaxDestructibles = 64;
+    public const int MaxDestructibles = 128;
     private const float RestoreSeconds = 45f;
 
     /// <summary>Arena box index of each destructible (network order).</summary>
@@ -14,7 +14,9 @@ public sealed partial class GameWorld
     private float[] _boxHp = [];
     private float[] _boxRestore = [];
     /// <summary>Bit i set = destructible i is currently destroyed.</summary>
-    public ulong DestroyedMask { get; private set; }
+    public UInt128 DestroyedMask { get; private set; }
+
+    public static UInt128 Bit(int d) => UInt128.One << d;
 
     private void InitDestructibles()
     {
@@ -29,7 +31,7 @@ public sealed partial class GameWorld
             _boxHp[d] = Arena.Boxes[list[d]].Health;
             Collision.SetBoxEnabled(list[d], true);
         }
-        DestroyedMask = 0;
+        DestroyedMask = UInt128.Zero;
     }
 
     private int DestructibleOf(int boxIndex)
@@ -43,10 +45,10 @@ public sealed partial class GameWorld
     public void DamageBox(int boxIndex, float amount, Vector3 dir)
     {
         int d = DestructibleOf(boxIndex);
-        if (d < 0 || (DestroyedMask & (1UL << d)) != 0) return;
+        if (d < 0 || (DestroyedMask & Bit(d)) != 0) return;
         _boxHp[d] -= amount;
         if (_boxHp[d] > 0) return;
-        DestroyedMask |= 1UL << d;
+        DestroyedMask |= Bit(d);
         _boxRestore[d] = RestoreSeconds;
         Collision.SetBoxEnabled(boxIndex, false);
         var b = Arena.Boxes[boxIndex];
@@ -57,7 +59,7 @@ public sealed partial class GameWorld
     {
         for (int d = 0; d < Destructibles.Length; d++)
         {
-            if ((DestroyedMask & (1UL << d)) != 0) continue;
+            if ((DestroyedMask & Bit(d)) != 0) continue;
             var b = Arena.Boxes[Destructibles[d]];
             var box = new Aabb(b.MinV, b.MaxV);
             float dist = Vector3.Distance(box.ClosestPoint(center), center);
@@ -68,10 +70,10 @@ public sealed partial class GameWorld
 
     private void UpdateDestructibles(float dt)
     {
-        if (DestroyedMask == 0) return;
+        if (DestroyedMask == UInt128.Zero) return;
         for (int d = 0; d < Destructibles.Length; d++)
         {
-            if ((DestroyedMask & (1UL << d)) == 0) continue;
+            if ((DestroyedMask & Bit(d)) == 0) continue;
             _boxRestore[d] -= dt;
             if (_boxRestore[d] > 0) continue;
             var b = Arena.Boxes[Destructibles[d]];
@@ -80,7 +82,7 @@ public sealed partial class GameWorld
             for (int i = 0; i < Players.Length && !blocked; i++) if (Players[i].Active && Players[i].Alive && BodyBox(Players[i]).Intersects(box)) blocked = true;
             if (blocked) { _boxRestore[d] = 2f; continue; }
             _boxHp[d] = b.Health;
-            DestroyedMask &= ~(1UL << d);
+            DestroyedMask &= ~Bit(d);
             Collision.SetBoxEnabled(Destructibles[d], true);
             Push(new GameEvent { Type = GameEventType.BoxRestored, Value = (short)d, Position = box.Center });
         }

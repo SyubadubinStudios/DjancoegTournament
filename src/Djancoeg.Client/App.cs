@@ -193,7 +193,7 @@ public sealed class App : IDisposable
             "editor" => new EditorScreen(this),
             "achievements" => new AchievementsScreen(this, new MainMenuScreen(this)),
             "boss" => StartShotBoss(),
-            "game" or "game-tps" or "scoreboard" or "spectate" or "creeps" => StartShotGame(),
+            "game" or "game-tps" or "scoreboard" or "spectate" or "creeps" or "ragdoll" => StartShotGame(),
             _ => new MainMenuScreen(this),
         };
     }
@@ -202,13 +202,13 @@ public sealed class App : IDisposable
     {
         var match = new MatchSettings
         {
-            ArenaId = Options.Arena ?? Settings.ArenaId, BotCount = Options.Shot == "creeps" ? 3 : 7, BotSkill = 0.6f, ScoreLimit = 999, TimeLimitSeconds = 600,
+            ArenaId = Options.Arena ?? Settings.ArenaId, BotCount = Options.Shot == "creeps" ? 3 : Options.Shot == "ragdoll" ? 0 : 7, BotSkill = 0.6f, ScoreLimit = 999, TimeLimitSeconds = 600,
             CreepIntervalMin = Options.Shot == "creeps" ? 1.5f : 25f, CreepIntervalMax = Options.Shot == "creeps" ? 3f : 55f,
             Mode = Options.Mode switch { "tdm" => GameModeKind.TeamDeathmatch, "koth" => GameModeKind.KingOfTheHill, "ctf" => GameModeKind.CaptureTheFlag, "race" => GameModeKind.Race, _ => GameModeKind.FreeForAll },
         };
         var session = Game.Session.StartLocal(Content, Settings, match, host: false, null, spectator: Options.Shot == "spectate", persistStats: false);
-        session.Autopilot = true;
-        session.ThirdPerson = Options.Shot is "game-tps" or "creeps";
+        session.Autopilot = Options.Shot != "ragdoll";
+        session.ThirdPerson = Options.Shot is "game-tps" or "creeps" or "ragdoll";
         return new PlayScreen(this, session) { ShowScoreboardForShot = Options.Shot == "scoreboard" };
     }
 

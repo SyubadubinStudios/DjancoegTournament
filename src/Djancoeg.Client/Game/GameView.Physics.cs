@@ -28,6 +28,8 @@ public sealed partial class GameView
         public bool Grounded;
         public int Bounces;
         public Color Blood;
+        /// <summary>Driven by a per-limb ragdoll (fighters with the shared rig).</summary>
+        public bool Rag;
     }
 
     private readonly Corpse[] _corpses = new Corpse[40];
@@ -46,8 +48,9 @@ public sealed partial class GameView
     private int _chunkNext;
     private int _corpseNext;
 
-    private void SpawnCorpse(int playerId, CharacterModel? model, float scale, Vector3 pos, Vector3 impulse, float yaw, Color fallback, Color blood)
+    private int SpawnCorpse(int playerId, CharacterModel? model, float scale, Vector3 pos, Vector3 impulse, float yaw, Color fallback, Color blood)
     {
+        int slot = _corpseNext;
         ref var c = ref _corpses[_corpseNext];
         _corpseNext = (_corpseNext + 1) % _corpses.Length;
         var rng = new FastRandom((ulong)(_time * 1000) + (ulong)_corpseNext);
@@ -59,6 +62,7 @@ public sealed partial class GameView
             Pos = pos, Vel = kick + new Vector3(0, 2.5f + kick.Length() * 0.25f, 0), Yaw = yaw,
             PitchVel = -(2.5f + kick.Length() * 0.4f) * (rng.Chance(0.5f) ? 1 : -1), RollVel = rng.Range(-3, 3), YawVel = rng.Range(-2, 2),
         };
+        return slot;
     }
 
     private void RemovePlayerCorpse(int id)
@@ -82,6 +86,13 @@ public sealed partial class GameView
             c.Age += dt;
             if (c.Age > 14f) { c.Active = false; continue; }
             if (c.PlayerId >= 0 && TryView(c.PlayerId, out var p) && p.Has(NetPlayerFlags.Alive) && c.Age > 0.5f) { c.Active = false; continue; }
+            if (c.Rag)
+            {
+                // Fixed sub-steps keep the Verlet integration stable at any frame rate.
+                int steps = Math.Clamp((int)MathF.Ceiling(dt * 60f), 1, 4);
+                for (int s = 0; s < steps && c.Active; s++) StepRagdoll(i, ref c, dt / steps);
+                continue;
+            }
 
             c.Vel.Y -= PlayerMovement.Gravity * dt;
             if (col is not null)
@@ -134,6 +145,9 @@ public sealed partial class GameView
         {
             ref var c = ref _corpses[i];
             if (!c.Active) continue;
+            var fade = Color.White;
+            if (c.Age > 11f) fade.A = (byte)(255 * MathF.Max(0, (14f - c.Age) / 3f));
+            if (c.Rag && c.Model is { } rm) { DrawRagdoll(i, c, rm, fade); continue; }
             Rlgl.PushMatrix();
             Rlgl.Translatef(c.Pos.X, c.Pos.Y, c.Pos.Z);
             Rlgl.Rotatef(c.Yaw * 57.2958f, 0, 1, 0);
@@ -158,8 +172,12 @@ public sealed partial class GameView
         var chars = _session.Content.Characters;
         var cd = chars[Math.Min(p.Character, chars.Count - 1)];
         RemovePlayerCorpse(e.A);
-        SpawnCorpse(e.A, _app.Models.Character(cd), cd.Scale, p.Position + new Vector3(0, 0.9f * cd.Scale, 0), e.Vector + p.Velocity * 0.5f, p.Yaw,
+        var model = _app.Models.Character(cd);
+        int slot = SpawnCorpse(e.A, model, cd.Scale, p.Position + new Vector3(0, 0.9f * cd.Scale, 0), e.Vector + p.Velocity * 0.5f, p.Yaw,
             Theme.Rgba(ColorUtil.ParseRgba(cd.PrimaryColor)), new Color(140, 8, 10, 255));
+        var kick = e.Vector * 0.5f;
+        if (kick.LengthSquared() > 324) kick = Vector3.Normalize(kick) * 18;
+        _corpses[slot].Rag = TryStartRagdoll(slot, model, p.Position, p.Yaw, cd.Scale, p.Velocity * 0.5f + new Vector3(0, 1.5f, 0), kick);
     }
 
     private void CorpseForCreep(in GameEvent e)

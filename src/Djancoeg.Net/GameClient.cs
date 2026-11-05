@@ -354,7 +354,7 @@ public sealed class GameClient : IDisposable
             if (idx < 0) { State = ClientState.Rejected; RejectReason = $"Missing arena '{arenaId}'."; return; }
             Arena = _content.Arenas[idx];
             Collision = new CollisionWorld(Arena);
-            _appliedDestroyed = 0;
+            _appliedDestroyed = UInt128.Zero;
             _predictionValid = false;
             ArenaChanged?.Invoke(Arena);
         }
@@ -436,7 +436,8 @@ public sealed class GameClient : IDisposable
         int wc = Math.Min((int)r.U8(), SimConstants.MaxWeapons);
         for (int i = 0; i < wc; i++) s.Ammo[i] = r.U16();
         s.PickupMask = r.U64();
-        s.DestroyedMask = r.U64();
+        ulong lo = r.U64(), hi = r.U64();
+        s.DestroyedMask = ((UInt128)hi << 64) | lo;
         s.CreepCount = Math.Min((int)r.U8(), s.Creeps.Length);
         for (int i = 0; i < s.CreepCount; i++)
             s.Creeps[i] = new NetCreep { Index = r.U8(), Kind = r.U8(), State = (CreepState)r.U8(), Position = r.Pos(), Yaw = r.Angle(), HealthPct = r.U8() };
@@ -475,17 +476,17 @@ public sealed class GameClient : IDisposable
         Reconcile(s);
     }
 
-    private ulong _appliedDestroyed;
+    private UInt128 _appliedDestroyed;
 
     /// <summary>Mirrors destroyed boxes into the client's collision so prediction walks through broken stalls.</summary>
-    private void ApplyDestruction(ulong mask)
+    private void ApplyDestruction(UInt128 mask)
     {
         if (mask == _appliedDestroyed || Collision is null || Arena is null) return;
         int d = 0;
         for (int i = 0; i < Arena.Boxes.Count && d < GameWorld.MaxDestructibles; i++)
         {
             if (!Arena.Boxes[i].Solid || Arena.Boxes[i].Health <= 0) continue;
-            Collision.SetBoxEnabled(i, (mask & (1UL << d)) == 0);
+            Collision.SetBoxEnabled(i, (mask & GameWorld.Bit(d)) == UInt128.Zero);
             d++;
         }
         _appliedDestroyed = mask;

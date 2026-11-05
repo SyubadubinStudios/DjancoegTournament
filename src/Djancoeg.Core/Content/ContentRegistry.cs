@@ -51,6 +51,7 @@ public sealed class ContentRegistry
 
     public void AddOrReplace(ArenaDef a)
     {
+        a = ArenaPieces.Split(a);
         if (_arenaIndex.TryGetValue(a.Id, out int i)) { _arenas[i] = a; return; }
         _arenaIndex[a.Id] = _arenas.Count;
         _arenas.Add(a);

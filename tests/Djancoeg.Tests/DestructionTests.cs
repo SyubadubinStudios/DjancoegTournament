@@ -37,9 +37,9 @@ public class DestructionTests
         Assert.True(w.Collision.IsBoxEnabled(box));
 
         w.DamageBox(box, b.Health * 0.5f, Vector3.UnitX);
-        Assert.Equal(0UL, w.DestroyedMask);
+        Assert.Equal(UInt128.Zero, w.DestroyedMask);
         w.DamageBox(box, b.Health, Vector3.UnitX);
-        Assert.Equal(1UL, w.DestroyedMask & 1);
+        Assert.Equal(UInt128.One, w.DestroyedMask & UInt128.One);
         Assert.False(w.Collision.IsBoxEnabled(box));
         // A ray through the broken box no longer reports it.
         var origin = center - new Vector3(5, 0, 0);
@@ -53,7 +53,7 @@ public class DestructionTests
             w.Players[0].Move.Position = new Vector3(0, 30, 0);
             w.Players[0].Move.Velocity = default;
             w.Step();
-            restored = (w.DestroyedMask & 1) == 0;
+            restored = (w.DestroyedMask & UInt128.One) == UInt128.Zero;
         }
         Assert.True(restored);
         Assert.True(w.Collision.IsBoxEnabled(box));
@@ -67,7 +67,7 @@ public class DestructionTests
         for (int i = 0; i < w.Arena.Boxes.Count; i++) if (w.Arena.Boxes[i].Solid && w.Arena.Boxes[i].Health <= 0) { wall = i; break; }
         Assert.True(wall >= 0);
         w.DamageBox(wall, 99999, Vector3.UnitY);
-        Assert.Equal(0UL, w.DestroyedMask);
+        Assert.Equal(UInt128.Zero, w.DestroyedMask);
         Assert.True(w.Collision.IsBoxEnabled(wall));
     }
 
@@ -76,9 +76,9 @@ public class DestructionTests
     {
         var w = World();
         foreach (int box in w.Destructibles) w.DamageBox(box, 99999, Vector3.UnitY);
-        Assert.NotEqual(0UL, w.DestroyedMask);
+        Assert.NotEqual(UInt128.Zero, w.DestroyedMask);
         w.RestartMatch();
-        Assert.Equal(0UL, w.DestroyedMask);
+        Assert.Equal(UInt128.Zero, w.DestroyedMask);
         foreach (int box in w.Destructibles) Assert.True(w.Collision.IsBoxEnabled(box));
     }
 }

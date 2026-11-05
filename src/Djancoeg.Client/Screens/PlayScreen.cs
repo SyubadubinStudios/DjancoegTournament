@@ -13,6 +13,8 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     private float _age;
     private bool _suspended; // true while Fighters/Settings are shown on top of the match
     private bool _showBoard;
+    private bool _ragdollThrown;
+    private float _ragdollAt;
 
     public bool ShowScoreboardForShot { get; init; }
     /// <summary>Set when this match is a Tur Nusantara stage.</summary>
@@ -22,8 +24,9 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     public override bool ReadyForScreenshot =>
         (session.Client.IsSpectator && _age > 8f) ||
         (App.Options.Shot == "creeps" && _age > 14f && session.Client.Latest is { CreepCount: > 2 }) ||
+        (App.Options.Shot == "ragdoll" && _ragdollThrown && _age > _ragdollAt + 2.2f) ||
         (App.Options.Shot == "boss" && _age > 13f && session.Client.Latest is { CreepCount: > 0 }) ||
-        App.Options.Shot != "boss" && _age > 7f && session.Client.State == ClientState.Connected &&
+        App.Options.Shot is not ("boss" or "ragdoll") && _age > 7f && session.Client.State == ClientState.Connected &&
         session.Client.Latest is { } s && s.TryGetPlayer(session.Client.LocalId, out var me) && me.Has(NetPlayerFlags.Alive) && !me.Has(NetPlayerFlags.Protected) && (_age > 30f || (me.Health >= 60 && (!session.Autopilot || session.AutopilotEngaged)));
 
     public override void Enter()
@@ -71,6 +74,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
             if (_view.Paused) EnableCursor(); else DisableCursor();
         }
         _view.Update(dt, inputAllowed: true);
+        if (App.Options.Shot == "ragdoll" && !_ragdollThrown && _age > 6f) { _view.DebugThrowRagdolls(); _ragdollThrown = true; _ragdollAt = _age; }
         if (Campaign is { } run)
         {
             run.Update(dt, session);

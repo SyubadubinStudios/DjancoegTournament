@@ -583,7 +583,8 @@ public sealed partial class GameServer : IDisposable
         ulong mask = 0;
         for (int k = 0; k < world.Pickups.Length; k++) if (world.Pickups[k].Available) mask |= 1UL << k;
         w.U64(mask);
-        w.U64(world.DestroyedMask);
+        w.U64((ulong)world.DestroyedMask);
+        w.U64((ulong)(world.DestroyedMask >> 64));
 
         // Arena creeps (always all of them; at most 16 x 12 bytes).
         countPos = w.Position; w.U8(0); count = 0;

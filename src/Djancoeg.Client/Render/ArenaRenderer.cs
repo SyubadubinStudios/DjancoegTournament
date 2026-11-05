@@ -34,12 +34,12 @@ public sealed unsafe class ArenaRenderer : IDisposable
     }
 
     /// <summary>Draws destructible boxes whose bit in <paramref name="destroyedMask"/> is clear.</summary>
-    public void DrawDestructibles(WorldShader shader, ulong destroyedMask)
+    public void DrawDestructibles(WorldShader shader, UInt128 destroyedMask)
     {
         if (_destructibles.Count == 0) return;
         shader.SetPattern(true);
         for (int d = 0; d < _destructibles.Count; d++)
-            if ((destroyedMask & (1UL << d)) == 0) Raylib.DrawModel(_destructibles[d], Vector3.Zero, 1f, Color.White);
+            if ((destroyedMask & Djancoeg.Core.Simulation.GameWorld.Bit(d)) == UInt128.Zero) Raylib.DrawModel(_destructibles[d], Vector3.Zero, 1f, Color.White);
         shader.SetPattern(false);
     }
 
