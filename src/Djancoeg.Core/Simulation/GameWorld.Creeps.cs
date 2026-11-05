@@ -15,6 +15,7 @@ public struct Creep
     public MoveState Move;
     public float Yaw;
     public float Health;
+    public float MaxHealth;
     public int Target;
     public float StateTimer;
     public float AttackCooldown;
@@ -98,7 +99,7 @@ public sealed partial class GameWorld
             }
             Creeps[slot] = new Creep
             {
-                Active = true, Kind = (byte)kind, Health = def.Health, Target = -1, Life = def.Lifetime,
+                Active = true, Kind = (byte)kind, Health = def.Health, MaxHealth = def.Health, Target = -1, Life = def.Lifetime,
                 State = def.Shape == CreepShape.Worm ? CreepState.Burrowed : CreepState.Emerging,
                 StateTimer = def.Shape == CreepShape.Worm ? 2.5f : 1.0f,
                 Move = new MoveState { Position = pos }, Yaw = _rng.Range(-MathF.PI, MathF.PI),
@@ -316,6 +317,7 @@ public sealed partial class GameWorld
         if (c.Health > 0) return false;
         c.State = CreepState.Dying;
         c.StateTimer = 1.2f;
+        OnCreepDied(index, attacker);
         if (attacker >= 0 && Players[attacker].Active && Settings.Mode is GameModeKind.FreeForAll) Players[attacker].Score += def.ScoreReward;
         Push(new GameEvent { Type = GameEventType.CreepKilled, A = (byte)Math.Max(0, attacker), B = (byte)index, Value = c.Kind, Position = CreepBox(c).Center, Vector = dir * knockback });
         return true;

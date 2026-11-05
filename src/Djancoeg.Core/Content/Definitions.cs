@@ -212,6 +212,9 @@ public sealed record MatchSettings
     public bool Creeps { get; set; } = true;
     public float CreepIntervalMin { get; set; } = 25f;
     public float CreepIntervalMax { get; set; } = 55f;
+    /// <summary>Campaign boss creep id (empty = none). The match ends when it is killed.</summary>
+    public string BossCreepId { get; set; } = "";
+    public float BossHealthScale { get; set; } = 1f;
 }
 
 public static class ColorUtil

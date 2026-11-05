@@ -12,6 +12,8 @@ public sealed unsafe class ArenaRenderer : IDisposable
 {
     private const int MaxVertsPerChunk = 16000;
     private readonly List<Model> _chunks = [];
+    /// <summary>One model per destructible box, in network (DestroyedMask bit) order.</summary>
+    private readonly List<Model> _destructibles = [];
     public ArenaDef Arena { get; }
     public int VertexCount { get; private set; }
 
@@ -27,6 +29,18 @@ public sealed unsafe class ArenaRenderer : IDisposable
             _chunks.Add(BuildChunk(boxes, i, take, shader.Shader));
             i += take;
         }
+        var breakable = arena.Boxes.Where(b => b.Solid && b.Health > 0).Take(Djancoeg.Core.Simulation.GameWorld.MaxDestructibles).ToList();
+        for (int d = 0; d < breakable.Count; d++) _destructibles.Add(BuildChunk(breakable, d, 1, shader.Shader));
+    }
+
+    /// <summary>Draws destructible boxes whose bit in <paramref name="destroyedMask"/> is clear.</summary>
+    public void DrawDestructibles(WorldShader shader, ulong destroyedMask)
+    {
+        if (_destructibles.Count == 0) return;
+        shader.SetPattern(true);
+        for (int d = 0; d < _destructibles.Count; d++)
+            if ((destroyedMask & (1UL << d)) == 0) Raylib.DrawModel(_destructibles[d], Vector3.Zero, 1f, Color.White);
+        shader.SetPattern(false);
     }
 
     private Model BuildChunk(List<ArenaBox> boxes, int start, int count, Shader shader)
@@ -85,6 +99,8 @@ public sealed unsafe class ArenaRenderer : IDisposable
     public void Dispose()
     {
         foreach (var m in _chunks) Raylib.UnloadModel(m);
+        foreach (var m in _destructibles) Raylib.UnloadModel(m);
         _chunks.Clear();
+        _destructibles.Clear();
     }
 }

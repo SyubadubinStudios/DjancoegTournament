@@ -15,16 +15,25 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     private bool _showBoard;
 
     public bool ShowScoreboardForShot { get; init; }
+    /// <summary>Set when this match is a Tur Nusantara stage.</summary>
+    public CampaignRun? Campaign { get; init; }
     public override bool ReadyForScreenshot =>
         (session.Client.IsSpectator && _age > 8f) ||
         (App.Options.Shot == "creeps" && _age > 14f && session.Client.Latest is { CreepCount: > 2 }) ||
-        _age > 7f && session.Client.State == ClientState.Connected &&
+        (App.Options.Shot == "boss" && _age > 13f && session.Client.Latest is { CreepCount: > 0 }) ||
+        App.Options.Shot != "boss" && _age > 7f && session.Client.State == ClientState.Connected &&
         session.Client.Latest is { } s && s.TryGetPlayer(session.Client.LocalId, out var me) && me.Has(NetPlayerFlags.Alive) && !me.Has(NetPlayerFlags.Protected) && (_age > 30f || (me.Health >= 60 && (!session.Autopilot || session.AutopilotEngaged)));
 
     public override void Enter()
     {
         _suspended = false;
         _view.ForceScoreboard = ShowScoreboardForShot;
+        if (Campaign is { } run)
+        {
+            _view.BossKind = run.Stage.IsBoss ? session.Content.CreepIndexOf(run.Stage.Boss) : -1;
+            _view.CreepKilledHook = kind => run.OnCreepKilled(kind, session.Content);
+            _view.Banner = S.T(run.Stage.Name);
+        }
         if (_view.Paused) EnableCursor(); else DisableCursor();
     }
 
@@ -60,6 +69,15 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
             if (_view.Paused) EnableCursor(); else DisableCursor();
         }
         _view.Update(dt, inputAllowed: true);
+        if (Campaign is { } run)
+        {
+            run.Update(dt, session);
+            if (run.EndedFor > 4f)
+            {
+                var (won, deaths) = run.Result(session);
+                App.Go(new CampaignResultScreen(App, run.Stage, won, deaths, run.Seconds));
+            }
+        }
     }
 
     public override void Draw()
@@ -95,7 +113,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
                     case 2: session.ThirdPerson = !session.ThirdPerson; break;
                     case 3: _showBoard = !_showBoard; if (_showBoard) session.Client.RequestLeaderboard(); break;
                     case 4: Suspend(new SettingsScreen(App, this)); break;
-                    case 5: App.Go(new MainMenuScreen(App)); break;
+                    case 5: App.Go(Campaign is null ? new MainMenuScreen(App) : new CampaignScreen(App)); break;
                 }
             }
             y += 70 * u;

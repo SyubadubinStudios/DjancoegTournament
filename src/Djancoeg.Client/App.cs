@@ -42,6 +42,7 @@ public sealed class App : IDisposable
     public Gui.Marquee Marquee { get; } = new();
     public float Time { get; private set; }
     public Texture2D? KeyArt { get; private set; }
+    public Achievements Achievements { get; }
 
     private Screen _screen = null!;
     private Screen? _pending;
@@ -51,6 +52,8 @@ public sealed class App : IDisposable
     {
         Options = options;
         Settings = ClientSettings.Load();
+        // Screenshot/autopilot runs must never unlock the player's real achievements.
+        Achievements = new Achievements(options.Shot is null ? null : Path.Combine(Path.GetTempPath(), "djancoeg-shot-achievements.json"));
         if (options.Language is "en") Settings.Language = Core.Localization.Language.English;
         if (options.Language is "id") Settings.Language = Core.Localization.Language.Indonesian;
         S.Lang = Settings.Language;
@@ -106,6 +109,7 @@ public sealed class App : IDisposable
             if (_pending is not null)
             {
                 _screen.Leave();
+                Achievements.Save();
                 _screen = _pending;
                 _pending = null;
                 Gui.Reset();
@@ -116,6 +120,7 @@ public sealed class App : IDisposable
 
             BeginDrawing();
             _screen.Draw();
+            if (Options.Shot is null) Achievements.DrawToast(dt, this);
             EndDrawing();
 
             if (Options.Shot is not null)
@@ -170,6 +175,9 @@ public sealed class App : IDisposable
             "settings-access" => new SettingsScreen(this, null, 2),
             "controls" => new ControlsScreen(this),
             "credits" => new CreditsScreen(this),
+            "campaign" => new CampaignScreen(this),
+            "achievements" => new AchievementsScreen(this, new MainMenuScreen(this)),
+            "boss" => StartShotBoss(),
             "game" or "game-tps" or "scoreboard" or "spectate" or "creeps" => StartShotGame(),
             _ => new MainMenuScreen(this),
         };
@@ -187,6 +195,15 @@ public sealed class App : IDisposable
         session.Autopilot = true;
         session.ThirdPerson = Options.Shot is "game-tps" or "creeps";
         return new PlayScreen(this, session) { ShowScoreboardForShot = Options.Shot == "scoreboard" };
+    }
+
+    private Screen StartShotBoss()
+    {
+        var stage = Core.Content.Campaign.Stage("jawa-boss")!;
+        var session = Game.Session.StartLocal(Content, Settings, stage.ToMatch(), host: false, null, persistStats: false);
+        session.Autopilot = true;
+        session.ThirdPerson = true;
+        return new PlayScreen(this, session) { Campaign = new CampaignRun(stage) };
     }
 
     public void Go(Screen next) => _pending = next;

@@ -91,6 +91,8 @@ public sealed partial class GameView
         if (haveMe) DrawVitals(sw, sh, u, me, s);
         else if (_session.Client.IsSpectator && s.Phase == MatchPhase.Playing) DrawSpectatorHud(sw, sh, u);
         DrawObjectiveHud(sw, sh, u);
+        DrawBossBar(sw, u);
+        DrawBanner(sw, sh, u);
         if (_session.Client.Vote is { } vote)
         {
             string text = $"VOTE: {vote.Description}  ·  {vote.Yes}/{vote.Needed}  ·  {vote.SecondsLeft}s  ·  {S.T("vote.hint")}";

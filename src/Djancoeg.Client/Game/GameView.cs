@@ -241,11 +241,14 @@ public sealed partial class GameView : IDisposable
                 break;
             case GameEventType.Kill:
                 OnKill(e, me);
+                if (e.A == me) _app.Achievements.OnLocalDeath();
+                else if (e.B == me && ((KillFlags)e.Flags & (KillFlags.Suicide | KillFlags.Creep)) == 0) _app.Achievements.OnLocalKill();
                 CorpseForPlayer(e);
                 break;
             case GameEventType.BoxDestroyed:
             case GameEventType.BoxRestored:
                 OnBoxEvent(e);
+                if (e.Type == GameEventType.BoxDestroyed && Vector3.Distance(e.Position, ListenerPos) < 9f) _app.Achievements.OnBoxBroken();
                 break;
             case GameEventType.Explosion:
             {

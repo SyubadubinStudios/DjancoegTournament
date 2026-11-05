@@ -13,7 +13,25 @@ public static class S
     private static readonly Dictionary<string, (string En, string Id)> Table = new()
     {
         // Main menu
+        ["menu.campaign"] = ("Tur Nusantara (campaign)", "Tur Nusantara (kampanye)"),
         ["menu.practice"] = ("Practice vs bots", "Latihan lawan bot"),
+        // Campaign
+        ["camp.subtitle"] = ("Single-player island tour. Win stages, collect stars, open new islands, beat the bosses.", "Tur antarpulau sendirian. Menangkan tahap, kumpulkan bintang, buka pulau baru, kalahkan bosnya."),
+        ["camp.locked"] = ("Locked. Collect {0} stars to sail here.", "Terkunci. Kumpulkan {0} bintang untuk berlayar ke sini."),
+        ["camp.stageLocked"] = ("Win the previous stage first.", "Menangkan tahap sebelumnya dulu."),
+        ["camp.rules"] = ("1 star: win.  2 stars: win without dying too often.  3 stars: also beat the par time. Boss stages end when the boss falls; the killing blow is worth +10.", "1 bintang: menang.  2 bintang: menang tanpa sering mati.  3 bintang: juga lebih cepat dari waktu par. Tahap bos selesai saat bos tumbang; pukulan terakhir +10."),
+        ["camp.won"] = ("Stage cleared!", "Tahap beres!"),
+        ["camp.lost"] = ("Not this time", "Belum rezeki"),
+        ["camp.star1"] = ("Win the stage", "Menangkan tahap"),
+        ["camp.star2"] = ("Die at most {0} times", "Mati maksimal {0} kali"),
+        ["camp.star3"] = ("Finish within {0}", "Selesai dalam {0}"),
+        ["camp.newBest"] = ("New personal best!", "Rekor pribadi baru!"),
+        ["camp.retry"] = ("Retry", "Ulangi"),
+        ["camp.next"] = ("Next stage", "Tahap berikut"),
+        ["camp.map"] = ("Island map", "Peta pulau"),
+        ["ach.unlocked"] = ("Achievement unlocked", "Pencapaian terbuka"),
+        ["ach.title"] = ("Achievements", "Pencapaian"),
+        ["menu.achievements"] = ("Achievements", "Pencapaian"),
         ["menu.host"] = ("Host a game", "Buka server"),
         ["menu.find"] = ("Find a game", "Cari server"),
         ["menu.fighters"] = ("Fighters", "Pilih jagoan"),

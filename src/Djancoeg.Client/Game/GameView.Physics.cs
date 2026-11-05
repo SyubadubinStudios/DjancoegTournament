@@ -32,7 +32,6 @@ public sealed partial class GameView
 
     private readonly Corpse[] _corpses = new Corpse[40];
     private int _corpseNext;
-    private ulong _seenDestroyed;
 
     private void SpawnCorpse(int playerId, CharacterModel? model, float scale, Vector3 pos, Vector3 impulse, float yaw, Color fallback, Color blood)
     {
@@ -201,24 +200,6 @@ public sealed partial class GameView
         return -1;
     }
 
-    /// <summary>Destructible boxes aren't baked into the arena mesh; draw the intact ones.</summary>
-    private void DrawDestructibles(ArenaDef arena)
-    {
-        ulong mask = _latest!.DestroyedMask;
-        int d = 0;
-        for (int i = 0; i < arena.Boxes.Count && d < GameWorld.MaxDestructibles; i++)
-        {
-            var b = arena.Boxes[i];
-            if (!b.Solid || b.Health <= 0) continue;
-            bool destroyed = (mask & (1UL << d)) != 0;
-            d++;
-            if (destroyed) continue;
-            var center = (b.MinV + b.MaxV) * 0.5f;
-            var size = b.MaxV - b.MinV;
-            var c = Theme.Rgba(ColorUtil.ParseRgba(b.Color));
-            DrawCubeV(center, size, c);
-            DrawCubeWiresV(center, size, new Color((byte)(c.R * 0.6f), (byte)(c.G * 0.6f), (byte)(c.B * 0.6f), (byte)255));
-        }
-        _seenDestroyed = mask;
-    }
+    /// <summary>Destructible boxes aren't in the static arena mesh; draw the intact ones with the world shader.</summary>
+    private void DrawDestructibles(ArenaDef arena) => _arena?.DrawDestructibles(_app.Shader, _latest!.DestroyedMask);
 }

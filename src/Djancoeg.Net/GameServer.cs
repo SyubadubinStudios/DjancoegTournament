@@ -593,7 +593,7 @@ public sealed partial class GameServer : IDisposable
             if (!cr.Active) continue;
             var def = world.CreepDefOf(cr);
             w.U8((byte)k); w.U8(cr.Kind); w.U8((byte)cr.State); w.Pos(cr.Move.Position); w.Angle(cr.Yaw);
-            w.U8((byte)Math.Clamp(cr.Health / def.Health * 255f, 0, 255));
+            w.U8((byte)Math.Clamp(cr.Health / MathF.Max(1f, cr.MaxHealth > 0 ? cr.MaxHealth : def.Health) * 255f, 0, 255));
             count++;
         }
         w.PatchU8(countPos, count);

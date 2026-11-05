@@ -209,6 +209,12 @@ public sealed partial class GameWorld
                 if (Players[i].Active && Players[i].Score >= limit) { winner = i; break; }
         }
 
+        if (winner < 0 && HasBoss && BossDefeated)
+        {
+            winner = IsTeamMode ? (TeamScores[0] >= TeamScores[1] ? 0 : 1) : Leader();
+            if (winner < 0) winner = 0;
+        }
+
         if (winner < 0 && Settings.TimeLimitSeconds > 0 && MatchTime >= Settings.TimeLimitSeconds)
             winner = IsTeamMode ? (TeamScores[0] >= TeamScores[1] ? 0 : 1) : Leader();
 
