@@ -1,6 +1,10 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using Djancoeg.Core;
 using Djancoeg.Core.Content;
 using Djancoeg.Core.Simulation;
@@ -16,33 +20,64 @@ public sealed class ServerConfig
     public List<string> ArenaRotation { get; set; } = [];
     /// <summary>"host:port" of a master server to advertise to (online server browser). Null = LAN only.</summary>
     public string? MasterServer { get; set; }
+    /// <summary>Join password (null/empty = open server).</summary>
+    public string? Password { get; set; }
+    /// <summary>Remote admin password for "!login" in chat (null = only the console and local players are admins).</summary>
+    public string? RconPassword { get; set; }
+    /// <summary>Players connecting from this machine are admins (listen servers, local testing).</summary>
+    public bool TrustLoopbackAdmin { get; set; } = true;
+    public bool AllowVotes { get; set; } = true;
+    /// <summary>Folder for stats.json and bans.txt. Null = nothing is persisted.</summary>
+    public string? DataDirectory { get; set; }
     public Action<string>? Log { get; set; }
 }
 
 /// <summary>
-/// Authoritative game server. Runs the <see cref="GameWorld"/> at 60 Hz, consumes client inputs in order,
-/// and sends 30 Hz delta-free snapshots sized to fit one UDP datagram. Used by the dedicated server,
-/// "Host game" (listen server) and offline practice (bound to loopback).
+/// Authoritative game server. Runs the <see cref="GameWorld"/> at 60 Hz, consumes client inputs in order and sends
+/// 30 Hz snapshots, delta-encoded against the last snapshot each client acknowledged. Connections use a stateless
+/// cookie challenge (and optional password), then ECDH + AES-GCM encryption. Also hosts admin commands, votes,
+/// bans, persistent stats and NAT punch-through answers. Used by the dedicated server, "Host game" and practice.
 /// </summary>
-public sealed class GameServer : IDisposable
+public sealed partial class GameServer : IDisposable
 {
+    private sealed class SentFrame
+    {
+        public uint Tick;
+        public int Count;
+        public readonly NetPlayer[] Players = new NetPlayer[SimConstants.MaxPlayers];
+    }
+
     private sealed class Client
     {
         public required SocketAddress Address;
+        public required SecureChannel Channel;
+        public required KeyExchange Keys;
         public int Slot; // -1 for spectators
         public bool IsSpectator => Slot < 0;
         public string Name = "";
+        public string PlayerKey = "";
+        public bool IsAdmin;
         public double LastHeard;
         public uint EventAck;
+        public uint SnapshotAck;
         public uint EchoTime;
         public float RttMs;
-        public double LastInfo;
         public int PropCursor;
         public uint LastQueuedSeq;
         public uint AppliedSeq;
         public readonly PlayerInput[] Queue = new PlayerInput[16];
         public int QHead, QCount;
         public PlayerInput Last;
+        public readonly SentFrame[] Frames = CreateFrames();
+        public int FrameHead;
+        public double PlayAccum;
+
+        private static SentFrame[] CreateFrames()
+        {
+            var f = new SentFrame[32];
+            for (int i = 0; i < f.Length; i++) f[i] = new SentFrame();
+            return f;
+        }
     }
 
     private readonly ContentRegistry _content;
@@ -51,20 +86,30 @@ public sealed class GameServer : IDisposable
     private readonly Dictionary<SocketAddress, Client> _clients = [];
     private readonly Client?[] _bySlot = new Client?[SimConstants.MaxPlayers];
     private readonly GameEvent[] _eventScratch = new GameEvent[64];
+    private readonly GameEvent[] _statsScratch = new GameEvent[EventBuffer.Capacity];
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Lock _gate = new();
+    private readonly CookieJar _cookies = new();
+    private readonly byte[] _plain = new byte[Protocol.MaxPacketSize];
+    private readonly byte[] _sealed = new byte[Protocol.MaxPacketSize + 64];
+    private readonly byte[] _opened = new byte[2048];
+    private readonly ConcurrentQueue<string> _consoleQueue = new();
+    private readonly HashSet<string> _bans = new(StringComparer.Ordinal);
     private Thread? _thread;
     private volatile bool _running;
     private int _rotationIndex;
     private byte _generation;
-    private double _nextHeartbeat;
+    private double _nextHeartbeat, _nextStatsSave;
     private SocketAddress? _master;
+    private uint _statsCursor;
 
     public GameWorld World { get; private set; }
+    public StatsStore Stats { get; }
     public int Port => _transport.LocalPort;
     public int ClientCount => _clients.Count;
     public bool IsRunning => _running;
     public long BytesSent => _transport.BytesSent;
+    public bool PasswordProtected => !string.IsNullOrEmpty(_config.Password);
 
     public GameServer(ContentRegistry content, ServerConfig config)
     {
@@ -73,8 +118,12 @@ public sealed class GameServer : IDisposable
         _transport = new UdpTransport(config.Port, config.Bind, broadcast: false);
         World = new GameWorld(content, config.Match, (ulong)Environment.TickCount64);
         World.BalanceBots();
+        _statsCursor = World.Events.LastId;
         if (!string.IsNullOrWhiteSpace(config.MasterServer)) _master = ResolveMaster(config.MasterServer);
-        Log($"{GameInfo.Name} server v{GameInfo.Version} on UDP {Port} | arena {World.Arena.Id} | mode {config.Match.Mode} | bots {config.Match.BotCount}");
+        Stats = new StatsStore(config.DataDirectory is null ? null : Path.Combine(config.DataDirectory, "stats.json"));
+        LoadBans();
+        Log($"{GameInfo.Name} server v{GameInfo.Version} on UDP {Port} | arena {World.Arena.Id} | mode {config.Match.Mode} | bots {config.Match.BotCount}" +
+            (PasswordProtected ? " | password" : "") + " | encrypted");
     }
 
     private void Log(string msg) => _config.Log?.Invoke(msg);
@@ -109,15 +158,16 @@ public sealed class GameServer : IDisposable
         Loop();
     }
 
+    /// <summary>Queues a console command (thread-safe); it runs on the server thread before the next tick.</summary>
+    public void EnqueueCommand(string line) => _consoleQueue.Enqueue(line);
+
     public void Stop()
     {
         _running = false;
         _thread?.Join(2000);
-        // Tell everyone we are leaving.
-        var w = new NetWriter(_transport.SendBuffer);
-        Protocol.WriteHeader(ref w, PacketType.Disconnect);
-        w.Str("Server shutting down");
-        foreach (var c in _clients.Values) _transport.Send(w.Written, c.Address);
+        foreach (var c in _clients.Values.ToList()) SendDisconnect(c, RejectCode.Generic, "Server shutting down");
+        FlushPlayTime();
+        Stats.Save();
     }
 
     private void Loop()
@@ -128,7 +178,6 @@ public sealed class GameServer : IDisposable
             double now = Now;
             if (now < next)
             {
-                // Sleep while far from the next tick, then wait on the socket for precise wakeups.
                 double wait = next - now;
                 if (wait > 0.002) _transport.Poll((int)((wait - 0.001) * 1_000_000));
                 ReceiveAll();
@@ -136,16 +185,22 @@ public sealed class GameServer : IDisposable
             }
             lock (_gate) TickOnce();
             next += SimConstants.TickDelta;
-            if (Now - next > 0.25) next = Now; // hitch: don't spiral trying to catch up
+            if (Now - next > 0.25) next = Now;
         }
     }
 
     /// <summary>Processes network input and advances exactly one tick. Public for tests and tools.</summary>
     public void TickOnce()
     {
+        while (_consoleQueue.TryDequeue(out var line))
+        {
+            string output = Execute(line, null);
+            if (output.Length > 0) Log(output);
+        }
         ReceiveAll();
         ApplyQueuedInputs();
         World.Step();
+        TrackStats();
         if (World.Tick % SimConstants.SnapshotEveryTicks == 0) SendSnapshots();
         Housekeeping();
     }
@@ -158,24 +213,39 @@ public sealed class GameServer : IDisposable
         {
             int n = _transport.Receive(out var from);
             if (n <= 0) break;
-            var r = new NetReader(_transport.ReceiveBuffer.AsSpan(0, n));
+            var packet = _transport.ReceiveBuffer.AsSpan(0, n);
+            var r = new NetReader(packet);
             var type = Protocol.ReadHeader(ref r);
             if (type == 0) continue;
             _clients.TryGetValue(from, out var client);
             switch (type)
             {
                 case PacketType.Connect: HandleConnect(ref r, from, client); break;
-                case PacketType.Input when client is not null: HandleInput(ref r, client); break;
-                case PacketType.Disconnect when client is not null: Drop(client, "left the game"); break;
-                case PacketType.ChangeCharacter when client is not null:
-                {
-                    int ch = _content.CharacterIndexOf(r.Str());
-                    if (ch >= 0) World.SetCharacter(client.Slot, ch);
-                    break;
-                }
-                case PacketType.Chat when client is not null: HandleChat(ref r, client); break;
+                case PacketType.Secure when client is not null: HandleSecure(packet, client); break;
                 case PacketType.DiscoveryRequest: HandleDiscovery(ref r, from); break;
+                case PacketType.PunchNotify when _master is not null && from.Equals(_master): HandlePunchNotify(ref r); break;
             }
+        }
+    }
+
+    private void HandleSecure(ReadOnlySpan<byte> packet, Client c)
+    {
+        var aad = packet[..Protocol.HeaderSize];
+        if (!c.Channel.Open(packet[Protocol.HeaderSize..], aad, _opened, out int len) || len < 1) return;
+        c.LastHeard = Now;
+        var r = new NetReader(_opened.AsSpan(1, len - 1));
+        switch ((PacketType)_opened[0])
+        {
+            case PacketType.Input: HandleInput(ref r, c); break;
+            case PacketType.Disconnect: Drop(c, "left the game"); break;
+            case PacketType.ChangeCharacter:
+            {
+                int ch = _content.CharacterIndexOf(r.Str());
+                if (ch >= 0 && !c.IsSpectator) World.SetCharacter(c.Slot, ch);
+                break;
+            }
+            case PacketType.Chat: HandleChat(ref r, c); break;
+            case PacketType.LeaderboardRequest: SendLeaderboard(c); break;
         }
     }
 
@@ -185,41 +255,90 @@ public sealed class GameServer : IDisposable
         string characterId = r.Str();
         uint signature = r.U32();
         bool spectator = (r.U8() & 1) != 0;
-        if (r.Error) return;
+        string playerKey = r.Str();
+        int keyLen = r.U16();
+        Span<byte> clientKey = stackalloc byte[Math.Min(keyLen, 256)];
+        for (int i = 0; i < clientKey.Length; i++) clientKey[i] = r.U8();
+        int cookieLen = r.U8();
+        Span<byte> cookie = stackalloc byte[CookieJar.CookieSize];
+        bool hasCookie = cookieLen == CookieJar.CookieSize;
+        for (int i = 0; i < cookieLen; i++) { byte b = r.U8(); if (hasCookie) cookie[i] = b; }
+        int proofLen = r.U8();
+        Span<byte> proof = stackalloc byte[32];
+        for (int i = 0; i < proofLen; i++) { byte b = r.U8(); if (i < 32) proof[i] = b; }
+        if (r.Error || keyLen == 0 || keyLen > 256) return;
 
         if (existing is not null) { SendAccept(existing); return; } // duplicate connect (lost accept)
 
+        var ip = UdpTransport.ToEndPoint(from).Address.ToString();
+        if (_bans.Contains(ip)) { SendReject(from, RejectCode.Banned, "You are banned from this server."); return; }
+
+        // Step 1: stateless cookie challenge (blocks spoofed addresses; the reply is smaller than the request).
+        long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var addrBytes = from.Buffer.Span[..from.Size];
+        if (!hasCookie || !_cookies.Verify(addrBytes, cookie, nowUnix))
+        {
+            Span<byte> fresh = stackalloc byte[CookieJar.CookieSize];
+            _cookies.Issue(addrBytes, nowUnix, fresh);
+            var cw = new NetWriter(_transport.SendBuffer);
+            Protocol.WriteHeader(ref cw, PacketType.Challenge);
+            cw.U8(CookieJar.CookieSize);
+            foreach (byte b in fresh) cw.U8(b);
+            cw.Bool(PasswordProtected);
+            _transport.Send(cw.Written, from);
+            return;
+        }
+
+        // Step 2: password proof.
+        if (PasswordProtected)
+        {
+            var expected = CookieJar.PasswordProof(_config.Password!, cookie);
+            if (proofLen != 32 || !CryptographicOperations.FixedTimeEquals(expected, proof))
+            {
+                SendReject(from, RejectCode.Password, "Wrong or missing password.");
+                return;
+            }
+        }
+
         if (signature != _content.Signature)
         {
-            SendReject(from, $"Content mismatch: the server runs mods [{string.Join(", ", _content.LoadedMods)}]. Enable the same mods to join.");
+            SendReject(from, RejectCode.Content, $"Content mismatch: the server runs mods [{string.Join(", ", _content.LoadedMods)}]. Enable the same mods to join.");
             return;
         }
+
+        // Step 3: key exchange.
+        var keys = new KeyExchange();
+        var channel = keys.Derive(clientKey, cookie, isServer: true);
+        if (channel is null) { keys.Dispose(); return; }
+
+        bool loopback = IPAddress.IsLoopback(UdpTransport.ToEndPoint(from).Address);
+        Client c;
         if (spectator)
         {
-            if (_clients.Values.Count(c => c.IsSpectator) >= Protocol.MaxSpectators) { SendReject(from, "Spectator seats are full."); return; }
-            var sc = new Client { Address = Clone(from), Slot = -1, Name = string.IsNullOrWhiteSpace(name) ? "Penonton" : name.Trim(), LastHeard = Now, EventAck = World.Events.LastId };
-            _clients[sc.Address] = sc;
-            Log($"+ {sc.Name} is watching from {UdpTransport.ToEndPoint(from)}");
-            SendAccept(sc);
-            BroadcastPlayerInfo();
-            return;
+            if (_clients.Values.Count(x => x.IsSpectator) >= Protocol.MaxSpectators) { SendReject(from, RejectCode.Full, "Spectator seats are full."); keys.Dispose(); channel.Dispose(); return; }
+            c = new Client { Address = Clone(from), Channel = channel, Keys = keys, Slot = -1, Name = string.IsNullOrWhiteSpace(name) ? "Penonton" : name.Trim(), LastHeard = Now, EventAck = World.Events.LastId };
+            Log($"+ {c.Name} is watching from {ip}");
         }
-        int ch = Math.Max(0, _content.CharacterIndexOf(characterId));
-        uint eventAck = World.Events.LastId; // the new client also receives its own join/spawn events
-        // Make room by removing a bot if needed.
-        int slot = World.AddPlayer(name, ch, isBot: false);
-        if (slot < 0)
+        else
         {
-            for (int i = World.Players.Length - 1; i >= 0 && slot < 0; i--)
-                if (World.Players[i].Active && World.Players[i].IsBot) { World.RemovePlayer(i); slot = World.AddPlayer(name, ch, false); }
+            int ch = Math.Max(0, _content.CharacterIndexOf(characterId));
+            uint eventAck = World.Events.LastId;
+            int slot = World.AddPlayer(name, ch, isBot: false);
+            if (slot < 0)
+            {
+                for (int i = World.Players.Length - 1; i >= 0 && slot < 0; i--)
+                    if (World.Players[i].Active && World.Players[i].IsBot) { World.RemovePlayer(i); slot = World.AddPlayer(name, ch, false); }
+            }
+            if (slot < 0) { SendReject(from, RejectCode.Full, "Server is full."); keys.Dispose(); channel.Dispose(); return; }
+            c = new Client { Address = Clone(from), Channel = channel, Keys = keys, Slot = slot, Name = World.Players[slot].Name, LastHeard = Now, EventAck = eventAck };
+            _bySlot[slot] = c;
+            Log($"+ {c.Name} joined from {ip} (slot {slot})");
         }
-        if (slot < 0) { SendReject(from, "Server is full."); return; }
-
-        var c = new Client { Address = Clone(from), Slot = slot, Name = World.Players[slot].Name, LastHeard = Now, EventAck = eventAck };
+        c.PlayerKey = playerKey.Length is > 0 and <= 64 ? playerKey : "";
+        c.IsAdmin = loopback && _config.TrustLoopbackAdmin;
+        if (!c.IsSpectator) Stats.Touch(c.PlayerKey, c.Name);
         _clients[c.Address] = c;
-        _bySlot[slot] = c;
         World.BalanceBots();
-        Log($"+ {c.Name} joined from {UdpTransport.ToEndPoint(from)} (slot {slot})");
         SendAccept(c);
         BroadcastPlayerInfo();
     }
@@ -243,29 +362,58 @@ public sealed class GameServer : IDisposable
         w.U32(_content.Signature);
         w.Str(World.Settings.ServerName);
         w.U32(World.Tick);
+        w.Bool(c.IsAdmin);
+        w.U16((ushort)c.Keys.PublicKey.Length);
+        foreach (byte b in c.Keys.PublicKey) w.U8(b);
         _transport.Send(w.Written, c.Address);
     }
 
-    private void SendReject(SocketAddress to, string reason)
+    private void SendReject(SocketAddress to, RejectCode code, string reason)
     {
         var w = new NetWriter(_transport.SendBuffer);
         Protocol.WriteHeader(ref w, PacketType.Reject);
+        w.U8((byte)code);
         w.Str(reason);
         _transport.Send(w.Written, to);
     }
 
+    /// <summary>Encrypts the inner packet written in <see cref="_plain"/> (type byte + body) and sends it.</summary>
+    private void SendSecure(Client c, ReadOnlySpan<byte> inner)
+    {
+        Span<byte> header = stackalloc byte[Protocol.HeaderSize];
+        header[0] = Protocol.Magic0; header[1] = Protocol.Magic1; header[2] = Protocol.Version; header[3] = (byte)PacketType.Secure;
+        header.CopyTo(_sealed);
+        int n = c.Channel.Seal(inner, header, _sealed.AsSpan(Protocol.HeaderSize));
+        _transport.Send(_sealed.AsSpan(0, Protocol.HeaderSize + n), c.Address);
+    }
+
+    private NetWriter Inner(PacketType type)
+    {
+        var w = new NetWriter(_plain);
+        w.U8((byte)type);
+        return w;
+    }
+
+    private void SendDisconnect(Client c, RejectCode code, string reason)
+    {
+        var w = Inner(PacketType.Disconnect);
+        w.U8((byte)code);
+        w.Str(reason);
+        for (int i = 0; i < 2; i++) SendSecure(c, w.Written);
+    }
+
     private void HandleInput(ref NetReader r, Client c)
     {
-        c.LastHeard = Now;
         c.EchoTime = r.U32();
         uint ack = r.U32();
         if (ack > c.EventAck && ack <= World.Events.LastId) c.EventAck = ack;
+        uint snapAck = r.U32();
+        if (snapAck > c.SnapshotAck && snapAck <= World.Tick) c.SnapshotAck = snapAck;
         c.RttMs = r.U16();
         int count = Math.Min((int)r.U8(), Protocol.InputRedundancy);
         Span<PlayerInput> inputs = stackalloc PlayerInput[Protocol.InputRedundancy];
         for (int i = 0; i < count; i++) inputs[i] = Protocol.ReadInput(ref r);
         if (r.Error) return;
-        // Inputs arrive newest-first; enqueue the unseen ones oldest-first.
         for (int i = count - 1; i >= 0; i--)
         {
             if (inputs[i].Sequence <= c.LastQueuedSeq) continue;
@@ -281,7 +429,6 @@ public sealed class GameServer : IDisposable
         foreach (var c in _clients.Values)
         {
             if (c.IsSpectator) { c.QCount = 0; continue; }
-            // Drain a backlog quickly so latency doesn't accumulate.
             while (c.QCount > 4) { c.QHead = (c.QHead + 1) % c.Queue.Length; c.QCount--; }
             if (c.QCount > 0)
             {
@@ -300,12 +447,22 @@ public sealed class GameServer : IDisposable
         string text = r.Str().Trim();
         if (text.Length == 0) return;
         if (text.Length > 120) text = text[..120];
+        if (text[0] == '!') { HandleChatCommand(c, text[1..]); return; }
         Log($"<{c.Name}> {text}");
-        var w = new NetWriter(_transport.SendBuffer);
-        Protocol.WriteHeader(ref w, PacketType.Chat);
+        var w = Inner(PacketType.Chat);
         w.U8(c.IsSpectator ? Protocol.SpectatorSlot : (byte)c.Slot);
         w.Str(c.IsSpectator ? "[" + c.Name + "] " + text : text);
-        foreach (var other in _clients.Values) _transport.Send(w.Written, other.Address);
+        foreach (var other in _clients.Values) SendSecure(other, w.Written);
+    }
+
+    /// <summary>Sends a chat line from the server to one client, or everyone when <paramref name="to"/> is null.</summary>
+    private void ServerSay(string text, Client? to = null)
+    {
+        var w = Inner(PacketType.Chat);
+        w.U8(Protocol.ServerSender);
+        w.Str(text.Length > 200 ? text[..200] : text);
+        if (to is not null) SendSecure(to, w.Written);
+        else foreach (var c in _clients.Values) SendSecure(c, w.Written);
     }
 
     private void HandleDiscovery(ref NetReader r, SocketAddress from)
@@ -322,7 +479,21 @@ public sealed class GameServer : IDisposable
         w.U8((byte)World.Settings.MaxPlayers);
         w.U32(_content.Signature);
         w.U16((ushort)Port);
+        w.Bool(PasswordProtected);
         _transport.Send(w.Written, from);
+    }
+
+    /// <summary>The master tells us a client wants to join through NAT: send a few packets to open our mapping.</summary>
+    private void HandlePunchNotify(ref NetReader r)
+    {
+        uint ip = r.U32();
+        int port = r.U16();
+        if (r.Error) return;
+        var target = new IPEndPoint(new IPAddress(ip), port);
+        var w = new NetWriter(_transport.SendBuffer);
+        Protocol.WriteHeader(ref w, PacketType.Punch);
+        for (int i = 0; i < 3; i++) _transport.Send(w.Written, target);
+        Log($"~ punch-through towards {target}");
     }
 
     private void Drop(Client c, string reason)
@@ -332,7 +503,11 @@ public sealed class GameServer : IDisposable
         {
             _bySlot[c.Slot] = null;
             World.RemovePlayer(c.Slot);
+            Stats.Update(c.PlayerKey, s => s.PlaySeconds += c.PlayAccum);
+            c.PlayAccum = 0;
         }
+        c.Channel.Dispose();
+        c.Keys.Dispose();
         World.BalanceBots();
         Log($"- {c.Name} {reason}");
         BroadcastPlayerInfo();
@@ -348,9 +523,15 @@ public sealed class GameServer : IDisposable
     private void SendSnapshot(Client c)
     {
         var world = World;
-        var w = new NetWriter(_transport.SendBuffer);
-        Protocol.WriteHeader(ref w, PacketType.Snapshot);
+        var w = Inner(PacketType.Snapshot);
         w.U32(world.Tick);
+
+        // Delta baseline: the newest snapshot this client confirmed, if we still remember it.
+        SentFrame? baseline = null;
+        if (c.SnapshotAck != 0 && world.Tick - c.SnapshotAck < 60)
+            foreach (var f in c.Frames) if (f.Tick == c.SnapshotAck) { baseline = f; break; }
+        w.U32(baseline?.Tick ?? 0);
+
         w.U32(c.AppliedSeq);
         w.U32(c.EchoTime);
         w.U8((byte)world.Phase);
@@ -371,19 +552,28 @@ public sealed class GameServer : IDisposable
             w.Pos(f.Position);
         }
 
-        // Players (always all of them).
+        // Players: every active player, each as a field delta against the baseline.
+        var frame = c.Frames[c.FrameHead];
+        c.FrameHead = (c.FrameHead + 1) % c.Frames.Length;
+        frame.Tick = world.Tick;
+        frame.Count = 0;
         int countPos = w.Position; w.U8(0);
         byte count = 0;
         for (int i = 0; i < world.Players.Length; i++)
         {
             ref readonly var p = ref world.Players[i];
             if (!p.Active) continue;
-            ToNet(world, i, p).Write(ref w);
+            var q = ToNet(world, i, p).Quantized();
+            bool has = false;
+            NetPlayer b = default;
+            if (baseline is not null)
+                for (int k = 0; k < baseline.Count; k++) if (baseline.Players[k].Id == q.Id) { b = baseline.Players[k]; has = true; break; }
+            q.WriteDelta(ref w, b, has);
+            frame.Players[frame.Count++] = q;
             count++;
         }
         w.PatchU8(countPos, count);
 
-        // Local inventory (empty for spectators).
         ref readonly var me = ref world.Players[c.IsSpectator ? 0 : c.Slot];
         w.U16(c.IsSpectator ? (ushort)0 : me.OwnedWeapons);
         w.U8(c.IsSpectator ? (byte)0 : (byte)_content.Weapons.Count);
@@ -394,7 +584,6 @@ public sealed class GameServer : IDisposable
         for (int k = 0; k < world.Pickups.Length; k++) if (world.Pickups[k].Available) mask |= 1UL << k;
         w.U64(mask);
 
-        // Events: oldest unacked first, as many as fit (keep room for projectiles/props).
         int evN = world.Events.ReadSince(c.EventAck, _eventScratch);
         countPos = w.Position; w.U8(0); count = 0;
         for (int k = 0; k < evN && w.Remaining > Protocol.EventSize + 200; k++)
@@ -404,7 +593,6 @@ public sealed class GameServer : IDisposable
         }
         w.PatchU8(countPos, count);
 
-        // Projectiles: nearest to the player get priority when the packet is full.
         countPos = w.Position; w.U8(0); count = 0;
         var eye = c.IsSpectator ? world.Arena.ZoneCenterV : me.Move.Position;
         for (int pass = 0; pass < 2; pass++)
@@ -421,7 +609,6 @@ public sealed class GameServer : IDisposable
         }
         w.PatchU8(countPos, count);
 
-        // Props: moving ones first, then a rotating slice of resting ones.
         countPos = w.Position; w.U8(0); count = 0;
         int nProps = world.Props.Length;
         for (int k = 0; k < nProps && w.Remaining > NetProp.Size; k++)
@@ -439,8 +626,12 @@ public sealed class GameServer : IDisposable
         }
         w.PatchU8(countPos, count);
 
-        if (!w.Overflow) _transport.Send(w.Written, c.Address);
+        if (!w.Overflow) SendSecure(c, w.Written);
+        LastSnapshotBytes = w.Position + Protocol.HeaderSize + SecureChannel.Overhead;
     }
+
+    /// <summary>Size of the last snapshot datagram (diagnostics and tests).</summary>
+    public int LastSnapshotBytes { get; private set; }
 
     private static void WriteProp(ref NetWriter w, int index, in Prop pr)
     {
@@ -479,8 +670,7 @@ public sealed class GameServer : IDisposable
 
     private void BroadcastPlayerInfo()
     {
-        var w = new NetWriter(_transport.SendBuffer);
-        Protocol.WriteHeader(ref w, PacketType.PlayerInfo);
+        var w = Inner(PacketType.PlayerInfo);
         int countPos = w.Position; w.U8(0);
         byte count = 0;
         for (int i = 0; i < World.Players.Length; i++)
@@ -491,7 +681,7 @@ public sealed class GameServer : IDisposable
             count++;
         }
         w.PatchU8(countPos, count);
-        foreach (var c in _clients.Values) { _transport.Send(w.Written, c.Address); c.LastInfo = Now; }
+        foreach (var c in _clients.Values) SendSecure(c, w.Written);
     }
 
     // ------------------------------------------------------------------ housekeeping
@@ -507,9 +697,10 @@ public sealed class GameServer : IDisposable
         {
             World.BalanceBots();
             BroadcastPlayerInfo();
+            UpdateVote();
         }
 
-        if (World.Phase == MatchPhase.Ended && World.PhaseTimer <= 0) NextMatch();
+        if (World.Phase == MatchPhase.Ended && World.PhaseTimer <= 0) ChangeMatch(null);
 
         if (_master is not null && now >= _nextHeartbeat)
         {
@@ -519,19 +710,30 @@ public sealed class GameServer : IDisposable
             w.U16((ushort)Port);
             _transport.Send(w.Written, _master);
         }
+
+        if (now >= _nextStatsSave)
+        {
+            _nextStatsSave = now + 60;
+            FlushPlayTime();
+            Stats.Save();
+        }
     }
 
-    private void NextMatch()
+    /// <summary>Starts the next match: the given settings (admin/vote), the rotation, or a restart.</summary>
+    private void ChangeMatch(MatchSettings? forced)
     {
-        var settings = World.Settings;
-        if (_config.ArenaRotation.Count > 0)
+        var settings = forced ?? World.Settings;
+        if (forced is null && _config.ArenaRotation.Count > 0)
         {
             _rotationIndex = (_rotationIndex + 1) % _config.ArenaRotation.Count;
             settings = settings with { ArenaId = _config.ArenaRotation[_rotationIndex] };
         }
-        if (settings.ArenaId == World.Arena.Id)
+        FlushPlayTime();
+        Stats.Save();
+        if (forced is null && settings.ArenaId == World.Arena.Id)
         {
             World.RestartMatch();
+            _statsCursor = World.Events.LastId;
             Log("Match restarted.");
             return;
         }
@@ -539,14 +741,17 @@ public sealed class GameServer : IDisposable
         foreach (var c in _clients.Values)
         {
             c.EventAck = 0;
+            c.SnapshotAck = 0;
+            foreach (var f in c.Frames) f.Tick = 0;
             if (c.IsSpectator) continue;
             ref readonly var old = ref World.Players[c.Slot];
             next.AddPlayer(old.Name, old.CharacterIndex, false, c.Slot);
         }
         World = next;
         World.BalanceBots();
+        _statsCursor = World.Events.LastId;
         _generation++;
-        Log($"Next match on {World.Arena.Id}.");
+        Log($"Next match on {World.Arena.Id} ({World.Settings.Mode}).");
         foreach (var c in _clients.Values) SendAccept(c);
         BroadcastPlayerInfo();
     }
@@ -557,6 +762,7 @@ public sealed class GameServer : IDisposable
     public void Dispose()
     {
         if (_running) Stop();
+        foreach (var c in _clients.Values) { c.Channel.Dispose(); c.Keys.Dispose(); }
         _transport.Dispose();
     }
 }

@@ -41,6 +41,11 @@ dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" -
 | `--master host:port` | — | Daftarkan ke master server tiap 20 detik |
 | `--mods dir` / `--no-mods` | ./mods | Folder mod, atau hanya konten bawaan |
 | `--config file.json` | — | Muat pengaturan pertandingan dari JSON |
+| `--password <teks>` | — | Pemain harus memasukkan password ini untuk gabung |
+| `--rcon <teks>` | — | Password admin untuk `!login` di chat |
+| `--data <dir>` | ./data | Tempat `stats.json` (statistik karier) dan `bans.txt` disimpan |
+| `--no-votes` | voting aktif | Matikan `!vote` |
+| `--max` | 16 | Pemain maksimal, **sampai 32** |
 
 Contoh file `--config`:
 
@@ -92,3 +97,40 @@ Server dan setiap klien harus memuat konten yang sama. Saat menyambung, klien me
 ## Netcode dalam satu paragraf
 
 Server mensimulasikan pada **60 Hz** dan mengirim snapshot ke setiap klien pada **30 Hz**. Klien mengirim input setiap tick (4 input terakhir sekaligus, jadi paket hilang tidak berpengaruh), **memprediksi** gerakannya sendiri dengan kode gerak yang persis sama, lalu **merekonsiliasi** saat snapshot datang dengan memutar ulang input yang belum dikonfirmasi. Pemain lain **diinterpolasi** 100 ms di belakang. Senjata hitscan memakai **kompensasi lag**: server memundurkan posisi pemain lain sebesar latensi penembak + jeda interpolasi. Event (tembakan, kill, item) ikut di dalam snapshot dengan konfirmasi, jadi tidak pernah hilang. Detail: [arsitektur.md](arsitektur.md#jaringan).
+
+## Keamanan
+
+Setiap koneksi diawali **tantangan cookie tanpa state**: server membalas `Connect` pertama dengan cookie `Challenge` kecil (HMAC dari alamat klien dan waktu, berlaku 10 detik) dan baru membuat state setelah klien mengirimnya kembali. Alamat palsu tidak pernah dapat slot, dan balasannya lebih kecil dari permintaan sehingga server tidak bisa dipakai untuk serangan amplifikasi.
+
+Kalau server berpassword, klien membuktikan bahwa ia tahu passwordnya dengan `HMAC-SHA256(SHA256(password), cookie)`; passwordnya sendiri tidak pernah dikirim lewat jaringan.
+
+Lalu kedua pihak melakukan pertukaran kunci **ECDH (P-256)** dan menurunkan dua kunci **AES-256-GCM** dengan HKDF (garamnya cookie). Semua setelah `Accept` — input, snapshot, chat, perintah admin — terenkripsi dan terautentikasi, dengan jendela anti-replay 64 paket. Lalu lintas pencarian server dan master server tetap terbuka (memang informasi publik).
+
+> Pertukaran kunci tidak diautentikasi dengan sertifikat, jadi melindungi dari penyadapan dan perubahan oleh penyerang pasif, bukan dari man-in-the-middle aktif yang menguasai jalur ke server.
+
+## Konsol admin, rcon, dan voting
+
+Dedicated server membaca perintah dari konsolnya. Admin bisa menjalankan perintah yang sama di chat dengan awalan `!`: pemain dari komputer yang sama (listen server) otomatis admin, yang lain mengetik `!login <password rcon>`.
+
+| Perintah | Efek |
+|---|---|
+| `status` | Server, arena, mode, dan pemain beserta ping |
+| `kick <id\|nama> [alasan]` | Keluarkan pemain |
+| `ban <id\|nama\|ip> [alasan]` / `unban <ip>` / `bans` | Daftar blokir, disimpan di `data/bans.txt` |
+| `map <arena> [mode]` | Ganti arena (dan mode) sekarang |
+| `mode <ffa\|tdm\|koth\|ctf\|race>` | Ganti mode sekarang |
+| `bots <n>` / `skill <0-1>` | Jumlah dan kehebatan bot tanpa restart |
+| `restart` | Ulang pertandingan |
+| `say <teks>` | Pesan server ke semua orang |
+| `password <teks\|off>` | Ganti password masuk |
+| `top [n]` | Papan peringkat karier |
+
+Pemain bisa voting: `!vote map <arena>`, `!vote mode <mode>`, `!vote restart`. Semua orang melihat spanduk kuning dan menjawab dengan **F1 (setuju) / F2 (tolak)** atau `!yes` / `!no`; lolos kalau mayoritas pemain manusia setuju dalam 30 detik.
+
+## NAT punch-through
+
+Server yang terdaftar di master server bisa dimasuki dari balik router rumahan. Saat kamu gabung dari daftar **Online**, game meminta master memperkenalkanmu; master memberi tahu server, lalu server mengirim beberapa paket ke alamat publikmu untuk membuka pemetaan router-nya sementara klienmu terus mengetuk. Cara ini berhasil di kebanyakan router rumahan (cone NAT); NAT simetris tetap butuh port forwarding.
+
+## Statistik karier
+
+Server menyimpan statistik per pemain (kill, mati, menang, jumlah main, gorengan yang dicetak, hadiah Panjat Pinang, ngamuk terbaik, waktu main) di `data/stats.json`, dengan kunci pemain acak yang dibuat tiap instalasi game — tanpa akun. Buka **Jeda → Peringkat server** di tengah pertandingan; **Papan peringkat** di menu utama menampilkan latihan dan server buatanmu di komputer ini.

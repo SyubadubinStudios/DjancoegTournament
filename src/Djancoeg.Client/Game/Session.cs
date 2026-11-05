@@ -35,18 +35,22 @@ public sealed class Session : IDisposable
     private byte _slotPress;
     private InputButtons _latched;
 
-    private Session(SessionKind kind, ContentRegistry content, GameServer? server, IPEndPoint ep, ClientSettings settings, bool spectator = false)
+    private Session(SessionKind kind, ContentRegistry content, GameServer? server, IPEndPoint ep, ClientSettings settings, bool spectator = false, string? password = null, IPEndPoint? viaMaster = null)
     {
         Kind = kind;
         Content = content;
         Server = server;
         Endpoint = ep.ToString();
         Client = new GameClient(content);
-        Client.Connect(ep, settings.PlayerName, settings.CharacterId, spectator);
+        Client.Connect(new ConnectOptions
+        {
+            Server = ep, Name = settings.PlayerName, CharacterId = settings.CharacterId, Spectator = spectator,
+            Password = password, PlayerKey = settings.PlayerKey, ViaMaster = viaMaster,
+        });
         ThirdPerson = settings.ThirdPerson;
     }
 
-    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master, bool spectator = false)
+    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master, bool spectator = false, bool persistStats = true)
     {
         var config = new ServerConfig
         {
@@ -54,15 +58,18 @@ public sealed class Session : IDisposable
             Port = host ? settings.HostPort : 0,
             Bind = host ? IPAddress.Any : IPAddress.Loopback,
             MasterServer = host ? master : null,
+            Password = host && settings.HostPassword.Length > 0 ? settings.HostPassword : null,
+            DataDirectory = persistStats ? ClientSettings.ServerDataFolder : null,
             ArenaRotation = host ? [.. content.Arenas.Select(a => a.Id)] : [],
         };
         var server = new GameServer(content, config);
         server.Start();
-        return new Session(host ? SessionKind.Host : SessionKind.Practice, content, server, new IPEndPoint(IPAddress.Loopback, server.Port), settings, spectator);
+        return new Session(host ? SessionKind.Host : SessionKind.Practice, content, server, new IPEndPoint(IPAddress.Loopback, server.Port), settings, spectator,
+            host && settings.HostPassword.Length > 0 ? settings.HostPassword : null);
     }
 
-    public static Session Join(ContentRegistry content, ClientSettings settings, IPEndPoint ep, bool spectator = false) =>
-        new(SessionKind.Join, content, null, ep, settings, spectator);
+    public static Session Join(ContentRegistry content, ClientSettings settings, IPEndPoint ep, bool spectator = false, string? password = null, IPEndPoint? viaMaster = null) =>
+        new(SessionKind.Join, content, null, ep, settings, spectator, password, viaMaster);
 
     /// <summary>Per-frame update: network receive, mouse/stick look, fixed-rate input sending.</summary>
     public void Update(float dt, ClientSettings settings, bool inputEnabled)

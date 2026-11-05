@@ -40,6 +40,14 @@ public sealed class ClientSettings
 
     public bool SpectatePractice { get; set; }
 
+    // Online.
+    /// <summary>Random key that lets servers keep your career stats without an account.</summary>
+    public string PlayerKey { get; set; } = "";
+    public string WorkshopUrl { get; set; } = "http://127.0.0.1:27951";
+    public string HostPassword { get; set; } = "";
+
+    [JsonIgnore] public static string ServerDataFolder => Path.Combine(Folder, "server-data");
+
     // Last practice / host setup.
     public string ArenaId { get; set; } = "pasar-malam";
     public int Mode { get; set; }

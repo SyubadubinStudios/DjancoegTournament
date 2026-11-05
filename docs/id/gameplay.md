@@ -16,7 +16,8 @@
 | T | Ejek (balon kata) |
 | Tab | Papan skor |
 | Y | Chat |
-| Esc | Menu jeda (ganti jagoan, kamera, pengaturan, keluar) |
+| Esc | Menu jeda (ganti jagoan, kamera, peringkat server, pengaturan, keluar) |
+| F1 / F2 | Setuju / tolak saat ada voting |
 
 Semua aksi kecuali tombol angka senjata bisa **diatur ulang** di *Pengaturan → Atur tombol* (klik aksi, lalu tekan tombol keyboard atau mouse yang baru). Tombol panah, C (jongkok), klik kanan (jurus), dan scroll mouse selalu berfungsi sebagai cadangan.
 

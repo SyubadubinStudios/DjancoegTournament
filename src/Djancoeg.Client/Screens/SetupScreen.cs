@@ -16,6 +16,7 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
     private string _serverName = app.Settings.ServerName;
     private string _port = app.Settings.HostPort.ToString(CultureInfo.InvariantCulture);
     private bool _public;
+    private string _password = app.Settings.HostPassword;
 
     public override void Update(float dt)
     {
@@ -87,6 +88,8 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
             if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("setup.port"), ref _port, 5) && int.TryParse(_port, Inv, out int p) && p is > 1024 and < 65536) st.HostPort = p;
             y += rh;
             Gui.Toggle(new Rectangle(x, y, w, rh), S.T("setup.public"), ref _public);
+            y += rh;
+            if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("setup.password"), ref _password, 32)) st.HostPassword = _password;
             y += rh;
         }
 

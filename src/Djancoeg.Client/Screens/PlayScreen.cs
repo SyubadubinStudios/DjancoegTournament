@@ -12,6 +12,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     private readonly GameView _view = new(app, session);
     private float _age;
     private bool _suspended; // true while Fighters/Settings are shown on top of the match
+    private bool _showBoard;
 
     public bool ShowScoreboardForShot { get; init; }
     public override bool ReadyForScreenshot =>
@@ -42,7 +43,14 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
         _age += dt;
         if (session.Client.State is ClientState.Rejected or ClientState.TimedOut && _age > 0.5f)
         {
-            App.Go(new MessageScreen(App, session.Client.RejectReason, new MainMenuScreen(App)));
+            string msg = session.Client.RejectCode switch
+            {
+                Net.RejectCode.Password => S.T("reject.password"),
+                Net.RejectCode.Banned => S.T("reject.banned"),
+                Net.RejectCode.Kicked => S.T("reject.kicked").Replace("{0}", session.Client.RejectReason),
+                _ => session.Client.RejectReason,
+            };
+            App.Go(new MessageScreen(App, msg, session.Kind == SessionKind.Join ? new BrowserScreen(App) : new MainMenuScreen(App)));
             return;
         }
         if (!_view.Chatting && Controls.PausePressed)
@@ -71,8 +79,8 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
         float u = U;
         DrawRectangle(0, 0, sw, sh, Theme.Fade(Theme.TarpDeep, 0.78f));
         Theme.SignText(S.Lang == Core.Localization.Language.Indonesian ? "ISTIRAHAT DULU" : "TAKE A BREATHER", new System.Numerics.Vector2(96 * u, 120 * u), 64 * u, Theme.Kuning, doubleShadow: true);
-        string[] items = ["pause.resume", "pause.fighter", "pause.camera", "menu.settings", "pause.leave"];
-        float[] tilts = [-2f, 2f, -1.5f, 2f, -2.5f];
+        string[] items = ["pause.resume", "pause.fighter", "pause.camera", "pause.leaderboard", "menu.settings", "pause.leave"];
+        float[] tilts = [-2f, 2f, -1.5f, 1.5f, 2f, -2.5f];
         float y = 280 * u;
         for (int i = 0; i < items.Length; i++)
         {
@@ -84,11 +92,19 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
                     case 0: _view.Paused = false; DisableCursor(); break;
                     case 1: Suspend(new FightersScreen(App, this, id => session.Client.ChangeCharacter(id))); break;
                     case 2: session.ThirdPerson = !session.ThirdPerson; break;
-                    case 3: Suspend(new SettingsScreen(App, this)); break;
-                    case 4: App.Go(new MainMenuScreen(App)); break;
+                    case 3: _showBoard = !_showBoard; if (_showBoard) session.Client.RequestLeaderboard(); break;
+                    case 4: Suspend(new SettingsScreen(App, this)); break;
+                    case 5: App.Go(new MainMenuScreen(App)); break;
                 }
             }
             y += 70 * u;
+        }
+        if (_showBoard)
+        {
+            var board = new Rectangle(sw - 760 * u, 200 * u, 690 * u, sh - 300 * u);
+            LeaderboardScreen.DrawTable(board, S.T("lb.server"), session.Client.Leaderboard.Select(e => (e.Rank, e.Name, e.Kills, e.Deaths, e.Wins, e.Matches, e.Captures, e.BestStreak, e.Minutes, e.IsYou)).ToList(),
+                session.Client.LeaderboardVersion == 0 ? S.T("lb.loading") : S.T("lb.empty"), u);
+            return;
         }
         var r = new Rectangle(sw - 640 * u, 280 * u, 560 * u, 230 * u);
         Gui.Panel(r, Theme.Kapur);

@@ -19,7 +19,8 @@
 |---|---|
 | **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*), Snack Snatch capture-the-flag (*Rebutan Gorengan*), Greased Pole Race (*Panjat Pinang*) |
 | **Views** | First person and third person — press **V** at any time |
-| **Multiplayer** | Practice vs bots, LAN (auto-discovery), online via a master server, direct IP, dedicated server |
+| **Multiplayer** | Practice vs bots, LAN (auto-discovery), online via a master server with NAT punch-through, direct IP, dedicated server, up to 32 players |
+| **Online services** | Encrypted connections (ECDH + AES-GCM), server passwords, admin console & rcon, kick/ban, map/mode votes, career stats & leaderboards, online Workshop |
 | **Cross platform** | Windows, Linux, macOS (x64 / Apple Silicon) — .NET 10 + raylib |
 | **Fighters** | 17 built-in: legends, professions, ghosts, animals and memes, each with a signature ability |
 | **Arenas** | Night Market, Bus Terminal, Rice Fields & Watch Post, Kampung Rooftops, Harbour, Old Train Station, Village Office |
@@ -89,7 +90,8 @@ tools/blender          Reproducible character sculpt + rig + animation script
 |---|---|
 | **Mode** | Tawuran Bebas, Perang Kampung (tim), Raja Warung (kuasai zona), Rebutan Gorengan (capture the flag), Panjat Pinang (balapan ke puncak) |
 | **Kamera** | Orang pertama dan orang ketiga — tekan **V** kapan saja |
-| **Multiplayer** | Latihan lawan bot, LAN (server terdeteksi otomatis), online lewat master server, IP langsung, dedicated server |
+| **Multiplayer** | Latihan lawan bot, LAN (terdeteksi otomatis), online lewat master server dengan NAT punch-through, IP langsung, dedicated server, sampai 32 pemain |
+| **Layanan online** | Koneksi terenkripsi (ECDH + AES-GCM), password server, konsol admin & rcon, kick/ban, voting arena/mode, statistik karier & papan peringkat, Workshop online |
 | **Lintas platform** | Windows, Linux, macOS (x64 / Apple Silicon) — .NET 10 + raylib |
 | **Jagoan** | 17 bawaan: legenda, profesi, hantu, hewan, dan meme, masing-masing punya jurus |
 | **Arena** | Pasar Malam Ceria, Terminal Antar Kota, Sawah & Pos Ronda, Atap Kampung, Pelabuhan, Stasiun Kereta Tua, Kantor Kelurahan |

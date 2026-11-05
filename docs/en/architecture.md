@@ -38,15 +38,20 @@ Single UDP socket per endpoint (`UdpTransport`) using the allocation-free `Socke
 
 | Packet | Direction | Contents |
 |---|---|---|
-| Connect / Accept / Reject | C→S / S→C | name, fighter, content signature, spectator flag / slot (255 = spectator), arena, mode, limits |
+| Connect / Challenge | C→S / S→C | name, fighter, content signature, spectator flag, player key, ECDH public key, cookie, password proof / connect cookie + password-required flag |
+| Accept / Reject | S→C | slot (255 = spectator), arena, mode, limits, admin flag, server ECDH key / reject code + reason |
+| Secure | both | AES-256-GCM sealed inner packet (counter, ciphertext, tag); everything below travels inside it |
 | Input | C→S, 60 Hz | echo time, event ack, RTT, the last 4 inputs (16 bytes each) |
-| Snapshot | S→C, 30 Hz | tick, input ack, match state, gorengan flags, all players, own inventory, pickup bitmask, events, projectiles, props |
+| Snapshot | S→C, 30 Hz | tick, delta baseline tick, input ack, match state, gorengan flags, all players (field deltas), own inventory, pickup bitmask, events, projectiles, props |
 | PlayerInfo | S→C, 1 Hz + on change | names and bot flags |
-| Chat, ChangeCharacter, Disconnect | both | |
+| Chat, ChangeCharacter, Disconnect, LeaderboardRequest/Response, VoteStatus | both | |
+| PunchRequest / PunchNotify / Punch | client→master→server→client | NAT punch-through |
 | DiscoveryRequest/Response | browser↔server | LAN broadcast / unicast ping |
 | MasterHeartbeat / Query / List | server/browser↔master | online list |
 
-Snapshots are budgeted to **1200 bytes** (below typical MTU): players always fit; then events (oldest unacknowledged first), projectiles (nearest first), moving props and a rotating slice of resting props. Positions are quantized to 1/64 m, angles to 16 bits.
+**Delta compression** — each player is written as an id, an 8-bit field mask and only the fields that changed since the snapshot the client last acknowledged (the client echoes the newest decoded tick in every input; the server keeps the last 32 sent frames per client). Values are compared after quantization, so client and server baselines stay bit-identical. 32 players fit in one datagram even in a full snapshot.
+
+Snapshots are budgeted to **1400 bytes** (below typical MTU): players always fit; then events (oldest unacknowledged first), projectiles (nearest first), moving props and a rotating slice of resting props. Positions are quantized to 1/64 m, angles to 16 bits.
 
 **Client prediction & reconciliation** — `GameClient.SendInput` stores each input in a 256-entry ring and steps `PlayerMovement` locally. When a snapshot arrives, the client resets to the server state at the acknowledged input and replays the rest; any visual error is smoothed out over ~100 ms.
 

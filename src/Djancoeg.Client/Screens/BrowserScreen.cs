@@ -18,6 +18,7 @@ public sealed class BrowserScreen(App app) : Screen(app)
     private string _direct = app.Settings.LastDirectConnect;
     private int _selected = -1;
     private float _refreshTimer;
+    private string _password = "";
 
     public override void Enter()
     {
@@ -44,10 +45,10 @@ public sealed class BrowserScreen(App app) : Screen(app)
         if (Gui.Back && Gui.TextFocus < 0) App.Go(new MainMenuScreen(App));
     }
 
-    private void Join(IPEndPoint ep, bool spectate = false)
+    private void Join(IPEndPoint ep, bool spectate = false, IPEndPoint? viaMaster = null)
     {
         App.Settings.Save();
-        App.Go(new PlayScreen(App, Session.Join(App.Content, App.Settings, ep, spectate)));
+        App.Go(new PlayScreen(App, Session.Join(App.Content, App.Settings, ep, spectate, _password.Length > 0 ? _password : null, viaMaster)));
     }
 
     public override void Draw()
@@ -64,7 +65,7 @@ public sealed class BrowserScreen(App app) : Screen(app)
         if (_online) Theme.Text(Theme.Mono, S.T("browser.master") + ": " + App.Settings.MasterServer, new Vector2(x + 576 * u, y + 14 * u), 16 * u, Theme.Kapur);
 
         // List.
-        var list = new Rectangle(x, y + 72 * u, sw - 2 * x, sh - 470 * u);
+        var list = new Rectangle(x, y + 72 * u, sw - 2 * x, sh - 500 * u);
         DrawRectangleRec(list, Theme.Fade(Theme.Aspal, 0.45f));
         float cx0 = list.X + 20 * u, cx1 = list.X + list.Width * 0.42f, cx2 = list.X + list.Width * 0.62f, cx3 = list.X + list.Width * 0.82f, cx4 = list.X + list.Width - 20 * u;
         float hy = list.Y + 12 * u;
@@ -84,12 +85,13 @@ public sealed class BrowserScreen(App app) : Screen(app)
             bool sel = i == _selected;
             if (Gui.Row(row, sel, out _))
             {
-                if (sel) Join(sv.EndPoint);
+                if (sel) Join(sv.EndPoint, false, sv.ViaMaster);
                 _selected = i;
             }
             var col = sel ? Theme.Aspal : Theme.Kapur;
             bool mismatch = sv.ContentSignature != App.Content.Signature;
-            Theme.Text(Theme.BodyBold, sv.Name + (mismatch ? $"  ({S.T("browser.mismatch")})" : ""), new Vector2(cx0, ry + 10 * u), 20 * u, mismatch ? Theme.Cabe : col);
+            string tags = (sv.PasswordProtected ? $"  [{S.T("browser.locked")}]" : "") + (mismatch ? $"  ({S.T("browser.mismatch")})" : "");
+            Theme.Text(Theme.BodyBold, sv.Name + tags, new Vector2(cx0, ry + 10 * u), 20 * u, mismatch ? Theme.Cabe : col);
             int ai = App.Content.ArenaIndexOf(sv.ArenaId);
             Theme.Text(Theme.Body, ai >= 0 ? S.T(App.Content.Arenas[ai].Name) : sv.ArenaId, new Vector2(cx1, ry + 10 * u), 19 * u, col);
             var (en, id) = ModeNames.Of((Core.Content.GameModeKind)sv.Mode);
@@ -123,10 +125,12 @@ public sealed class BrowserScreen(App app) : Screen(app)
         }
         if (_selected >= 0 && _selected < servers.Count)
         {
-            if (Gui.Button(new Rectangle(sw - x - 240 * u, dy, 240 * u, 54 * u), S.T("browser.join") + " >", true, 22 * u)) Join(servers[_selected].EndPoint);
-            if (Gui.Button(new Rectangle(sw - x - 460 * u, dy, 200 * u, 54 * u), S.T("browser.watch"), false, 22 * u)) Join(servers[_selected].EndPoint, spectate: true);
+            var sel = servers[_selected];
+            if (Gui.Button(new Rectangle(sw - x - 240 * u, dy, 240 * u, 54 * u), S.T("browser.join") + " >", true, 22 * u)) Join(sel.EndPoint, false, sel.ViaMaster);
+            if (Gui.Button(new Rectangle(sw - x - 460 * u, dy, 200 * u, 54 * u), S.T("browser.watch"), false, 22 * u)) Join(sel.EndPoint, spectate: true, sel.ViaMaster);
         }
-        if (Gui.Button(new Rectangle(x, dy + 80 * u, 200 * u, 52 * u), S.T("common.back"), false, 20 * u)) App.Go(new MainMenuScreen(App));
+        Gui.TextField(new Rectangle(x, dy + 64 * u, 760 * u, 50 * u), S.T("browser.password"), ref _password, 32);
+        if (Gui.Button(new Rectangle(x + 790 * u, dy + 64 * u, 180 * u, 50 * u), S.T("common.back"), false, 20 * u)) App.Go(new MainMenuScreen(App));
         App.DrawFooter();
     }
 }

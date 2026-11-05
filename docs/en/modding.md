@@ -158,3 +158,16 @@ Limits: 1–4096 boxes, 64 pickups, 64 props, at least 2 spawns. Test with bots:
 3. Share the `.djmod`. Players put it in `mods/_inbox/` and press **Install from inbox** in the Workshop, or run `djancoeg-server mod install file.djmod`.
 
 Packages are zip files; the installer rejects entries that would write outside the mod folder.
+
+## Online Workshop
+
+Anyone can host a Workshop — a folder of packages with an `index.json`, served over HTTP:
+
+```bash
+djancoeg-server workshop publish my-mod-1.0.0.djmod --dir ./workshop   # validates, hashes and indexes it
+djancoeg-server workshop serve --dir ./workshop --port 27951          # http://host:27951/index.json
+```
+
+Players open **Workshop → Online**, enter the address (also in *Settings → General*), and press **Download & install**. The game checks each download's SHA-256 against the index before installing, and installed mods show *Installed* or *Update*. The built-in server is read-only and only serves `index.json` and `packages/*.djmod`; you can also put the same folder behind any static web host or CDN (HTTPS works).
+
+![Online Workshop](../screenshots/workshop-online-id.png)

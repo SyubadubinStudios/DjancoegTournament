@@ -16,8 +16,10 @@ public sealed class ServerBrowser : IDisposable
     private readonly Dictionary<string, double> _sentAt = [];
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private uint _nonce = (uint)Environment.TickCount;
+    private readonly Dictionary<string, IPEndPoint> _viaMaster = [];
 
     public IReadOnlyCollection<ServerInfo> Servers => _found.Values;
+    private IPEndPoint? _master;
 
     /// <summary>Broadcasts a discovery request on the LAN (ports 27960-27963).</summary>
     public void RefreshLan()
@@ -37,9 +39,10 @@ public sealed class ServerBrowser : IDisposable
         {
             var addr = Dns.GetHostAddresses(parts[0]).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
             if (addr is null) return;
+            _master = new IPEndPoint(addr, port);
             var w = new NetWriter(_transport.SendBuffer);
             Protocol.WriteHeader(ref w, PacketType.MasterQuery);
-            _transport.Send(w.Written, new IPEndPoint(addr, port));
+            _transport.Send(w.Written, _master);
         }
         catch (SocketException) { }
     }
@@ -70,9 +73,11 @@ public sealed class ServerBrowser : IDisposable
                 string name = r.Str(), arena = r.Str();
                 byte mode = r.U8(); int players = r.U8(); r.U8(); int max = r.U8();
                 uint sig = r.U32(); int port = r.U16();
+                bool password = r.Bool();
                 if (r.Error) continue;
                 var ep = new IPEndPoint(src.Address, port);
-                var info = new ServerInfo(name, arena, mode, players, max, sig, ep);
+                var info = new ServerInfo(name, arena, mode, players, max, sig, ep) { PasswordProtected = password };
+                if (_viaMaster.TryGetValue(ep.ToString(), out var m)) info.ViaMaster = m;
                 if (_sentAt.TryGetValue(ep.ToString(), out double t0) || _sentAt.TryGetValue($"{IPAddress.Broadcast}:{port}", out t0))
                     info.PingMs = (float)(_clock.Elapsed.TotalMilliseconds - t0);
                 // Same machine answers on loopback and LAN: keep one entry per port+name.
@@ -86,7 +91,9 @@ public sealed class ServerBrowser : IDisposable
                 {
                     var ip = new IPAddress(r.U32());
                     int port = r.U16();
-                    Ping(new IPEndPoint(ip, port));
+                    var ep = new IPEndPoint(ip, port);
+                    _viaMaster[ep.ToString()] = src;
+                    Ping(ep);
                 }
             }
         }
@@ -144,6 +151,19 @@ public sealed class MasterServer(int port = Protocol.DefaultMasterPort, Action<s
                 var ep = new IPEndPoint(src.Address, gamePort);
                 if (!_servers.ContainsKey(ep)) log?.Invoke($"+ server {ep}");
                 _servers[ep] = now;
+            }
+            else if (type == PacketType.PunchRequest)
+            {
+                // A client behind NAT wants to reach a listed server: tell the server to punch towards the client.
+                var target = new IPEndPoint(new IPAddress(r.U32()), r.U16());
+                if (r.Error || !_servers.ContainsKey(target)) continue;
+                var w = new NetWriter(_transport.SendBuffer);
+                Protocol.WriteHeader(ref w, PacketType.PunchNotify);
+#pragma warning disable CS0618 // IPv4 address as uint is exactly what we want on the wire
+                w.U32((uint)src.Address.Address);
+#pragma warning restore CS0618
+                w.U16((ushort)src.Port);
+                _transport.Send(w.Written, target);
             }
             else if (type == PacketType.MasterQuery)
             {

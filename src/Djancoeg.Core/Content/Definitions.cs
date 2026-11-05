@@ -203,7 +203,7 @@ public sealed record MatchSettings
     public int TimeLimitSeconds { get; set; } = 600;
     public int BotCount { get; set; } = 5;
     public float BotSkill { get; set; } = 0.5f;
-    public int MaxPlayers { get; set; } = SimConstants.MaxPlayers;
+    public int MaxPlayers { get; set; } = 16;
     public bool FriendlyFire { get; set; }
     public string ServerName { get; set; } = "Warung Tawuran";
 }

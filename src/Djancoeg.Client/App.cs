@@ -55,6 +55,7 @@ public sealed class App : IDisposable
         if (options.Language is "id") Settings.Language = Core.Localization.Language.Indonesian;
         S.Lang = Settings.Language;
         Controls.Settings = Settings;
+        if (Settings.PlayerKey.Length == 0) { Settings.PlayerKey = Guid.NewGuid().ToString("N"); Settings.Save(); }
         AssetsDir = Path.Combine(AppContext.BaseDirectory, "assets");
         ModsDir = ModLoader.DefaultModsDirectory;
         ReloadContent();
@@ -162,6 +163,8 @@ public sealed class App : IDisposable
             "fighters" => new FightersScreen(this),
             "browser" => new BrowserScreen(this),
             "workshop" => new WorkshopScreen(this),
+            "workshop-online" => new WorkshopScreen(this, online: true),
+            "leaderboard" => new LeaderboardScreen(this),
             "settings" => new SettingsScreen(this),
             "settings-graphics" => new SettingsScreen(this, null, 1),
             "settings-access" => new SettingsScreen(this, null, 2),
@@ -179,7 +182,7 @@ public sealed class App : IDisposable
             ArenaId = Options.Arena ?? Settings.ArenaId, BotCount = 7, BotSkill = 0.6f, ScoreLimit = 999, TimeLimitSeconds = 600,
             Mode = Options.Mode switch { "tdm" => GameModeKind.TeamDeathmatch, "koth" => GameModeKind.KingOfTheHill, "ctf" => GameModeKind.CaptureTheFlag, "race" => GameModeKind.Race, _ => GameModeKind.FreeForAll },
         };
-        var session = Game.Session.StartLocal(Content, Settings, match, host: false, null, spectator: Options.Shot == "spectate");
+        var session = Game.Session.StartLocal(Content, Settings, match, host: false, null, spectator: Options.Shot == "spectate", persistStats: false);
         session.Autopilot = true;
         session.ThirdPerson = Options.Shot == "game-tps";
         return new PlayScreen(this, session) { ShowScoreboardForShot = Options.Shot == "scoreboard" };

@@ -41,14 +41,15 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Modes: Rebutan Gorengan (capture the flag), Panjat Pinang (race to the top) / *mode baru*
 - ✅ Rodin-generated props: plastic chair, scooter, jerrycan (decimated in Blender) / *properti Rodin*
 
-## v1.3 — "Kampung Online" (online services) ⬜
+## v1.3 — "Kampung Online" (online services) ✅
 
-- ⬜ NAT punch-through via the master server / *NAT punch-through*
-- ⬜ Packet encryption and connect tokens / *enkripsi paket dan token sambungan*
-- ⬜ Server admin console (kick, ban, map vote) / *konsol admin server*
-- ⬜ Online Workshop index with download from the in-game browser / *Workshop online*
-- ⬜ Delta-compressed snapshots for larger player counts (32+) / *snapshot delta untuk 32+ pemain*
-- ⬜ Persistent stats and leaderboards / *statistik dan papan peringkat*
+- ✅ NAT punch-through via the master server / *NAT punch-through*
+- ✅ Packet encryption (ECDH P-256 + AES-256-GCM, replay window) and stateless connect cookies + server passwords / *enkripsi dan cookie koneksi*
+- ✅ Server admin console, rcon (`!login`), kick/ban, map/mode/restart votes / *konsol admin, rcon, voting*
+- ✅ Online Workshop index (HTTP) with verified download from the in-game browser / *Workshop online*
+- ✅ Delta-compressed snapshots; 32 players per server / *snapshot delta, 32 pemain*
+- ✅ Persistent career stats and leaderboards / *statistik dan papan peringkat*
+- ✅ Bonus: realistic procedural skybox with lit clouds, stars and optional HDRI panoramas / *langit realistis*
 
 ## v2.0 — "Nusantara Raya" ⬜
 

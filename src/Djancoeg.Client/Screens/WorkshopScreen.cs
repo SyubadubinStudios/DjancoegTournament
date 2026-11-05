@@ -9,15 +9,43 @@ using static Raylib_cs.Raylib;
 namespace Djancoeg.Client.Screens;
 
 /// <summary>Local Workshop: list, enable/disable and install mods (.djmod packages from mods/_inbox).</summary>
-public sealed class WorkshopScreen(App app) : Screen(app)
+public sealed class WorkshopScreen(App app, bool online = false) : Screen(app)
 {
     private string _status = "";
     private int _selected;
+    private bool _online = online;
+    private string _url = app.Settings.WorkshopUrl;
+    private Task<WorkshopIndex>? _fetch;
+    private WorkshopIndex? _index;
+    private Task<ModInfo>? _install;
+    private string _installing = "";
+    private string _onlineStatus = "";
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
     private string Inbox => Path.Combine(App.ModsDir, "_inbox");
 
+    public override void Enter()
+    {
+        base.Enter();
+        if (_online) Fetch();
+    }
+
+    public override bool ReadyForScreenshot => !_online || _index is not null || _onlineStatus.StartsWith("Workshop", StringComparison.Ordinal);
+
     public override void Update(float dt)
     {
+        if (_fetch is { IsCompleted: true } f)
+        {
+            if (f.IsCompletedSuccessfully) { _index = f.Result; _onlineStatus = ""; }
+            else _onlineStatus = string.Format(CultureInfo.InvariantCulture, S.T("workshop.failed"), f.Exception?.GetBaseException().Message);
+            _fetch = null;
+        }
+        if (_install is { IsCompleted: true } t)
+        {
+            if (t.IsCompletedSuccessfully) { App.ReloadContent(); _onlineStatus = S.T("workshop.done").Replace("{0}", _installing); }
+            else _onlineStatus = string.Format(CultureInfo.InvariantCulture, S.T("workshop.failed"), t.Exception?.GetBaseException().Message);
+            _install = null;
+        }
         if (Gui.Back) App.Go(new MainMenuScreen(App));
     }
 
@@ -44,12 +72,59 @@ public sealed class WorkshopScreen(App app) : Screen(app)
         _status = string.Format(CultureInfo.InvariantCulture, S.T("workshop.installed"), n) + (errors.Count > 0 ? "  " + string.Join("  ", errors) : "");
     }
 
+    private void Fetch()
+    {
+        App.Settings.WorkshopUrl = _url;
+        _onlineStatus = S.T("workshop.loadingList");
+        _fetch = new WorkshopClient(Http).FetchIndexAsync(_url);
+    }
+
+    private void DrawOnline(float u, int sw, int sh)
+    {
+        float x = 84 * u, y = 210 * u;
+        Gui.TextField(new Rectangle(x, y, 900 * u, 52 * u), S.T("workshop.url"), ref _url, 96);
+        if (Gui.Button(new Rectangle(x + 920 * u, y, 220 * u, 52 * u), S.T("workshop.fetch"), true, 20 * u) && _fetch is null) Fetch();
+        y += 70 * u;
+        if (_onlineStatus.Length > 0) { Theme.Paragraph(Theme.BodyBold, _onlineStatus, new Vector2(x, y), 18 * u, sw - 2 * x, Theme.Kuning); y += 34 * u; }
+        var packages = _index?.Packages ?? [];
+        if (_index is not null && packages.Count == 0)
+            Theme.Paragraph(Theme.BodyBold, S.T("workshop.onlineEmpty"), new Vector2(x, y), 20 * u, sw - 2 * x, Theme.Kapur);
+        foreach (var e in packages)
+        {
+            if (y > sh - 220 * u) break;
+            var row = new Rectangle(x, y, sw - 2 * x, 92 * u);
+            Gui.Panel(row, Theme.Kapur, 5 * u);
+            Theme.Text(Theme.Display, S.T(e.Name).ToUpperInvariant(), new Vector2(row.X + 18 * u, row.Y + 10 * u), 22 * u, Theme.Aspal);
+            Theme.Text(Theme.Mono, $"{e.Id}  v{e.Version}  ·  {e.Author}  ·  {e.Size / 1024} KB  ·  " +
+                string.Format(CultureInfo.InvariantCulture, S.T("workshop.contents"), e.Weapons, e.Characters, e.Arenas), new Vector2(row.X + 18 * u, row.Y + 40 * u), 14 * u, Theme.Fade(Theme.Aspal, 0.75f));
+            Theme.Text(Theme.Body, S.T(e.Description), new Vector2(row.X + 18 * u, row.Y + 62 * u), 16 * u, Theme.Aspal);
+            var installed = App.Mods.FirstOrDefault(m => m.Id == e.Id);
+            bool same = installed?.Manifest?.Version == e.Version;
+            string label = same ? S.T("workshop.upToDate") : installed is null ? S.T("workshop.download") : S.T("workshop.update");
+            if (Gui.Button(new Rectangle(row.X + row.Width - 280 * u, row.Y + 20 * u, 260 * u, 52 * u), label, !same, 18 * u, enabled: !same && _install is null))
+            {
+                _installing = S.T(e.Name);
+                _onlineStatus = S.T("workshop.downloading").Replace("{0}", _installing);
+                _install = new WorkshopClient(Http).InstallAsync(_url, e, App.ModsDir);
+            }
+            y += 106 * u;
+        }
+        if (Gui.Button(new Rectangle(x, sh - 110 * u, 200 * u, 54 * u), S.T("common.back"), false, 20 * u)) App.Go(new MainMenuScreen(App));
+    }
+
     public override void Draw()
     {
         App.DrawBackdrop();
         float u = U;
         int sw = GetScreenWidth(), sh = GetScreenHeight();
         App.DrawHeader(S.T("workshop.title"), S.T("workshop.desc"));
+        if (Gui.Button(new Rectangle(sw - 500 * u, 92 * u, 200 * u, 48 * u), S.T("workshop.tabInstalled"), !_online, 20 * u)) _online = false;
+        if (Gui.Button(new Rectangle(sw - 284 * u, 92 * u, 200 * u, 48 * u), S.T("workshop.tabOnline"), _online, 20 * u))
+        {
+            _online = true;
+            if (_index is null && _fetch is null) Fetch();
+        }
+        if (_online) { DrawOnline(u, sw, sh); App.DrawFooter(); return; }
 
         float x = 84 * u, y = 214 * u;
         var mods = App.Mods;

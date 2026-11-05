@@ -90,6 +90,15 @@ public sealed partial class GameView
         if (haveMe) DrawVitals(sw, sh, u, me, s);
         else if (_session.Client.IsSpectator && s.Phase == MatchPhase.Playing) DrawSpectatorHud(sw, sh, u);
         DrawObjectiveHud(sw, sh, u);
+        if (_session.Client.Vote is { } vote)
+        {
+            string text = $"VOTE: {vote.Description}  ·  {vote.Yes}/{vote.Needed}  ·  {vote.SecondsLeft}s  ·  {S.T("vote.hint")}";
+            var m = Theme.Measure(Theme.BodyBold, text, 18 * u);
+            var vr = new Rectangle(sw / 2f - m.X / 2 - 18 * u, 196 * u, m.X + 36 * u, 38 * u);
+            DrawRectangleRec(new Rectangle(vr.X + 4, vr.Y + 4, vr.Width, vr.Height), Theme.Aspal);
+            DrawRectangleRec(vr, Theme.Kuning);
+            Theme.TextCentered(Theme.BodyBold, text, new Vector2(sw / 2f, vr.Y + vr.Height / 2), 18 * u, Theme.Aspal);
+        }
         DrawShout(sw, sh, u);
         DrawCaption(sw, sh, u);
 

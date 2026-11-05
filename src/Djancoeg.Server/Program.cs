@@ -19,6 +19,7 @@ public static class Program
         {
             return args.Length > 0 && args[0] == "master" ? RunMaster(args[1..])
                  : args.Length > 0 && args[0] == "mod" ? RunModTool(args[1..])
+                 : args.Length > 0 && args[0] == "workshop" ? RunWorkshop(args[1..])
                  : RunGameServer(args);
         }
         catch (Exception ex) when (ex is ArgumentException or FormatException or IOException or InvalidDataException or System.Net.Sockets.SocketException)
@@ -55,6 +56,8 @@ public static class Program
           djancoeg-server mod pack <dir> [outDir]   Package a mod as <id>-<version>.djmod
           djancoeg-server mod install <file.djmod>  Install a packaged mod into ./mods
           djancoeg-server mod list                  List installed mods
+          djancoeg-server workshop serve [--dir d] [--port 27951]   Serve an online Workshop over HTTP
+          djancoeg-server workshop publish <file.djmod> [--dir d]   Add a package to a Workshop folder
 
         Game server options:
           --config <file.json>   Load MatchSettings from JSON (see docs/en/server.md)
@@ -67,11 +70,18 @@ public static class Program
           --time <seconds>       Time limit (0 = none)
           --bots <n>             Bots to fill the server with
           --skill <0..1>         Bot skill
-          --max <n>              Max players (2-16)
+          --max <n>              Max players (2-32)
           --friendly-fire        Enable team damage in tdm
           --master <host:port>   Advertise to a master server (online play)
           --mods <dir>           Mods folder (default ./mods)
           --no-mods              Run with built-in content only
+          --password <text>      Require a password to join
+          --rcon <text>          Admin password for "!login" in chat
+          --data <dir>           Folder for stats.json and bans.txt (default ./data)
+          --no-votes             Disable player votes (!vote)
+
+        While running, type admin commands into the console (help, status, kick, ban, map, mode, bots, say, top...).
+        All traffic after the handshake is encrypted (ECDH P-256 + AES-256-GCM).
         """);
     }
 
@@ -107,6 +117,10 @@ public static class Program
             Port = Int(opts, "port", Protocol.DefaultPort),
             ArenaRotation = opts.TryGetValue("rotation", out var rot) ? [.. rot.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)] : [],
             MasterServer = opts.GetValueOrDefault("master"),
+            Password = opts.GetValueOrDefault("password"),
+            RconPassword = opts.GetValueOrDefault("rcon"),
+            DataDirectory = opts.GetValueOrDefault("data", Path.Combine(Environment.CurrentDirectory, "data")),
+            AllowVotes = !opts.ContainsKey("no-votes"),
             Log = msg => Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {msg}"),
         };
         foreach (var a in config.ArenaRotation)
@@ -115,7 +129,22 @@ public static class Program
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
         using var server = new GameServer(content, config);
-        Console.WriteLine($"Content signature {content.Signature:X8}. Press Ctrl+C to stop.");
+        Console.WriteLine($"Content signature {content.Signature:X8}. Type 'help' for admin commands, Ctrl+C to stop.");
+        // Admin console: lines from stdin are queued and executed on the server thread.
+        var console = new Thread(() =>
+        {
+            try
+            {
+                string? line;
+                while (!cts.IsCancellationRequested && (line = Console.ReadLine()) is not null)
+                {
+                    if (line.Trim() is "quit" or "exit") { cts.Cancel(); break; }
+                    if (line.Trim().Length > 0) server.EnqueueCommand(line);
+                }
+            }
+            catch (IOException) { }
+        }) { IsBackground = true, Name = "AdminConsole" };
+        console.Start();
         server.Run(cts.Token);
         server.Stop();
         Console.WriteLine("Server stopped. Sampai jumpa!");
@@ -166,6 +195,35 @@ public static class Program
                 foreach (var mod in ModLoader.Discover(modsDir))
                     Console.WriteLine($"{(mod.Enabled ? "[on] " : "[off]")} {mod.Id,-24} {(mod.IsValid ? "ok" : "INVALID: " + string.Join("; ", mod.Errors))}");
                 return 0;
+            default:
+                PrintHelp();
+                return 1;
+        }
+    }
+
+    private static int RunWorkshop(string[] args)
+    {
+        if (args.Length == 0) { PrintHelp(); return 1; }
+        var opts = ParseOptions(args.Skip(args[0] == "publish" ? 2 : 1).ToArray());
+        string dir = opts.GetValueOrDefault("dir", Path.Combine(Environment.CurrentDirectory, "workshop"));
+        switch (args[0])
+        {
+            case "publish" when args.Length > 1:
+            {
+                var e = WorkshopServer.Publish(args[1], dir);
+                Console.WriteLine($"Published {e.Id} v{e.Version} ({e.Size / 1024} KB, sha256 {e.Sha256[..12]}...) to {dir}");
+                return 0;
+            }
+            case "serve":
+            {
+                using var cts = new CancellationTokenSource();
+                Console.CancelKeyPress += (_, ev) => { ev.Cancel = true; cts.Cancel(); };
+                using var ws = new WorkshopServer(dir, Int(opts, "port", WorkshopServer.DefaultPort)) { Log = Console.WriteLine };
+                ws.Start();
+                Console.WriteLine($"{WorkshopServer.ReadIndex(dir).Packages.Count} package(s). Press Ctrl+C to stop.");
+                cts.Token.WaitHandle.WaitOne();
+                return 0;
+            }
             default:
                 PrintHelp();
                 return 1;

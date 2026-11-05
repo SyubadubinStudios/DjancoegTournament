@@ -16,7 +16,8 @@
 | T | Taunt (speech bubble) |
 | Tab | Scoreboard |
 | Y | Chat |
-| Esc | Pause menu (change fighter, camera, settings, leave) |
+| Esc | Pause menu (change fighter, camera, server leaderboard, settings, leave) |
+| F1 / F2 | Vote yes / no when a vote is running |
 
 Every action except the weapon number keys can be **rebound** in *Settings → Controls* (click an action, press the new key or mouse button). Arrow keys, C (crouch), right mouse (ability) and the mouse wheel always work as alternates.
 

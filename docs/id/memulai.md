@@ -15,7 +15,7 @@ Library native raylib untuk `win-x64`, `win-x86`, `linux-x64`, `osx-x64`, dan `o
 ```bash
 git clone <repo> && cd DjancoegTournament
 dotnet build                    # build ke-6 proyek
-dotnet test                     # 80 tes: fisika, pertarungan, arena, bot, jaringan, mod
+dotnet test                     # 93 tes: fisika, pertarungan, arena, bot, jaringan, mod
 dotnet run --project src/Djancoeg.Client
 ```
 

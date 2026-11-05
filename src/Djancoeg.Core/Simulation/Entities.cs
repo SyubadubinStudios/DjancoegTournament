@@ -39,7 +39,7 @@ public struct Player
     public float AbilityCooldown;
     public float AbilityTimer;
     public float DashTimer;
-    public ushort DashHitMask;
+    public uint DashHitMask;
     public float QuadTimer;
     public float BoostTimer; // Rally speed boost
     public float TauntCooldown;

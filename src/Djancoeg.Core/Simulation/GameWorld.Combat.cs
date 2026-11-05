@@ -510,9 +510,9 @@ public sealed partial class GameWorld
         var box = BodyBox(p).Expand(0.35f);
         for (int i = 0; i < Players.Length; i++)
         {
-            if (i == id || !Players[i].Active || !Players[i].Alive || (p.DashHitMask & (1 << i)) != 0) continue;
+            if (i == id || !Players[i].Active || !Players[i].Alive || (p.DashHitMask & (1u << i)) != 0) continue;
             if (!box.Intersects(BodyBox(Players[i]))) continue;
-            p.DashHitMask |= (ushort)(1 << i);
+            p.DashHitMask |= 1u << i;
             var dir = Vector3.Normalize(VectorMath.FlatForward(p.Yaw) + new Vector3(0, 0.5f, 0));
             ApplyDamage(i, id, 255, 35f * Content.Characters[p.CharacterIndex].Ability.Power, dir, 12f, KillFlags.Ability);
         }

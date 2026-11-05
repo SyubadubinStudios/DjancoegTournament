@@ -13,6 +13,7 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private static readonly string[] Languages = ["English", "Bahasa Indonesia"];
     private string _master = app.Settings.MasterServer;
+    private string _workshop = app.Settings.WorkshopUrl;
     private int _tab = tab;
 
     public override void Update(float dt)
@@ -103,6 +104,8 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.thirdPerson"), ref tp)) st.ThirdPerson = tp;
         y += rh;
         if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("settings.master"), ref _master, 64)) st.MasterServer = _master;
+        y += rh;
+        if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("workshop.url"), ref _workshop, 96)) st.WorkshopUrl = _workshop;
         y += rh;
     }
 

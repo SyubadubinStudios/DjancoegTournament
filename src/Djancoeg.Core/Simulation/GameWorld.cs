@@ -14,7 +14,14 @@ public sealed partial class GameWorld
     public ArenaDef Arena { get; }
     public int ArenaIndex { get; }
     public CollisionWorld Collision { get; }
-    public MatchSettings Settings { get; }
+    public MatchSettings Settings { get; private set; }
+
+    /// <summary>Changes settings that are safe mid-match (bots, skill, limits, name). Arena and mode need a new world.</summary>
+    public void UpdateSettings(MatchSettings s)
+    {
+        Settings = s with { ArenaId = Settings.ArenaId, Mode = Settings.Mode };
+        for (int i = 0; i < _bots.Length; i++) if (Players[i].Active && Players[i].IsBot) _bots[i].Reset(Settings.BotSkill);
+    }
 
     public readonly Player[] Players = new Player[SimConstants.MaxPlayers];
     public readonly Projectile[] Projectiles = new Projectile[SimConstants.MaxProjectiles];
@@ -163,6 +170,8 @@ public sealed partial class GameWorld
     [
         "Mas Gondrong", "Cak Kartolo", "Bang Jago", "Mbak Sri", "Pak Lurah", "Ucup", "Asep Knalpot", "Joko Santuy",
         "Neng Geulis", "Mang Oleh", "Om Telolet", "Bu Tejo", "Kang Cilok", "Bli Made", "Daeng Rewa", "Ucok Baba",
+        "Mas Ojak", "Teh Euis", "Pak RW", "Bu RT", "Bang Udin", "Cak Dul", "Mbok Darmi", "Opung Tigor",
+        "Uda Rizal", "Nyoman Gedeg", "Ama Keling", "Engkong Bewok", "Jeng Lastri", "Dik Bayu", "Wak Kumis", "Abah Odon",
     ];
 
     private int SmallerTeam()

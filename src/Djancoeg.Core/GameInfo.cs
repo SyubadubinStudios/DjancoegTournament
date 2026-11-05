@@ -5,7 +5,7 @@ public static class GameInfo
 {
     public const string Name = "Djancoeg Tournament";
     public const string Tagline = "Ultimate Indonesian Chaos Battle Arena";
-    public const string Version = "1.2.0";
+    public const string Version = "1.3.0";
     public const string Studio = "Syubadubin Studios";
     public const string Creator = "Ariana Mischa Fadhila";
 
@@ -22,7 +22,7 @@ public static class SimConstants
     public const int TickRate = 60;
     public const float TickDelta = 1f / TickRate;
     public const int SnapshotEveryTicks = 2; // 30 Hz snapshots
-    public const int MaxPlayers = 16;
+    public const int MaxPlayers = 32;
     public const int MaxProjectiles = 256;
     public const int MaxProps = 64;
     public const int MaxPickups = 64;

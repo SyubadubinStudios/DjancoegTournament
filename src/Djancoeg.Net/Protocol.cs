@@ -20,18 +20,31 @@ public enum PacketType : byte
     MasterList = 12,
     ChangeCharacter = 13,
     Chat = 14,
+    Challenge = 15,
+    Secure = 16,
+    PunchRequest = 17,
+    PunchNotify = 18,
+    Punch = 19,
+    LeaderboardRequest = 20,
+    LeaderboardResponse = 21,
+    VoteStatus = 22,
 }
+
+/// <summary>Why a connection was refused (lets the UI react, e.g. ask for a password).</summary>
+public enum RejectCode : byte { Generic = 0, Password = 1, Banned = 2, Full = 3, Content = 4, Kicked = 5 }
 
 /// <summary>Wire-format constants and helpers. Every packet starts with "DJ", the protocol version and a type byte.</summary>
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 3;
+    public const byte Version = 4;
+    /// <summary>Chat sender id used for server/console messages.</summary>
+    public const byte ServerSender = 254;
     public const byte SpectatorSlot = 255;
     public const int MaxSpectators = 8;
     public const int DefaultPort = 27960;
     public const int DefaultMasterPort = 27950;
-    public const int MaxPacketSize = 1200; // stays under typical internet MTU
+    public const int MaxPacketSize = 1400; // below the 1472-byte UDP payload of a 1500-byte MTU, leaves room for encryption
     public const int HeaderSize = 4;
     public const float TimeoutSeconds = 10f;
     public const int InputRedundancy = 4;
@@ -120,6 +133,66 @@ public struct NetPlayer
         w.U8(Tenths(AbilityCooldown)); w.U8(Tenths(AbilityTimer)); w.U8(Tenths(QuadTimer)); w.U8(PingQuarterMs);
     }
 
+    /// <summary>The value the receiver will decode (round-trips through the wire format). Deltas compare these.</summary>
+    public readonly NetPlayer Quantized()
+    {
+        Span<byte> buf = stackalloc byte[64];
+        var w = new NetWriter(buf);
+        Write(ref w);
+        var r = new NetReader(buf[..w.Position]);
+        return Read(ref r);
+    }
+
+    [Flags]
+    private enum Field : byte { Flags = 1, Kind = 2, Pos = 4, Vel = 8, Look = 16, Vitals = 32, Score = 64, Timers = 128, All = 255 }
+
+    /// <summary>Writes only the fields that differ from <paramref name="baseline"/> (all fields when there is none).
+    /// Both values must be <see cref="Quantized"/>.</summary>
+    public readonly void WriteDelta(ref NetWriter w, in NetPlayer baseline, bool hasBaseline)
+    {
+        var m = Field.All;
+        if (hasBaseline)
+        {
+            m = 0;
+            if (Flags != baseline.Flags) m |= Field.Flags;
+            if (Character != baseline.Character || Team != baseline.Team || Weapon != baseline.Weapon) m |= Field.Kind;
+            if (Position != baseline.Position) m |= Field.Pos;
+            if (Velocity != baseline.Velocity) m |= Field.Vel;
+            if (Yaw != baseline.Yaw || Pitch != baseline.Pitch) m |= Field.Look;
+            if (Health != baseline.Health || Armor != baseline.Armor) m |= Field.Vitals;
+            if (Score != baseline.Score || Kills != baseline.Kills || Deaths != baseline.Deaths) m |= Field.Score;
+            if (AbilityCooldown != baseline.AbilityCooldown || AbilityTimer != baseline.AbilityTimer || QuadTimer != baseline.QuadTimer || PingQuarterMs != baseline.PingQuarterMs) m |= Field.Timers;
+        }
+        w.U8(Id);
+        w.U8((byte)m);
+        if ((m & Field.Flags) != 0) w.U16((ushort)Flags);
+        if ((m & Field.Kind) != 0) { w.U8(Character); w.U8(Team); w.U8(Weapon); }
+        if ((m & Field.Pos) != 0) w.Pos(Position);
+        if ((m & Field.Vel) != 0) w.Vel(Velocity);
+        if ((m & Field.Look) != 0) { w.Angle(Yaw); w.I16(Quant.Pitch(Pitch)); }
+        if ((m & Field.Vitals) != 0) { w.I16(Health); w.U8(Armor); }
+        if ((m & Field.Score) != 0) { w.I16(Score); w.I16(Kills); w.I16(Deaths); }
+        if ((m & Field.Timers) != 0) { w.U8(Tenths(AbilityCooldown)); w.U8(Tenths(AbilityTimer)); w.U8(Tenths(QuadTimer)); w.U8(PingQuarterMs); }
+    }
+
+    /// <summary>Reads a delta written by <see cref="WriteDelta"/>; <paramref name="baselineFor"/> supplies the base for an id.</summary>
+    public static NetPlayer ReadDelta(ref NetReader r, Func<byte, NetPlayer?> baselineFor)
+    {
+        byte id = r.U8();
+        var m = (Field)r.U8();
+        var p = m == Field.All ? new NetPlayer() : baselineFor(id) ?? new NetPlayer();
+        p.Id = id;
+        if ((m & Field.Flags) != 0) p.Flags = (NetPlayerFlags)r.U16();
+        if ((m & Field.Kind) != 0) { p.Character = r.U8(); p.Team = r.U8(); p.Weapon = r.U8(); }
+        if ((m & Field.Pos) != 0) p.Position = r.Pos();
+        if ((m & Field.Vel) != 0) p.Velocity = r.Vel();
+        if ((m & Field.Look) != 0) { p.Yaw = r.Angle(); p.Pitch = Quant.UnPitch(r.I16()); }
+        if ((m & Field.Vitals) != 0) { p.Health = r.I16(); p.Armor = r.U8(); }
+        if ((m & Field.Score) != 0) { p.Score = r.I16(); p.Kills = r.I16(); p.Deaths = r.I16(); }
+        if ((m & Field.Timers) != 0) { p.AbilityCooldown = r.U8() / 10f; p.AbilityTimer = r.U8() / 10f; p.QuadTimer = r.U8() / 10f; p.PingQuarterMs = r.U8(); }
+        return p;
+    }
+
     public static NetPlayer Read(ref NetReader r) => new()
     {
         Id = r.U8(), Flags = (NetPlayerFlags)r.U16(), Character = r.U8(), Team = r.U8(), Weapon = r.U8(),
@@ -158,6 +231,7 @@ public struct NetProp
 public sealed class Snapshot
 {
     public uint Tick;
+    public uint BaselineTick;
     public uint AckInput;
     public uint EchoTime;
     public MatchPhase Phase;
@@ -202,8 +276,17 @@ public sealed class Snapshot
     }
 }
 
+/// <summary>One leaderboard row as sent to clients.</summary>
+public readonly record struct LeaderboardEntry(int Rank, string Name, int Kills, int Deaths, int Wins, int Matches, int Captures, int RaceGoals, int BestStreak, int Minutes, bool IsYou);
+
+/// <summary>An active vote (map or mode change) as shown to players.</summary>
+public sealed record VoteInfo(string Description, int Yes, int No, int Needed, int SecondsLeft);
+
 /// <summary>Server info returned by LAN discovery and master-server pings.</summary>
 public sealed record ServerInfo(string Name, string ArenaId, byte Mode, int Players, int MaxPlayers, uint ContentSignature, System.Net.IPEndPoint EndPoint)
 {
+    public bool PasswordProtected { get; init; }
+    /// <summary>Master server that listed this server (used to request NAT punch-through).</summary>
+    public System.Net.IPEndPoint? ViaMaster { get; set; }
     public float PingMs { get; set; }
 }

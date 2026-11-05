@@ -158,3 +158,16 @@ Batas: 1–4096 kotak, 64 item, 64 properti, minimal 2 spawn. Uji dengan bot: `d
 3. Bagikan file `.djmod`. Pemain menaruhnya di `mods/_inbox/` lalu menekan **Pasang dari inbox** di Workshop, atau menjalankan `djancoeg-server mod install file.djmod`.
 
 Paket berupa file zip; pemasang menolak isi yang mencoba menulis di luar folder mod.
+
+## Workshop online
+
+Siapa pun bisa membuka Workshop — folder berisi paket dan `index.json`, disajikan lewat HTTP:
+
+```bash
+djancoeg-server workshop publish mod-saya-1.0.0.djmod --dir ./workshop   # validasi, hitung hash, masukkan ke indeks
+djancoeg-server workshop serve --dir ./workshop --port 27951            # http://host:27951/index.json
+```
+
+Pemain membuka **Workshop → Online**, mengisi alamatnya (juga ada di *Pengaturan → Umum*), lalu menekan **Unduh & pasang**. Game memeriksa SHA-256 setiap unduhan dengan indeks sebelum memasang, dan mod yang sudah ada ditandai *Sudah terpasang* atau *Perbarui*. Server bawaannya hanya-baca dan hanya menyajikan `index.json` dan `packages/*.djmod`; folder yang sama juga bisa ditaruh di web hosting statis atau CDN mana pun (HTTPS bisa).
+
+![Workshop online](../screenshots/workshop-online-id.png)

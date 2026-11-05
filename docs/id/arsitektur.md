@@ -38,15 +38,20 @@ Satu socket UDP per endpoint (`UdpTransport`) memakai overload `SendTo`/`Receive
 
 | Paket | Arah | Isi |
 |---|---|---|
-| Connect / Accept / Reject | K→S / S→K | nama, jagoan, tanda tangan konten, penanda penonton / slot (255 = penonton), arena, mode, batas |
+| Connect / Challenge | K→S / S→K | nama, jagoan, tanda tangan konten, penanda penonton, kunci pemain, kunci publik ECDH, cookie, bukti password / cookie + penanda perlu password |
+| Accept / Reject | S→K | slot (255 = penonton), arena, mode, batas, penanda admin, kunci ECDH server / kode tolak + alasan |
+| Secure | dua arah | Paket dalam yang disegel AES-256-GCM (counter, ciphertext, tag); semua paket di bawah lewat di dalamnya |
 | Input | K→S, 60 Hz | waktu gema, konfirmasi event, RTT, 4 input terakhir (masing-masing 16 byte) |
-| Snapshot | S→K, 30 Hz | tick, konfirmasi input, status pertandingan, gorengan, semua pemain, inventaris sendiri, bitmask item, event, proyektil, properti |
+| Snapshot | S→K, 30 Hz | tick, tick baseline delta, konfirmasi input, status pertandingan, gorengan, semua pemain (delta per field), inventaris sendiri, bitmask item, event, proyektil, properti |
 | PlayerInfo | S→K, 1 Hz + saat berubah | nama dan penanda bot |
-| Chat, ChangeCharacter, Disconnect | dua arah | |
+| Chat, ChangeCharacter, Disconnect, LeaderboardRequest/Response, VoteStatus | dua arah | |
+| PunchRequest / PunchNotify / Punch | klien→master→server→klien | NAT punch-through |
 | DiscoveryRequest/Response | browser↔server | broadcast LAN / ping langsung |
 | MasterHeartbeat / Query / List | server/browser↔master | daftar online |
 
-Snapshot dianggarkan **1200 byte** (di bawah MTU umum): pemain selalu muat; lalu event (yang paling lama belum dikonfirmasi dulu), proyektil (terdekat dulu), properti yang bergerak, dan potongan bergilir properti yang diam. Posisi dikuantisasi 1/64 m, sudut 16 bit.
+**Kompresi delta** — setiap pemain ditulis sebagai id, mask field 8 bit, dan hanya field yang berubah sejak snapshot terakhir yang dikonfirmasi klien (klien mengirim tick terbaru yang berhasil dibaca di setiap input; server menyimpan 32 frame terakhir per klien). Nilai dibandingkan setelah kuantisasi, jadi baseline klien dan server selalu identik. 32 pemain muat dalam satu datagram, bahkan di snapshot penuh.
+
+Snapshot dianggarkan **1400 byte** (di bawah MTU umum): pemain selalu muat; lalu event (yang paling lama belum dikonfirmasi dulu), proyektil (terdekat dulu), properti yang bergerak, dan potongan bergilir properti yang diam. Posisi dikuantisasi 1/64 m, sudut 16 bit.
 
 **Prediksi & rekonsiliasi klien** — `GameClient.SendInput` menyimpan input di ring 256 entri dan menjalankan `PlayerMovement` secara lokal. Saat snapshot datang, klien kembali ke status server pada input yang dikonfirmasi lalu memutar ulang sisanya; selisih visual dihaluskan dalam ~100 ms.
 

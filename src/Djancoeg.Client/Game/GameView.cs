@@ -118,7 +118,12 @@ public sealed partial class GameView : IDisposable
         foreach (var e in _events) HandleEvent(e);
         _chatIn.Clear();
         client.DrainChat(_chatIn);
-        foreach (var (from, text) in _chatIn) AddChat(NameOf(from), text, Theme.Kuning);
+        foreach (var (from, text) in _chatIn) AddChat(NameOf(from), text, from == Protocol.ServerSender ? Theme.Daun : Theme.Kuning);
+        if (inputEnabled && client.Vote is not null)
+        {
+            if (IsKeyPressed(KeyboardKey.F1)) client.CastVote(true);
+            if (IsKeyPressed(KeyboardKey.F2)) client.CastVote(false);
+        }
 
         UpdateProps(dt);
         UpdateFootsteps(dt);
@@ -179,7 +184,7 @@ public sealed partial class GameView : IDisposable
         }
     }
 
-    private string NameOf(int id) => id == Protocol.SpectatorSlot ? "" : (uint)id < SimConstants.MaxPlayers && _session.Client.Names[id].Length > 0 ? _session.Client.Names[id] : "???";
+    private string NameOf(int id) => id == Protocol.ServerSender ? "SERVER" : id == Protocol.SpectatorSlot ? "" : (uint)id < SimConstants.MaxPlayers && _session.Client.Names[id].Length > 0 ? _session.Client.Names[id] : "???";
 
     private bool TryView(int id, out NetPlayer p)
     {
@@ -636,6 +641,8 @@ public sealed partial class GameView : IDisposable
         {
             var p = _view[i];
             if (p.Id == me && !_session.ThirdPerson && p.Has(NetPlayerFlags.Alive)) continue;
+            // Third person squeezed against a wall: hide our own body instead of filling the screen with it.
+            if (p.Id == me && _session.ThirdPerson && p.Has(NetPlayerFlags.Alive) && Vector3.Distance(_camera.Position, p.Position + new Vector3(0, 1.4f, 0)) < 1.6f) continue;
             var pos = p.Position;
             if (p.Id == me && p.Has(NetPlayerFlags.Alive) && _session.Client.TryGetPredicted(0, out _, out var visual)) pos = visual;
             var cd = chars[Math.Min(p.Character, chars.Count - 1)];

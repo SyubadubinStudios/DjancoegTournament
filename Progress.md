@@ -2,14 +2,14 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **1.2.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **1.3.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 80 passing / lulus |
+| Automated tests / Tes otomatis | 93 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
@@ -18,6 +18,28 @@ Current version / Versi sekarang: **1.2.0** · Roadmap / Peta jalan: [PLAN.md](P
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v1.3.0 "Kampung Online"
+
+**Done / Selesai**
+
+- [x] Realistic procedural sky (requested mid-milestone): atmosphere gradient, Mie sun halo, sun/moon disc, stars, FBM clouds lit from the sun, per-arena time-of-day palettes, optional equirect `skyTexture`
+- [x] Protocol v4: stateless HMAC connect cookies (anti-spoofing/amplification), password proof, ECDH P-256 + HKDF + AES-256-GCM channel with 64-packet replay window
+- [x] Delta-compressed snapshots (per-player field masks against acknowledged baselines); 1400-byte budget; up to 32 players
+- [x] Admin: console on stdin, `!login` rcon, local admins on listen servers; status/kick/ban/unban/map/mode/bots/skill/restart/say/password/top; bans persisted
+- [x] Votes: `!vote map|mode|restart`, F1/F2 banner, majority of humans within 30 s
+- [x] NAT punch-through via the master (PunchRequest → PunchNotify → Punch)
+- [x] Career stats (`StatsStore`, atomic JSON) and leaderboards: in-match server board in the pause menu, local board in the main menu
+- [x] Online Workshop: `workshop publish/serve` (read-only HTTP, traversal-safe), in-game Online tab with SHA-256 verified install/update
+- [x] Client: password field, password-protected markers, reject reasons (password/banned/kicked), host password, Workshop URL setting
+- [x] Tests: crypto (round trip, tamper, replay, window, cookies), password handshake, 32-player deltas, admin/ban, map + vote, rcon, stats/leaderboard, NAT punch, Workshop publish/serve/install (93 tests)
+
+**Known limitations / Keterbatasan yang diketahui**
+
+- The key exchange has no server certificate, so an active man-in-the-middle could still intercept a session.
+- Symmetric NATs can't be punched; forward the port instead.
+- Workshop packages aren't signed; the SHA-256 only proves the download matches the index you trust.
+
 
 ### 2026-11-06 — v1.2.0 "Pasar Rakyat"
 
@@ -94,4 +116,4 @@ Current version / Versi sekarang: **1.2.0** · Roadmap / Peta jalan: [PLAN.md](P
 
 ## Next up / Berikutnya
 
-See v1.3 "Kampung Online" in [PLAN.md](PLAN.md): NAT punch-through, encryption, admin console, online Workshop, delta snapshots, stats.
+See v2.0 "Nusantara Raya" in [PLAN.md](PLAN.md): in-game level editor, ragdolls and destructible stalls, single-player island tour, distribution.
