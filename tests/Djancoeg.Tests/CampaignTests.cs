@@ -76,4 +76,18 @@ public class CampaignTests
         Assert.Equal(MatchPhase.Ended, w.Phase);
         Assert.Equal(a, w.Winner);
     }
+
+    [Fact]
+    public void Boss_stage_tick_does_not_allocate()
+    {
+        var match = Campaign.Stage("jawa-boss")!.ToMatch() with { BotCount = 6, TimeLimitSeconds = 0, BossHealthScale = 50 };
+        var w = new GameWorld(ContentRegistry.CreateBuiltIn(), match, 11);
+        w.BalanceBots();
+        for (int i = 0; i < 900; i++) w.Step();
+        Assert.True(w.BossSlot >= 0);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1200; i++) w.Step();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allocated < 16 * 1024, $"allocated {allocated} bytes over 1200 ticks");
+    }
 }

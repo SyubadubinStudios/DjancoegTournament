@@ -1,0 +1,16 @@
+# itch.io app manifest: copied next to the executables by scripts/publish.ps1.
+# https://itch.io/docs/itch/integrating/manifest.html
+
+[[actions]]
+name = "play"
+path = "{{EXE}}"
+
+[[actions]]
+name = "Dedicated server"
+path = "{{SERVER}}"
+console = true
+args = ["--name", "Warung Tawuran"]
+
+[[actions]]
+name = "Mods folder"
+path = "mods"

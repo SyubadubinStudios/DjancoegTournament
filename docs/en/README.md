@@ -8,5 +8,6 @@
 4. [Modding](modding.md) — the mod format, adding fighters/weapons/arenas, packaging and the Workshop
 5. [Architecture](architecture.md) — how the code fits together, netcode, performance and memory
 6. [Art pipeline](assets.md) — Blender characters, Rodin art, regenerating screenshots
+7. [Campaign, editor & achievements](campaign-and-editor.md) — Tur Nusantara, level editor, destruction, achievements, distribution
 
 ![Third person in the Kampung Rooftops](../screenshots/game-tps-id-atap-kampung.png)

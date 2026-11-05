@@ -1,0 +1,17 @@
+{
+  "_comment": "Maps the game's local achievement ids (src/Djancoeg.Client/Achievements.cs) to Steamworks API names. Create these in the Steamworks partner site with the same API names; icons go in distribution/steam/icons/<API_NAME>.jpg (64x64 and 'unachieved' greyscale variants).",
+  "achievements": [
+    { "id": "FIRST_BLOOD",  "steam": "ACH_FIRST_BLOOD",  "stat": null },
+    { "id": "KO_100",       "steam": "ACH_KO_100",       "stat": "STAT_KNOCKOUTS", "goal": 100 },
+    { "id": "STREAK_5",     "steam": "ACH_STREAK_5",     "stat": null },
+    { "id": "CREEP_FIRST",  "steam": "ACH_CREEP_FIRST",  "stat": null },
+    { "id": "CREEP_50",     "steam": "ACH_CREEP_50",     "stat": "STAT_CREEPS", "goal": 50 },
+    { "id": "WRECKER",      "steam": "ACH_WRECKER",      "stat": "STAT_BOXES", "goal": 25 },
+    { "id": "BOSS_FIRST",   "steam": "ACH_BOSS_FIRST",   "stat": null },
+    { "id": "ISLAND_JAWA",  "steam": "ACH_ISLAND_JAWA",  "stat": null },
+    { "id": "ISLAND_ALL",   "steam": "ACH_ISLAND_ALL",   "stat": null },
+    { "id": "THREE_STARS",  "steam": "ACH_THREE_STARS",  "stat": null },
+    { "id": "ALL_STARS",    "steam": "ACH_ALL_STARS",    "stat": "STAT_STARS", "goal": 48 },
+    { "id": "EDITOR",       "steam": "ACH_EDITOR",       "stat": null }
+  ]
+}

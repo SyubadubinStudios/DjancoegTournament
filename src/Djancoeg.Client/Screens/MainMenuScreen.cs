@@ -51,7 +51,7 @@ public sealed class MainMenuScreen(App app) : Screen(app)
 
         // Sticker menu.
         string[] keys = ["menu.campaign", "menu.practice", "menu.host", "menu.find", "menu.fighters", "menu.workshop", "menu.editor", "menu.leaderboard", "menu.settings", "menu.credits", "menu.quit"];
-        float[] tilts = [2f, -3f, 2f, -1.5f, 2.5f, -2f, -1f, 2f, 1.5f, -2.5f, 1.8f];
+        float[] tilts = [1.2f, -1.5f, 1f, -0.8f, 1.3f, -1f, -0.6f, 1f, 0.8f, -1.2f, 0.9f];
         float y = 300 * u;
         for (int i = 0; i < keys.Length; i++)
         {

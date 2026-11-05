@@ -57,12 +57,19 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Creature models built in Blender, voice lines from Rodin/ElevenLabs, synthesized creature sounds
 - ✅ Blood/gore with floor and wall splats (confetti option), bullet holes, impact dust, muzzle smoke, layered explosions
 
-## v2.0 — "Nusantara Raya" ⬜
+## v2.0 — "Nusantara Raya" ✅
 
-- ⬜ Level editor inside the game / *editor arena di dalam game*
-- ⬜ Ragdoll physics and destructible stalls / *ragdoll dan tenda yang bisa hancur*
-- ⬜ Story-lite single-player tour across islands / *tur pemain tunggal antar pulau*
-- ⬜ Steam/itch.io distribution, achievements / *distribusi dan pencapaian*
+- ✅ Level editor inside the game: fly camera, 7 tools, undo/redo, save as mod, F5 test play / *editor arena di dalam game*
+- ✅ Physics corpses ("ragdoll-lite") and destructible stalls/benches/counters/water tanks that respawn (protocol v6) / *mayat berfisika dan lapak yang bisa hancur*
+- ✅ Tur Nusantara: 4 islands × 4 stages, stars, unlocks, boss fights, island map art / *tur pemain tunggal antar pulau*
+- ✅ Distribution: GitHub Actions CI + tagged releases, itch.io butler, Steam ContentBuilder templates; 12 local achievements with Steam mapping / *distribusi dan pencapaian*
+
+## Ideas after 2.0 / Ide setelah 2.0
+
+- Multi-bone ragdolls (per-limb) and partial destruction (chunks instead of whole boxes)
+- Editor: rotate/scale gizmos, copy between arenas, sky/fog panel, Workshop upload from the editor
+- Campaign: cutscene stills, co-op campaign over LAN, more bosses (Si Jangkung, Cacing Raksasa)
+- Steamworks SDK integration (achievements/stats/rich presence) behind a build flag
 
 ## Technical principles / Prinsip teknis
 

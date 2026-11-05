@@ -1,0 +1,14 @@
+"DepotBuild"
+{
+	"DepotID" "STEAM_DEPOT_MAC"
+	"ContentRoot" "../../artifacts/DjancoegTournament-osx-arm64/"
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"Recursive" "1"
+	}
+	// Player data lives in the OS app-data folder, never in the install directory.
+	"FileExclusion" "*.pdb"
+	"FileExclusion" ".itch.toml"
+}

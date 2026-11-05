@@ -2,22 +2,41 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **1.4.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **2.0.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 105 passing / lulus |
+| Automated tests / Tes otomatis | 122 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
-| Modes | 5 |
+| Modes | 5 + campaign (16 stages, 4 bosses) |
+| Achievements / Pencapaian | 12 |
 | Languages / Bahasa | English, Bahasa Indonesia (UI, docs, content) |
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v2.0.0 "Nusantara Raya"
+
+- [x] Destructible arena boxes: `ArenaBox.Health`, `CollisionWorld.SetBoxEnabled` + box-index raycasts, damage from hitscan/melee/projectiles/explosions, 45 s respawn (blocked while occupied), protocol v6 `DestroyedMask` mirrored into client prediction; built-in breakables in 4 arenas; splinters/dust/crunch
+- [x] Physics corpses ("ragdoll-lite") for fighters and creeps: thrown by the kill impulse, collide/bounce with the arena, blood splats, settle and fade
+- [x] Tur Nusantara campaign: 4 islands × 4 stages across all modes, 1–3 star rules, stage/island unlocks, boss stages (scaled creep that respawns, +10 killing blow, match ends on defeat) with boss bar and stage banner; island map art via Rodin; progress in AppData
+- [x] In-game level editor: window-free `ArenaEditor` (place/move/resize/style/duplicate/delete, grid, undo/redo, ray picking, validation, save as `arena-buatanku` mod) + `EditorScreen` (fly camera, tool panel, F5 test play)
+- [x] 12 local achievements with toasts and a screen; screenshot runs never touch real saves
+- [x] Distribution: GitHub Actions CI (Windows + Linux tests, tagged packages/releases, optional itch.io butler push), `.itch.toml`, Steam ContentBuilder templates, Steam achievement mapping
+- [x] Docs EN/ID: campaign, editor, destruction, achievements, distribution; new screenshots (campaign, boss, editor, achievements)
+- [x] Tests: destruction, campaign data/stars/unlocks, boss flow, boss-stage zero-allocation tick, editor operations/picking/saving (122 tests)
+
+**Fixed during v2.0 / Diperbaiki selama v2.0**
+
+- Boss lookup allocated a closure every tick → boss creep index resolved once per match (allocation test added).
+- Breakable boxes were drawn unlit with `DrawCubeV` → baked per-box meshes through the world shader.
+- Campaign map used a ★ glyph missing from the Latin-1 fonts → stars are drawn as shapes.
+- Level-editor camera started facing away from the arena.
 
 ### 2026-11-06 — v1.4.0 "Makhluk Aneh"
 
@@ -120,9 +139,9 @@ Current version / Versi sekarang: **1.4.0** · Roadmap / Peta jalan: [PLAN.md](P
 
 - Bots navigate by steering and feelers (no navmesh), so they rarely use stairs to upper walkways — they use jump pads.
 - Props are not client-predicted; standing on a moving prop can jitter slightly.
-- No packet encryption or NAT punch-through yet (planned for v1.3).
+- Corpses are a single rigid body (no per-limb ragdoll), and stalls break as whole boxes.
 - Stereo pan direction depends on the raylib audio backend's pan convention.
 
 ## Next up / Berikutnya
 
-See v2.0 "Nusantara Raya" in [PLAN.md](PLAN.md): in-game level editor, ragdolls and destructible stalls, single-player island tour, distribution.
+v2.0 is complete. Ideas for later releases are listed under "Ideas after 2.0" in [PLAN.md](PLAN.md).

@@ -11,12 +11,15 @@ public sealed partial class GameWorld
     /// <summary>Player who landed the killing blow on the boss (-1 = none / creep / world).</summary>
     public int BossKiller { get; private set; } = -1;
     private float _bossTimer = 5f;
+    private int _bossKind = -1;
 
-    public bool HasBoss => Settings.BossCreepId.Length > 0 && Content.CreepIndexOf(Settings.BossCreepId) >= 0;
+    public bool HasBoss => _bossKind >= 0;
 
     private void ResetBoss()
     {
         BossSlot = -1; BossDefeated = false; BossKiller = -1; _bossTimer = 5f;
+        // Resolved once: the tick must not allocate (CreepIndexOf uses a lambda).
+        _bossKind = Settings.BossCreepId.Length > 0 ? Content.CreepIndexOf(Settings.BossCreepId) : -1;
     }
 
     private void UpdateBoss(float dt)
@@ -27,7 +30,7 @@ public sealed partial class GameWorld
         _bossTimer -= dt;
         if (_bossTimer > 0) return;
         _bossTimer = 4f;
-        int kind = Content.CreepIndexOf(Settings.BossCreepId);
+        int kind = _bossKind;
         int slot = SpawnCreep(kind);
         if (slot < 0) return;
         ref var c = ref Creeps[slot];

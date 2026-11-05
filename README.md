@@ -17,6 +17,10 @@
 
 | | |
 |---|---|
+| **Campaign** | *Tur Nusantara*: 16 stages across Java, Sumatra, Borneo and Sulawesi, 3 stars each, a boss at the end of every island |
+| **Level editor** | Build arenas in the game, save them as a mod, test-play with F5 |
+| **Destruction** | Breakable stalls, benches, counters and water tanks; physics corpses that tumble and bounce |
+| **Achievements** | 12 local achievements with toasts (Steam mapping included) |
 | **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*), Snack Snatch capture-the-flag (*Rebutan Gorengan*), Greased Pole Race (*Panjat Pinang*) |
 | **Views** | First person and third person — press **V** at any time |
 | **Multiplayer** | Practice vs bots, LAN (auto-discovery), online via a master server with NAT punch-through, direct IP, dedicated server, up to 32 players |
@@ -38,6 +42,10 @@
 |---|---|
 | ![First person](docs/screenshots/game-en-terminal-bus.png) | ![Third person](docs/screenshots/game-tps-en-lapangan-17an.png) |
 
+| Tur Nusantara | Level editor |
+|---|---|
+| ![Campaign map](docs/screenshots/campaign-en.png) | ![Level editor](docs/screenshots/editor-en.png) |
+
 ![Fighter select](docs/screenshots/fighters-en.png)
 
 ![Practice setup with rendered arena previews](docs/screenshots/setup-en.png)
@@ -53,7 +61,7 @@ dotnet run --project src/Djancoeg.Client       # play
 dotnet run --project src/Djancoeg.Server -- --bots 6 --arena pasar-malam   # dedicated server
 ```
 
-Then choose **Practice vs bots**, pick your fighter and press **Start match**.
+Then choose **Tur Nusantara** for the campaign, or **Practice vs bots**, pick your fighter and press **Start match**.
 
 **Controls (rebindable, gamepad supported):** WASD move · Space jump · Ctrl crouch · Left mouse fire · Q / right mouse ability · 1-7, E or wheel weapons · V first/third person · T taunt · Tab scores · Y chat · Esc menu.
 
@@ -65,6 +73,7 @@ Then choose **Practice vs bots**, pick your fighter and press **Start match**.
 | [Gameplay](docs/en/gameplay.md) | Fighters, weapons, pickups, arenas, modes |
 | [Multiplayer & servers](docs/en/multiplayer.md) | Hosting, LAN, online master server, dedicated server, ports |
 | [Modding](docs/en/modding.md) | Make fighters, weapons and arenas; package and share `.djmod` |
+| [Campaign, editor & achievements](docs/en/campaign-and-editor.md) | Tur Nusantara, the level editor, destruction, achievements, distribution |
 | [Architecture](docs/en/architecture.md) | Projects, simulation, netcode, performance and memory |
 | [Art pipeline](docs/en/assets.md) | Blender sculpt/rig/animate, Rodin 3D & 2D art, screenshots |
 
@@ -73,13 +82,15 @@ Then choose **Practice vs bots**, pick your fighter and press **Start match**.
 ```
 src/Djancoeg.Core      Simulation: movement, combat, bots, rules, content (no rendering, no allocation per tick)
 src/Djancoeg.Net       UDP protocol, server, client prediction/interpolation, LAN discovery, master server
-src/Djancoeg.Modding   Mod loading, validation, packaging (.djmod)
+src/Djancoeg.Modding   Mod loading, validation, packaging (.djmod), level-editor model
 src/Djancoeg.Server    Dedicated server, master server and mod tools (djancoeg-server)
 src/Djancoeg.Client    The game (raylib): renderer, UI, audio, HUD
 tests/Djancoeg.Tests   xUnit tests: physics, combat, arenas, bots, protocol, loopback networking, mods
 mods/warung-bakso      Example mod: a meatball seller, a bowl launcher and the Independence Day field
 assets/                Fonts, Rodin art, Blender-built fighters, props, voice lines
 tools/blender          Reproducible character sculpt + rig + animation script
+distribution/          itch.io (butler) and Steam (ContentBuilder) templates, achievement mapping
+.github/workflows      CI: build + test, tagged releases
 ```
 
 ---
@@ -90,6 +101,10 @@ tools/blender          Reproducible character sculpt + rig + animation script
 
 | | |
 |---|---|
+| **Kampanye** | *Tur Nusantara*: 16 tahap di Jawa, Sumatera, Kalimantan, dan Sulawesi, 3 bintang per tahap, bos di akhir tiap pulau |
+| **Editor arena** | Bikin arena di dalam game, simpan sebagai mod, uji main dengan F5 |
+| **Kehancuran** | Lapak, bangku, loket, dan toren yang bisa hancur; mayat berfisika yang terlempar dan memantul |
+| **Pencapaian** | 12 pencapaian lokal dengan notifikasi (sudah ada pemetaan Steam) |
 | **Mode** | Tawuran Bebas, Perang Kampung (tim), Raja Warung (kuasai zona), Rebutan Gorengan (capture the flag), Panjat Pinang (balapan ke puncak) |
 | **Kamera** | Orang pertama dan orang ketiga — tekan **V** kapan saja |
 | **Multiplayer** | Latihan lawan bot, LAN (terdeteksi otomatis), online lewat master server dengan NAT punch-through, IP langsung, dedicated server, sampai 32 pemain |
@@ -113,6 +128,7 @@ tools/blender          Reproducible character sculpt + rig + animation script
 |---|---|
 | ![Orang pertama](docs/screenshots/game-id-pasar-malam.png) | ![Orang ketiga](docs/screenshots/game-tps-id-atap-kampung.png) |
 | ![Rebutan Gorengan](docs/screenshots/game-tps-id-pelabuhan-ctf.png) | ![Panjat Pinang](docs/screenshots/game-tps-en-stasiun-kereta-race.png) |
+| ![Tur Nusantara](docs/screenshots/campaign-id.png) | ![Pertarungan bos](docs/screenshots/boss-id.png) |
 
 ### Mulai cepat
 
@@ -125,7 +141,7 @@ dotnet run --project src/Djancoeg.Client       # main
 dotnet run --project src/Djancoeg.Server -- --bots 6 --arena pasar-malam   # dedicated server
 ```
 
-Pilih **Latihan lawan bot**, pilih jagoanmu, lalu tekan **Gas, mulai!**
+Pilih **Tur Nusantara** untuk kampanye, atau **Latihan lawan bot**, pilih jagoanmu, lalu tekan **Gas, mulai!**
 
 **Kontrol (bisa diatur ulang, mendukung gamepad):** WASD jalan · Spasi lompat · Ctrl jongkok · Klik kiri tembak · Q / klik kanan jurus · 1-7, E, atau scroll ganti senjata · V kamera 1/3 · T ejek · Tab skor · Y chat · Esc menu.
 
@@ -137,6 +153,7 @@ Pilih **Latihan lawan bot**, pilih jagoanmu, lalu tekan **Gas, mulai!**
 | [Gameplay](docs/id/gameplay.md) | Jagoan, senjata, item, arena, mode |
 | [Multiplayer & server](docs/id/multiplayer.md) | Buka server, LAN, master server online, dedicated server, port |
 | [Modding](docs/id/modding.md) | Bikin jagoan, senjata, dan arena; paketkan dan bagikan `.djmod` |
+| [Kampanye, editor & pencapaian](docs/id/kampanye-dan-editor.md) | Tur Nusantara, editor arena, kehancuran, pencapaian, distribusi |
 | [Arsitektur](docs/id/arsitektur.md) | Proyek, simulasi, netcode, performa, dan memori |
 | [Pipeline aset](docs/id/aset.md) | Sculpt/rig/animasi Blender, aset 3D & 2D Rodin, screenshot |
 

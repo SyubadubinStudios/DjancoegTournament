@@ -1,0 +1,19 @@
+// Steamworks SDK ContentBuilder script. Replace the IDs, then run:
+//   steamcmd +login <builder> +run_app_build ../distribution/steam/app_build.vdf +quit
+// Content roots point at the folders produced by scripts/publish.ps1.
+"AppBuild"
+{
+	"AppID"       "STEAM_APP_ID"
+	"Desc"        "Djancoeg Tournament v2.0"
+	"BuildOutput" "../../artifacts/steam-output/"
+	"ContentRoot" "../../artifacts/"
+	"SetLive"     ""          // e.g. "beta" to push to a branch automatically
+	"Preview"     "0"
+
+	"Depots"
+	{
+		"STEAM_DEPOT_WINDOWS" "depot_build_windows.vdf"
+		"STEAM_DEPOT_LINUX"   "depot_build_linux.vdf"
+		"STEAM_DEPOT_MAC"     "depot_build_mac.vdf"
+	}
+}

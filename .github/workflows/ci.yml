@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore
+      - run: dotnet build -c Release --no-restore
+      - run: dotnet test -c Release --no-build --logger "trx;LogFileName=results.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: "**/TestResults/*.trx"
+
+  package:
+    name: Package ${{ matrix.rid }}
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+    strategy:
+      matrix:
+        include:
+          - { rid: win-x64, os: windows-latest, channel: windows }
+          - { rid: linux-x64, os: ubuntu-latest, channel: linux }
+          - { rid: osx-arm64, os: macos-latest, channel: mac }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish
+        shell: pwsh
+        run: ./scripts/publish.ps1 -Runtimes ${{ matrix.rid }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DjancoegTournament-${{ matrix.rid }}
+          path: artifacts/DjancoegTournament-${{ matrix.rid }}.zip
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/DjancoegTournament-${{ matrix.rid }}.zip
+      - name: Push to itch.io (when BUTLER_API_KEY is set)
+        if: env.BUTLER_API_KEY != ''
+        shell: pwsh
+        env:
+          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        run: ./distribution/itch/push.ps1 -Channel ${{ matrix.channel }} -Folder artifacts/DjancoegTournament-${{ matrix.rid }} -Version "${{ github.ref_name }}"
