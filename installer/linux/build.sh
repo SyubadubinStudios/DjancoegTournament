@@ -18,7 +18,11 @@ if [[ "${SKIP_PUBLISH:-0}" != "1" ]]; then
   dotnet publish "$root/src/Djancoeg.Server" -c Release -r $rid --self-contained true -p:PublishSingleFile=true -o "$pub"
 fi
 rm -f "$pub"/*.pdb "$pub/.itch.toml"
-chmod +x "$pub/DjancoegTournament" "$pub/djancoeg-server"
+# Packages are run by other users: owner-executable files become 755, everything else 644, folders 755.
+find "$pub" -type d -exec chmod 755 {} +
+find "$pub" -type f -perm -u=x -exec chmod 755 {} +
+find "$pub" -type f ! -perm -u=x -exec chmod 644 {} +
+chmod 755 "$pub/DjancoegTournament" "$pub/djancoeg-server"
 
 # ---- portable tar.gz
 tar -C "$root/artifacts" -czf "$out/DjancoegTournament-linux-x64.tar.gz" "DjancoegTournament-$rid"
@@ -27,7 +31,7 @@ tar -C "$root/artifacts" -czf "$out/DjancoegTournament-linux-x64.tar.gz" "Djanco
 deb="$work/deb"
 mkdir -p "$deb/DEBIAN" "$deb/opt/djancoeg-tournament" "$deb/usr/bin" "$deb/usr/share/applications" "$deb/usr/share/icons/hicolor/256x256/apps"
 cp -a "$pub/." "$deb/opt/djancoeg-tournament/"
-cp "$root/installer/windows/installed.marker" "$deb/opt/djancoeg-tournament/"
+install -m 644 "$root/installer/windows/installed.marker" "$deb/opt/djancoeg-tournament/"
 cat > "$deb/usr/bin/djancoeg-tournament" <<'SH'
 #!/bin/sh
 exec /opt/djancoeg-tournament/DjancoegTournament "$@"
