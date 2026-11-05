@@ -23,6 +23,7 @@ public sealed class GameClient : IDisposable
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private SocketAddress? _server;
     private string _name = "", _characterId = "";
+    private bool _spectator;
     private double _nextConnectAttempt, _connectStarted, _lastHeard;
 
     private readonly Snapshot[] _ring = new Snapshot[SnapshotRing];
@@ -44,6 +45,8 @@ public sealed class GameClient : IDisposable
     public ClientState State { get; private set; }
     public string RejectReason { get; private set; } = "";
     public int LocalId { get; private set; } = -1;
+    /// <summary>True when connected as a spectator (no player slot; <see cref="LocalId"/> is 255).</summary>
+    public bool IsSpectator => LocalId == Protocol.SpectatorSlot;
     public string ServerName { get; private set; } = "";
     public ArenaDef? Arena { get; private set; }
     public CollisionWorld? Collision { get; private set; }
@@ -74,8 +77,9 @@ public sealed class GameClient : IDisposable
     private double Now => _clock.Elapsed.TotalSeconds;
     private uint NowMs => (uint)_clock.ElapsedMilliseconds;
 
-    public void Connect(IPEndPoint server, string name, string characterId)
+    public void Connect(IPEndPoint server, string name, string characterId, bool spectator = false)
     {
+        _spectator = spectator;
         ServerEndPoint = server;
         _server = server.Serialize();
         _name = name; _characterId = characterId;
@@ -146,7 +150,7 @@ public sealed class GameClient : IDisposable
                 _nextConnectAttempt = now + 0.5;
                 var w = new NetWriter(_transport.SendBuffer);
                 Protocol.WriteHeader(ref w, PacketType.Connect);
-                w.Str(_name); w.Str(_characterId); w.U32(_content.Signature);
+                w.Str(_name); w.Str(_characterId); w.U32(_content.Signature); w.U8(_spectator ? (byte)1 : (byte)0);
                 _transport.Send(w.Written, _server);
             }
         }

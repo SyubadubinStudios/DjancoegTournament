@@ -35,18 +35,18 @@ public sealed class Session : IDisposable
     private byte _slotPress;
     private InputButtons _latched;
 
-    private Session(SessionKind kind, ContentRegistry content, GameServer? server, IPEndPoint ep, ClientSettings settings)
+    private Session(SessionKind kind, ContentRegistry content, GameServer? server, IPEndPoint ep, ClientSettings settings, bool spectator = false)
     {
         Kind = kind;
         Content = content;
         Server = server;
         Endpoint = ep.ToString();
         Client = new GameClient(content);
-        Client.Connect(ep, settings.PlayerName, settings.CharacterId);
+        Client.Connect(ep, settings.PlayerName, settings.CharacterId, spectator);
         ThirdPerson = settings.ThirdPerson;
     }
 
-    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master)
+    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master, bool spectator = false)
     {
         var config = new ServerConfig
         {
@@ -58,13 +58,13 @@ public sealed class Session : IDisposable
         };
         var server = new GameServer(content, config);
         server.Start();
-        return new Session(host ? SessionKind.Host : SessionKind.Practice, content, server, new IPEndPoint(IPAddress.Loopback, server.Port), settings);
+        return new Session(host ? SessionKind.Host : SessionKind.Practice, content, server, new IPEndPoint(IPAddress.Loopback, server.Port), settings, spectator);
     }
 
-    public static Session Join(ContentRegistry content, ClientSettings settings, IPEndPoint ep) =>
-        new(SessionKind.Join, content, null, ep, settings);
+    public static Session Join(ContentRegistry content, ClientSettings settings, IPEndPoint ep, bool spectator = false) =>
+        new(SessionKind.Join, content, null, ep, settings, spectator);
 
-    /// <summary>Per-frame update: network receive, mouse look, fixed-rate input sending.</summary>
+    /// <summary>Per-frame update: network receive, mouse/stick look, fixed-rate input sending.</summary>
     public void Update(float dt, ClientSettings settings, bool inputEnabled)
     {
         Client.Update();
@@ -72,45 +72,57 @@ public sealed class Session : IDisposable
         {
             var md = Raylib.GetMouseDelta();
             float sens = 0.0022f * settings.MouseSensitivity;
-            Yaw -= md.X * sens;
-            Pitch += (settings.InvertY ? md.Y : -md.Y) * sens;
+            var look = Controls.PadLook() * (3.2f * settings.GamepadLookSpeed * dt);
+            Yaw -= md.X * sens + look.X;
+            Pitch += (settings.InvertY ? md.Y : -md.Y) * sens + (settings.InvertY ? -look.Y : look.Y);
             Pitch = Math.Clamp(Pitch, -1.5f, 1.5f);
             Yaw = VectorMath.WrapAngle(Yaw);
             _wheel += Raylib.GetMouseWheelMove();
             for (int k = 0; k < 9; k++) if (Raylib.IsKeyPressed(KeyboardKey.One + k)) _slotPress = (byte)(k + 1);
             // Latch quick taps so a press between two ticks is never lost.
-            if (Raylib.IsKeyPressed(KeyboardKey.Space)) _latched |= InputButtons.Jump;
-            if (Raylib.IsKeyPressed(KeyboardKey.Q) || Raylib.IsMouseButtonPressed(MouseButton.Right)) _latched |= InputButtons.Ability;
-            if (Raylib.IsKeyPressed(KeyboardKey.T)) _latched |= InputButtons.Taunt;
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left)) _latched |= InputButtons.Fire;
-            if (Raylib.IsKeyPressed(KeyboardKey.V)) ThirdPerson = !ThirdPerson;
+            if (Controls.Pressed(GameAction.Jump)) _latched |= InputButtons.Jump;
+            if (Controls.Pressed(GameAction.Ability)) _latched |= InputButtons.Ability;
+            if (Controls.Pressed(GameAction.Taunt)) _latched |= InputButtons.Taunt;
+            if (Controls.Pressed(GameAction.Fire)) _latched |= InputButtons.Fire;
+            if (Controls.Pressed(GameAction.NextWeapon)) _latched |= InputButtons.NextWeapon;
+            if (Controls.Pressed(GameAction.PrevWeapon)) _latched |= InputButtons.PrevWeapon;
+            if (Controls.Pressed(GameAction.Camera)) CameraTogglePressed = true;
         }
 
         _accumulator += MathF.Min(dt, 0.25f);
         while (_accumulator >= SimConstants.TickDelta)
         {
             _accumulator -= SimConstants.TickDelta;
-            var input = inputEnabled ? (Autopilot ? AutopilotInput() : Sample()) : new PlayerInput { Yaw = Yaw, Pitch = Pitch };
+            // Spectators still send (neutral) inputs: they carry acks and keep the connection alive.
+            var input = inputEnabled && !Client.IsSpectator ? (Autopilot ? AutopilotInput() : Sample()) : new PlayerInput { Yaw = Yaw, Pitch = Pitch };
             Client.SendInput(input);
         }
     }
 
+    /// <summary>Set when the camera key was pressed this frame; the view consumes it (FPS/TPS, or free-fly for spectators).</summary>
+    public bool CameraTogglePressed;
+
     private PlayerInput Sample()
     {
-        sbyte fwd = 0, right = 0;
-        if (Raylib.IsKeyDown(KeyboardKey.W) || Raylib.IsKeyDown(KeyboardKey.Up)) fwd += 127;
-        if (Raylib.IsKeyDown(KeyboardKey.S) || Raylib.IsKeyDown(KeyboardKey.Down)) fwd -= 127;
-        if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right)) right += 127;
-        if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left)) right -= 127;
+        float fwd = 0, right = 0;
+        if (Controls.Down(GameAction.Forward)) fwd += 1;
+        if (Controls.Down(GameAction.Back)) fwd -= 1;
+        if (Controls.Down(GameAction.Right)) right += 1;
+        if (Controls.Down(GameAction.Left)) right -= 1;
+        var stick = Controls.PadMove();
+        fwd = Math.Clamp(fwd + stick.Y, -1, 1);
+        right = Math.Clamp(right + stick.X, -1, 1);
         var b = _latched;
         _latched = InputButtons.None;
-        if (Raylib.IsKeyDown(KeyboardKey.Space)) b |= InputButtons.Jump;
-        if (Raylib.IsMouseButtonDown(MouseButton.Left)) b |= InputButtons.Fire;
-        if (Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.C)) b |= InputButtons.Crouch;
-        if (Raylib.IsKeyDown(KeyboardKey.Q)) b |= InputButtons.Ability;
+        if (Controls.Down(GameAction.Jump)) b |= InputButtons.Jump;
+        if (Controls.Down(GameAction.Fire)) b |= InputButtons.Fire;
+        if (Controls.Down(GameAction.Crouch)) b |= InputButtons.Crouch;
         if (_wheel > 0.1f) { b |= InputButtons.PrevWeapon; _wheel = 0; }
         else if (_wheel < -0.1f) { b |= InputButtons.NextWeapon; _wheel = 0; }
-        var input = new PlayerInput { Yaw = Yaw, Pitch = Pitch, Forward = fwd, Right = right, Buttons = b, WeaponSlot = _slotPress };
+        var input = new PlayerInput
+        {
+            Yaw = Yaw, Pitch = Pitch, Forward = (sbyte)(fwd * 127), Right = (sbyte)(right * 127), Buttons = b, WeaponSlot = _slotPress,
+        };
         _slotPress = 0;
         return input;
     }

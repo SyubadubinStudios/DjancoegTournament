@@ -2,14 +2,14 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **1.0.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **1.1.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 57 passing / lulus |
+| Automated tests / Tes otomatis | 59 passing / lulus |
 | Fighters / Jagoan | 13 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 7 built-in + 1 mod |
 | Arenas | 4 built-in + 1 mod |
@@ -18,6 +18,24 @@ Current version / Versi sekarang: **1.0.0** · Roadmap / Peta jalan: [PLAN.md](P
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-05 — v1.1.0 "Ronda Malam"
+
+**Done / Selesai**
+
+- [x] Repository moved to `C:\experiment\syubadubin\DjancoegTournament` (GitHub `SyubadubinStudios/DjancoegTournament`)
+- [x] `Controls`: rebindable keyboard/mouse actions saved in settings, Controls screen with capture + reset, gamepad gameplay (sticks, triggers, face buttons) and gamepad menu navigation
+- [x] Per-weapon crosshairs (melee circle, true-spread ring, piercing ticks, drop marks, splash ring); headshot hit sound; pitch per weapon
+- [x] Surface footsteps (7 synthesized sounds, `CollisionWorld.SurfaceBelow`), silent while crouching
+- [x] Spectator mode: protocol v2 spectator flag, up to 8 spectators without a player slot, follow camera with cycling, free-fly camera, spectator HUD; *Watch* in browser and *Watch only* for practice
+- [x] Kill cam: looks at your killer and shows their HP until respawn
+- [x] Graphics tab: effects quality (lights/particles), 3D render scale via render target, blob shadows, MSAA toggle
+- [x] Accessibility tab: colour-blind (Okabe-Ito) team colours, announcer subtitles, reduce shake, reduce flashes
+- [x] Rendered arena thumbnails in the setup screen
+- [x] Settings split into General / Graphics / Accessibility / Controls tabs
+- [x] Tests: spectator loopback, surface lookup; network tests serialized to remove cold-start flakiness (59 tests)
+- [x] Docs EN/ID and screenshots updated (21 screenshots)
+
 
 ### 2026-11-05 — v1.0.0
 
@@ -60,4 +78,4 @@ Current version / Versi sekarang: **1.0.0** · Roadmap / Peta jalan: [PLAN.md](P
 
 ## Next up / Berikutnya
 
-See v1.1 in [PLAN.md](PLAN.md): arena thumbnails, key rebinding/gamepad, footsteps, spectator mode.
+See v1.2 "Pasar Rakyat" in [PLAN.md](PLAN.md): new arenas (Pelabuhan, Stasiun Kereta, Kantor Kelurahan), fighters, weapons and modes.

@@ -26,7 +26,9 @@ public enum PacketType : byte
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 1;
+    public const byte Version = 2;
+    public const byte SpectatorSlot = 255;
+    public const int MaxSpectators = 8;
     public const int DefaultPort = 27960;
     public const int DefaultMasterPort = 27950;
     public const int MaxPacketSize = 1200; // stays under typical internet MTU

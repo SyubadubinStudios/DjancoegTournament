@@ -13,6 +13,7 @@ Every way of playing uses the same authoritative server code. Practice starts a 
 | Find a game → LAN | Broadcasts a discovery packet on ports 27960–27963 and lists every server that answers. |
 | Find a game → Online | Asks the master server (Settings → *Master server address*) for its list, then pings each server. |
 | Direct connect | Type `ip:port` or `hostname:port`. |
+| Watch | Join the selected server as a spectator (no player slot, up to 8 per server). |
 
 ![Server browser](../screenshots/browser-id.png)
 

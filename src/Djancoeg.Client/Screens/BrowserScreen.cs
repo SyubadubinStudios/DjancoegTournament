@@ -44,10 +44,10 @@ public sealed class BrowserScreen(App app) : Screen(app)
         if (Gui.Back && Gui.TextFocus < 0) App.Go(new MainMenuScreen(App));
     }
 
-    private void Join(IPEndPoint ep)
+    private void Join(IPEndPoint ep, bool spectate = false)
     {
         App.Settings.Save();
-        App.Go(new PlayScreen(App, Session.Join(App.Content, App.Settings, ep)));
+        App.Go(new PlayScreen(App, Session.Join(App.Content, App.Settings, ep, spectate)));
     }
 
     public override void Draw()
@@ -121,8 +121,11 @@ public sealed class BrowserScreen(App app) : Screen(app)
                 }
             }
         }
-        if (_selected >= 0 && _selected < servers.Count && Gui.Button(new Rectangle(sw - x - 240 * u, dy, 240 * u, 54 * u), S.T("browser.join") + " >", true, 22 * u))
-            Join(servers[_selected].EndPoint);
+        if (_selected >= 0 && _selected < servers.Count)
+        {
+            if (Gui.Button(new Rectangle(sw - x - 240 * u, dy, 240 * u, 54 * u), S.T("browser.join") + " >", true, 22 * u)) Join(servers[_selected].EndPoint);
+            if (Gui.Button(new Rectangle(sw - x - 460 * u, dy, 200 * u, 54 * u), S.T("browser.watch"), false, 22 * u)) Join(servers[_selected].EndPoint, spectate: true);
+        }
         if (Gui.Button(new Rectangle(x, dy + 80 * u, 200 * u, 52 * u), S.T("common.back"), false, 20 * u)) App.Go(new MainMenuScreen(App));
         App.DrawFooter();
     }

@@ -25,6 +25,9 @@
 | **Arenas** | Night Market, Intercity Bus Terminal, Rice Fields & Watch Post, Kampung Rooftops |
 | **Chaos** | Knockback and rocket jumps, kickable carts and water jugs that hurt, jump pads, confetti instead of gore |
 | **Modding** | Data-driven fighters, weapons and arenas in JSON; `.djmod` packages; in-game Workshop |
+| **Controls** | Rebindable keys, full gamepad support, per-weapon crosshairs, surface footsteps |
+| **Spectating** | Kill cam, spectator follow and free cameras (*Watch* in the browser) |
+| **Accessibility** | Colour-blind team colours, subtitles, reduced shake/flashes, render scale for slow GPUs |
 | **Languages** | English and Bahasa Indonesia, switchable in Settings |
 
 | First person | Third person |
@@ -32,6 +35,8 @@
 | ![First person](docs/screenshots/game-en-terminal-bus.png) | ![Third person](docs/screenshots/game-tps-en-lapangan-17an.png) |
 
 ![Fighter select](docs/screenshots/fighters-en.png)
+
+![Practice setup with rendered arena previews](docs/screenshots/setup-en.png)
 
 ### Quick start
 
@@ -46,7 +51,7 @@ dotnet run --project src/Djancoeg.Server -- --bots 6 --arena pasar-malam   # ded
 
 Then choose **Practice vs bots**, pick your fighter and press **Start match**.
 
-**Controls:** WASD move · Space jump · Ctrl crouch · Left mouse fire · Q / right mouse ability · 1-7 or wheel weapons · V first/third person · T taunt · Tab scores · Y chat · Esc menu.
+**Controls (rebindable, gamepad supported):** WASD move · Space jump · Ctrl crouch · Left mouse fire · Q / right mouse ability · 1-7, E or wheel weapons · V first/third person · T taunt · Tab scores · Y chat · Esc menu.
 
 ### Documentation
 
@@ -89,6 +94,9 @@ tools/blender          Reproducible character sculpt + rig + animation script
 | **Arena** | Pasar Malam Ceria, Terminal Antar Kota, Sawah & Pos Ronda, Atap Kampung |
 | **Kekacauan** | Knockback dan rocket jump, gerobak dan galon yang bisa ditendang (dan menyakitkan), kasur lompat, konfeti, bukan darah |
 | **Modding** | Jagoan, senjata, dan arena berbasis JSON; paket `.djmod`; Workshop di dalam game |
+| **Kontrol** | Tombol bisa diatur ulang, dukungan gamepad penuh, crosshair per senjata, suara langkah sesuai permukaan |
+| **Menonton** | Kill cam, kamera penonton ikuti dan bebas (*Tonton* di pencari server) |
+| **Aksesibilitas** | Warna tim ramah buta warna, subtitle, kurangi guncangan/kilatan, skala render untuk GPU lambat |
 | **Bahasa** | Inggris dan Bahasa Indonesia, bisa diganti di Pengaturan |
 
 ![Menu utama](docs/screenshots/menu-id.png)
@@ -110,7 +118,7 @@ dotnet run --project src/Djancoeg.Server -- --bots 6 --arena pasar-malam   # ded
 
 Pilih **Latihan lawan bot**, pilih jagoanmu, lalu tekan **Gas, mulai!**
 
-**Kontrol:** WASD jalan · Spasi lompat · Ctrl jongkok · Klik kiri tembak · Q / klik kanan jurus · 1-7 atau scroll ganti senjata · V kamera 1/3 · T ejek · Tab skor · Y chat · Esc menu.
+**Kontrol (bisa diatur ulang, mendukung gamepad):** WASD jalan · Spasi lompat · Ctrl jongkok · Klik kiri tembak · Q / klik kanan jurus · 1-7, E, atau scroll ganti senjata · V kamera 1/3 · T ejek · Tab skor · Y chat · Esc menu.
 
 ### Dokumentasi
 

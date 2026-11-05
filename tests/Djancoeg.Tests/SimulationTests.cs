@@ -422,3 +422,17 @@ public class BotMatchTests
         Assert.True(allocated < 16 * 1024, $"allocated {allocated} bytes over 1200 ticks");
     }
 }
+
+public class SurfaceTests
+{
+    [Fact]
+    public void Surface_below_reports_the_box_underfoot()
+    {
+        var world = new CollisionWorld(ContentRegistry.CreateBuiltIn().GetArena("sawah-ronda"));
+        Assert.True(world.SurfaceBelow(new Vector3(30, 0, 5), 1f, out var grass));
+        Assert.Equal(SurfaceKind.Grass, grass);
+        Assert.True(world.SurfaceBelow(new Vector3(0, 2.0f, 0), 1f, out var wood)); // pos ronda floor
+        Assert.Equal(SurfaceKind.Wood, wood);
+        Assert.False(world.SurfaceBelow(new Vector3(0, 30, 0), 1f, out _));
+    }
+}

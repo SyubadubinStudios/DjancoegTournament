@@ -29,7 +29,8 @@ public sealed class GameServer : IDisposable
     private sealed class Client
     {
         public required SocketAddress Address;
-        public int Slot;
+        public int Slot; // -1 for spectators
+        public bool IsSpectator => Slot < 0;
         public string Name = "";
         public double LastHeard;
         public uint EventAck;
@@ -183,6 +184,7 @@ public sealed class GameServer : IDisposable
         string name = r.Str();
         string characterId = r.Str();
         uint signature = r.U32();
+        bool spectator = (r.U8() & 1) != 0;
         if (r.Error) return;
 
         if (existing is not null) { SendAccept(existing); return; } // duplicate connect (lost accept)
@@ -190,6 +192,16 @@ public sealed class GameServer : IDisposable
         if (signature != _content.Signature)
         {
             SendReject(from, $"Content mismatch: the server runs mods [{string.Join(", ", _content.LoadedMods)}]. Enable the same mods to join.");
+            return;
+        }
+        if (spectator)
+        {
+            if (_clients.Values.Count(c => c.IsSpectator) >= Protocol.MaxSpectators) { SendReject(from, "Spectator seats are full."); return; }
+            var sc = new Client { Address = Clone(from), Slot = -1, Name = string.IsNullOrWhiteSpace(name) ? "Penonton" : name.Trim(), LastHeard = Now, EventAck = World.Events.LastId };
+            _clients[sc.Address] = sc;
+            Log($"+ {sc.Name} is watching from {UdpTransport.ToEndPoint(from)}");
+            SendAccept(sc);
+            BroadcastPlayerInfo();
             return;
         }
         int ch = Math.Max(0, _content.CharacterIndexOf(characterId));
@@ -223,7 +235,7 @@ public sealed class GameServer : IDisposable
     {
         var w = new NetWriter(_transport.SendBuffer);
         Protocol.WriteHeader(ref w, PacketType.Accept);
-        w.U8((byte)c.Slot);
+        w.U8(c.IsSpectator ? Protocol.SpectatorSlot : (byte)c.Slot);
         w.Str(World.Arena.Id);
         w.U8((byte)World.Settings.Mode);
         w.U16((ushort)World.Settings.ScoreLimit);
@@ -268,6 +280,7 @@ public sealed class GameServer : IDisposable
     {
         foreach (var c in _clients.Values)
         {
+            if (c.IsSpectator) { c.QCount = 0; continue; }
             // Drain a backlog quickly so latency doesn't accumulate.
             while (c.QCount > 4) { c.QHead = (c.QHead + 1) % c.Queue.Length; c.QCount--; }
             if (c.QCount > 0)
@@ -290,8 +303,8 @@ public sealed class GameServer : IDisposable
         Log($"<{c.Name}> {text}");
         var w = new NetWriter(_transport.SendBuffer);
         Protocol.WriteHeader(ref w, PacketType.Chat);
-        w.U8((byte)c.Slot);
-        w.Str(text);
+        w.U8(c.IsSpectator ? Protocol.SpectatorSlot : (byte)c.Slot);
+        w.Str(c.IsSpectator ? "[" + c.Name + "] " + text : text);
         foreach (var other in _clients.Values) _transport.Send(w.Written, other.Address);
     }
 
@@ -315,8 +328,11 @@ public sealed class GameServer : IDisposable
     private void Drop(Client c, string reason)
     {
         _clients.Remove(c.Address);
-        _bySlot[c.Slot] = null;
-        World.RemovePlayer(c.Slot);
+        if (!c.IsSpectator)
+        {
+            _bySlot[c.Slot] = null;
+            World.RemovePlayer(c.Slot);
+        }
         World.BalanceBots();
         Log($"- {c.Name} {reason}");
         BroadcastPlayerInfo();
@@ -345,7 +361,7 @@ public sealed class GameServer : IDisposable
         w.I8((sbyte)world.ZoneHolder);
         w.I8((sbyte)world.Winner);
         w.U8((byte)world.ArenaIndex);
-        w.U8((byte)c.Slot);
+        w.U8(c.IsSpectator ? Protocol.SpectatorSlot : (byte)c.Slot);
         w.U8(_generation);
 
         // Players (always all of them).
@@ -360,11 +376,12 @@ public sealed class GameServer : IDisposable
         }
         w.PatchU8(countPos, count);
 
-        // Local inventory.
-        ref readonly var me = ref world.Players[c.Slot];
-        w.U16(me.OwnedWeapons);
-        w.U8((byte)_content.Weapons.Count);
-        for (int k = 0; k < _content.Weapons.Count; k++) w.U16((ushort)Math.Clamp(me.Ammo[k], 0, ushort.MaxValue));
+        // Local inventory (empty for spectators).
+        ref readonly var me = ref world.Players[c.IsSpectator ? 0 : c.Slot];
+        w.U16(c.IsSpectator ? (ushort)0 : me.OwnedWeapons);
+        w.U8(c.IsSpectator ? (byte)0 : (byte)_content.Weapons.Count);
+        if (!c.IsSpectator)
+            for (int k = 0; k < _content.Weapons.Count; k++) w.U16((ushort)Math.Clamp(me.Ammo[k], 0, ushort.MaxValue));
 
         ulong mask = 0;
         for (int k = 0; k < world.Pickups.Length; k++) if (world.Pickups[k].Available) mask |= 1UL << k;
@@ -382,7 +399,7 @@ public sealed class GameServer : IDisposable
 
         // Projectiles: nearest to the player get priority when the packet is full.
         countPos = w.Position; w.U8(0); count = 0;
-        var eye = me.Move.Position;
+        var eye = c.IsSpectator ? world.Arena.ZoneCenterV : me.Move.Position;
         for (int pass = 0; pass < 2; pass++)
         {
             for (int k = 0; k < world.Projectiles.Length && w.Remaining > NetProjectile.Size + 60; k++)
@@ -513,9 +530,10 @@ public sealed class GameServer : IDisposable
         var next = new GameWorld(_content, settings, (ulong)Environment.TickCount64);
         foreach (var c in _clients.Values)
         {
+            c.EventAck = 0;
+            if (c.IsSpectator) continue;
             ref readonly var old = ref World.Players[c.Slot];
             next.AddPlayer(old.Name, old.CharacterIndex, false, c.Slot);
-            c.EventAck = 0;
         }
         World = next;
         World.BalanceBots();

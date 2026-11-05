@@ -24,7 +24,7 @@ public sealed partial class GameView
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
-    public bool ScoreboardHeld => ForceScoreboard || IsKeyDown(KeyboardKey.Tab);
+    public bool ScoreboardHeld => ForceScoreboard || Controls.Down(GameAction.Scores);
 
     private void AddFeed(string text, Color color)
     {
@@ -48,7 +48,7 @@ public sealed partial class GameView
         _feed.RemoveAll(f => f.Until < _time);
         _chat.RemoveAll(f => f.Until < _time);
         if (Paused) return;
-        if (!Chatting && IsKeyPressed(KeyboardKey.Y)) { Chatting = true; _chatDraft = ""; while (GetCharPressed() > 0) { } return; }
+        if (!Chatting && Controls.Pressed(GameAction.Chat)) { Chatting = true; _chatDraft = ""; while (GetCharPressed() > 0) { } return; }
         if (Chatting)
         {
             int ch;
@@ -72,7 +72,8 @@ public sealed partial class GameView
         DrawFloatingTexts();
 
         // Damage vignette.
-        float hurt = MathF.Max(_damageFlash, haveMe && me.Health < 35 && me.Has(NetPlayerFlags.Alive) ? 0.35f + 0.15f * MathF.Sin(_time * 6) : 0);
+        float flashScale = _app.Settings.ReduceFlashes ? 0.4f : 1f;
+        float hurt = flashScale * MathF.Max(_damageFlash, haveMe && me.Health < 35 && me.Has(NetPlayerFlags.Alive) ? 0.35f + 0.15f * MathF.Sin(_time * 6) : 0);
         if (hurt > 0.01f)
         {
             var c = Theme.Fade(Theme.Cabe, MathF.Min(0.6f, hurt));
@@ -82,16 +83,20 @@ public sealed partial class GameView
             DrawRectangleGradientH((int)(sw * 0.88f), 0, (int)(sw * 0.12f), sh, Theme.Fade(Theme.Cabe, 0), c);
         }
 
-        if (haveMe && me.Has(NetPlayerFlags.Alive)) DrawCrosshair(sw / 2f, sh / 2f, u);
+        if (haveMe && me.Has(NetPlayerFlags.Alive)) DrawCrosshair(sw / 2f, sh / 2f, u, me);
         DrawTopBar(sw, u, s, haveMe ? me : default);
         DrawFeed(sw, u);
         DrawChat(u, sh);
         if (haveMe) DrawVitals(sw, sh, u, me, s);
+        else if (_session.Client.IsSpectator && s.Phase == MatchPhase.Playing) DrawSpectatorHud(sw, sh, u);
         DrawShout(sw, sh, u);
+        DrawCaption(sw, sh, u);
 
         if (haveMe && !me.Has(NetPlayerFlags.Alive) && s.Phase == MatchPhase.Playing)
         {
             float y = sh * 0.62f;
+            if (_killerId >= 0 && TryView(_killerId, out var kp) && kp.Has(NetPlayerFlags.Alive))
+                Theme.TextCentered(Theme.Mono, "KILL CAM  ·  " + NameOf(_killerId) + "  " + Math.Max(0, (int)kp.Health).ToString(Inv) + " HP", new Vector2(sw / 2f, y - 40 * u), 18 * u, Theme.Kuning);
             if (_killedBy.Length > 0) Theme.SignText(S.T("hud.killedBy").Replace("{0}", _killedBy), new Vector2(sw / 2f - Theme.Measure(Theme.Display, S.T("hud.killedBy").Replace("{0}", _killedBy), 40 * u).X / 2, y), 40 * u, Theme.Kapur);
             float since = _time - _deathTime[me.Id];
             string t = since < SimConstants.RespawnDelay ? S.T("hud.respawnIn").Replace("{0}", MathF.Ceiling(SimConstants.RespawnDelay - since).ToString(Inv)) : S.T("hud.respawn");
@@ -105,18 +110,53 @@ public sealed partial class GameView
             Theme.Text(Theme.Mono, $"{GetFPS()} FPS  {_session.Client.RttMs:0} ms", new Vector2(12 * u, 10 * u), 16 * u, Theme.Fade(Theme.Kapur, 0.8f));
     }
 
-    private void DrawCrosshair(float cx, float cy, float u)
+    /// <summary>Crosshair shaped by the weapon: ring for spread, circle for melee, long ticks for piercing, drop marks for arcs.</summary>
+    private void DrawCrosshair(float cx, float cy, float u, in NetPlayer me)
     {
-        float g = 6 * u, l = 10 * u, t = 3 * u;
+        var weapons = _session.Content.Weapons;
+        var w = me.Weapon < weapons.Count ? weapons[me.Weapon] : null;
         Color o = Theme.Aspal, c = Theme.Kuning;
-        foreach (var (dx, dy) in (ReadOnlySpan<(int, int)>)[(1, 0), (-1, 0), (0, 1), (0, -1)])
+        float t = 3 * u;
+        var center = new Vector2(cx, cy);
+        if (w is { Kind: WeaponKind.Melee })
         {
-            var a = new Vector2(cx + dx * g, cy + dy * g);
-            var b = new Vector2(cx + dx * (g + l), cy + dy * (g + l));
-            DrawLineEx(a, b, t + 3, o);
-            DrawLineEx(a, b, t, c);
+            DrawRing(center, 9 * u - 1, 9 * u + t + 1, 0, 360, 24, o);
+            DrawRing(center, 9 * u, 9 * u + t, 0, 360, 24, c);
         }
-        DrawCircleV(new Vector2(cx, cy), 2.2f * u, c);
+        else if (w is { Pellets: > 1 })
+        {
+            // Ring sized to the real pellet cone at the current field of view.
+            float halfFov = _camera.FovY * MathF.PI / 360f;
+            float radius = MathF.Max(12 * u, MathF.Tan(w.SpreadDegrees * MathF.PI / 180f) / MathF.Tan(halfFov) * GetScreenHeight() / 2f);
+            DrawRing(center, radius - 1, radius + t + 1, 0, 360, 40, o);
+            DrawRing(center, radius, radius + t, 0, 360, 40, c);
+            DrawCircleV(center, 2.5f * u, c);
+        }
+        else if (w is { Piercing: true })
+        {
+            float g = 10 * u, l = 26 * u;
+            foreach (int dx in (ReadOnlySpan<int>)[1, -1])
+            {
+                DrawLineEx(new Vector2(cx + dx * g, cy), new Vector2(cx + dx * (g + l), cy), t + 3, o);
+                DrawLineEx(new Vector2(cx + dx * g, cy), new Vector2(cx + dx * (g + l), cy), t, c);
+            }
+            DrawCircleV(center, 2.2f * u, Theme.Cabe);
+        }
+        else
+        {
+            float g = 6 * u, l = 10 * u;
+            foreach (var (dx, dy) in (ReadOnlySpan<(int, int)>)[(1, 0), (-1, 0), (0, 1), (0, -1)])
+            {
+                var a = new Vector2(cx + dx * g, cy + dy * g);
+                var b = new Vector2(cx + dx * (g + l), cy + dy * (g + l));
+                DrawLineEx(a, b, t + 3, o);
+                DrawLineEx(a, b, t, c);
+            }
+            DrawCircleV(center, 2.2f * u, c);
+            if (w is { Kind: WeaponKind.Projectile, ProjectileGravity: > 4 })
+                for (int k = 1; k <= 3; k++) DrawRectangleRec(new Rectangle(cx - (8 - k * 1.5f) * u, cy + (14 + k * 9) * u, (16 - k * 3) * u, 2.5f * u), Theme.Fade(c, 0.9f - k * 0.2f));
+            if (w is { SplashRadius: > 0 }) DrawRing(center, 18 * u, 19.5f * u, 0, 360, 32, Theme.Fade(c, 0.5f));
+        }
         if (_hitMarker > 0)
         {
             float k = 10 * u + (1 - _hitMarker) * 6 * u;
@@ -189,8 +229,8 @@ public sealed partial class GameView
         string info;
         if (client.Mode == GameModeKind.TeamDeathmatch)
         {
-            DrawTeamTag(new Vector2(r.X - 12 * u, r.Y + 8 * u), S.T("hud.team0") + "  " + s.TeamScore0.ToString(Inv), Theme.Cabe, true, u);
-            DrawTeamTag(new Vector2(r.X + r.Width + 12 * u, r.Y + 8 * u), s.TeamScore1.ToString(Inv) + "  " + S.T("hud.team1"), Theme.TarpLight, false, u);
+            DrawTeamTag(new Vector2(r.X - 12 * u, r.Y + 8 * u), S.T("hud.team0") + "  " + s.TeamScore0.ToString(Inv), TeamColor(0), true, u);
+            DrawTeamTag(new Vector2(r.X + r.Width + 12 * u, r.Y + 8 * u), s.TeamScore1.ToString(Inv) + "  " + S.T("hud.team1"), TeamColor(1), false, u);
             info = (S.Lang == Core.Localization.Language.Indonesian ? "Timmu: " : "Your team: ") + S.T(me.Team == 0 ? "hud.team0" : "hud.team1") + " · " + client.ScoreLimit.ToString(Inv);
         }
         else
@@ -296,7 +336,7 @@ public sealed partial class GameView
             if (col is not null && !col.LineOfSight(_camera.Position, head)) continue;
             var sp = GetWorldToScreen(head, _camera);
             float size = Math.Clamp(22 - dist * 0.25f, 13, 22) * u;
-            var color = team ? (p.Team == self.Team ? Theme.Daun : Theme.Cabe) : Theme.Kapur;
+            var color = !team ? Theme.Kapur : _session.Client.IsSpectator ? TeamColor(p.Team) : p.Team == self.Team ? FriendColor : EnemyColor;
             string name = NameOf(p.Id);
             var m = Theme.Measure(Theme.BodyBold, name, size);
             DrawRectangleRec(new Rectangle(sp.X - m.X / 2 - 6, sp.Y - m.Y / 2 - 2, m.X + 12, m.Y + 4), Theme.Fade(Theme.Aspal, 0.6f));
@@ -367,7 +407,7 @@ public sealed partial class GameView
             bool isMe = p.Id == _session.Client.LocalId;
             var row = new Rectangle(r.X + 12 * u, y, w - 24 * u, rowH - 4 * u);
             DrawRectangleRec(row, isMe ? Theme.Kuning : k % 2 == 0 ? Theme.Fade(Theme.Aspal, 0.06f) : Theme.Fade(Theme.Aspal, 0.0f));
-            if (team) DrawRectangleRec(new Rectangle(row.X, row.Y, 6 * u, row.Height), p.Team == 0 ? Theme.Cabe : Theme.Tarp);
+            if (team) DrawRectangleRec(new Rectangle(row.X, row.Y, 6 * u, row.Height), TeamColor(p.Team));
             var cd = _session.Content.Characters[Math.Min(p.Character, _session.Content.Characters.Count - 1)];
             string name = NameOf(p.Id) + "  ·  " + S.T(cd.Name);
             Theme.Text(Theme.BodyBold, name, new Vector2(row.X + 14 * u, row.Y + 5 * u), 19 * u, Theme.Aspal);

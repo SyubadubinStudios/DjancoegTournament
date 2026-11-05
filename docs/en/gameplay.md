@@ -18,6 +18,16 @@
 | Y | Chat |
 | Esc | Pause menu (change fighter, camera, settings, leave) |
 
+Every action except the weapon number keys can be **rebound** in *Settings → Controls* (click an action, press the new key or mouse button). Arrow keys, C (crouch), right mouse (ability) and the mouse wheel always work as alternates.
+
+**Gamepad** (XInput layout): left stick move · right stick look · RT fire · A jump · B crouch · X ability · Y camera · RB/LB weapons · D-pad up taunt · View scoreboard · Menu pause. Menus work with the D-pad, A (confirm) and B (back).
+
+![Controls](../screenshots/controls-en.png)
+
+## Crosshairs and sounds
+
+The crosshair changes with the weapon: a circle for the racket, a ring matching the real pellet spread for the Wok Shotgun, long side ticks for the piercing Bamboo Spear, drop marks for arcing projectiles and a splash ring for explosives. Headshots have their own bright *tink*. Footsteps depend on the surface (planks, metal, tiles, grass, water, tarp) — **crouch to move silently**.
+
 ## The HUD
 
 The vitals are painted like Indonesian license plates: **HP** (*Darah*) and **Armor** (*Zirah*) bottom-left, **Ammo** (*Peluru*) bottom-right with the current weapon's name tag and the slot strip above it. The ring in the middle is your ability cooldown; it turns yellow and says **READY** (*SIAP*) when it can be used. The match clock and the score line sit at the top, and the kill feed on the right tells you who *nyentil* whom.
@@ -96,3 +106,19 @@ Self-inflicted splash damage is halved, but the knockback is full — that is ho
 | **King of the Warung** (*Raja Warung*) | Stand in the zone **alone** to earn 1 point per second. Two people inside = contested. |
 
 After a match ends the scoreboard shows the winner for 10 seconds; hosted servers then rotate to the next arena.
+
+## Kill cam and spectating
+
+When you are taken out, the camera rises from your body and looks at whoever got you, showing their remaining HP, until you respawn.
+
+**Spectate** a match with *Watch* in the server browser, or *Watch only* in the practice setup to watch the bots. Fire (or Next weapon) cycles through players, Ability/Previous weapon goes back, and the camera key switches to a **free camera** (movement keys, Jump/Crouch for up/down, Shift for speed). Spectators don't take a player slot (up to 8 per server).
+
+![Spectating](../screenshots/spectate-id-pasar-malam.png)
+
+## Graphics and accessibility
+
+| Settings tab | Options |
+|---|---|
+| Graphics | Effects quality (lights and particle density), 3D render scale (50–100%, great for slow GPUs), field of view, blob shadows, MSAA (restart), fullscreen, FPS/ping |
+| Accessibility | Colour-blind team colours (orange/sky blue instead of red/blue and green/red name tags), subtitles for announcer lines, reduce screen shake, reduce flashes |
+

@@ -38,7 +38,7 @@ Satu socket UDP per endpoint (`UdpTransport`) memakai overload `SendTo`/`Receive
 
 | Paket | Arah | Isi |
 |---|---|---|
-| Connect / Accept / Reject | K→S / S→K | nama, jagoan, tanda tangan konten / slot, arena, mode, batas |
+| Connect / Accept / Reject | K→S / S→K | nama, jagoan, tanda tangan konten, penanda penonton / slot (255 = penonton), arena, mode, batas |
 | Input | K→S, 60 Hz | waktu gema, konfirmasi event, RTT, 4 input terakhir (masing-masing 16 byte) |
 | Snapshot | S→K, 30 Hz | tick, konfirmasi input, status pertandingan, semua pemain, inventaris sendiri, bitmask item, event, proyektil, properti |
 | PlayerInfo | S→K, 1 Hz + saat berubah | nama dan penanda bot |
@@ -63,7 +63,9 @@ Snapshot dianggarkan **1200 byte** (di bawah MTU umum): pemain selalu muat; lalu
 - **`GameView`** mengubah snapshot + event menjadi dunia: satu mesh terpanggang per potongan arena (warna vertex + jenis permukaan di texcoord), jagoan glTF ber-skin dengan klip idle/run/shoot/die, model properti Rodin yang disesuaikan dengan kotak fisiknya, item/senjata/proyektil prosedural, partikel dan tracer yang di-pool, cahaya dinamis dari ledakan, viewmodel tanpa depth test, dan HUD.
 - **`WorldShader`** — satu shader GLSL 330: matahari + ambient hemisfer + hingga 16 lampu titik, kabut eksponensial, dan pola permukaan prosedural, sehingga seluruh arena cukup satu draw call per potongan.
 - **`SoundBank`** mensintesis semua efek saat start (tanpa file audio), memutarnya lewat pool alias dengan pelemahan jarak dan pan stereo, serta memuat suara penyiar dari `assets/audio/voice`.
-- **UI** — `Gui` immediate-mode dengan fokus keyboard dan mouse; identitas visual ada di `Ui/Theme.cs`.
+- **UI** — `Gui` immediate-mode dengan fokus keyboard, mouse, dan gamepad; identitas visual ada di `Ui/Theme.cs`.
+- **`Controls`** memetakan aksi yang bisa diatur ulang (kode tombol keyboard atau mouse yang disimpan di pengaturan) plus tata letak gamepad tetap; kode gameplay memanggil `Controls.Down/Pressed(GameAction)`.
+- **Fitur tampilan v1.1** ada di `GameView.Extras.cs`: kamera penonton (ikuti/bebas), suara langkah sesuai permukaan (`CollisionWorld.SurfaceBelow`), bayangan bulat, dan subtitle penyiar. Render target beresolusi rendah dipakai untuk *skala render*; thumbnail arena dirender sekali ke tekstur oleh `App.ArenaThumbnail`.
 
 ## Performa dan memori
 

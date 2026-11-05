@@ -6,6 +6,7 @@ namespace Djancoeg.Client.Audio;
 public enum Sfx
 {
     UiMove, UiClick, Slingshot, Shotgun, Gatling, Thump, Rocket, Zap, Spear, Explosion, Jump, Pad, Land, Pickup, Hit, Kill, Death, Ability, Taunt, Gong, Bounce, PropHit,
+    HitHead, StepGround, StepWood, StepMetal, StepGrass, StepTile, StepWater, StepFabric,
 }
 
 /// <summary>
@@ -124,6 +125,14 @@ public sealed unsafe class SoundBank : IDisposable
             Sfx.Gong => Tone(2.2f, t => (Sin(t, 110) + Sin(t, 113.5f) * 0.8f + Sin(t, 220.7f) * 0.3f) * Exp(t, 1.4f) * 0.5f), // gamelan gong with beating
             Sfx.Bounce => Tone(0.08f, t => Sin(t, 600) * Exp(t, 50) * 0.4f),
             Sfx.PropHit => Tone(0.25f, t => (Noise() * 0.6f + Sin(t, 120)) * Exp(t, 16) * 0.7f),
+            Sfx.HitHead => Tone(0.16f, t => (Sin(t, 2400) * 0.5f + Sin(t, 3600) * 0.3f) * Exp(t, 22) * 0.45f),
+            Sfx.StepGround => Tone(0.09f, t => (Noise() * 0.5f + Sin(t, 70)) * Exp(t, 45) * 0.5f),
+            Sfx.StepWood => Tone(0.1f, t => (Sin(t, 210 - t * 400) + Noise() * 0.2f) * Exp(t, 38) * 0.55f),
+            Sfx.StepMetal => Tone(0.14f, t => (Sin(t, 900) * 0.4f + Sin(t, 1370) * 0.3f + Noise() * 0.2f) * Exp(t, 30) * 0.45f),
+            Sfx.StepGrass => Tone(0.12f, t => Noise() * Env(t, 0.12f, 0.03f) * 0.35f),
+            Sfx.StepTile => Tone(0.07f, t => (Sq(t, 1200) * 0.3f + Noise() * 0.3f) * Exp(t, 60) * 0.5f),
+            Sfx.StepWater => Tone(0.2f, t => (Noise() * 0.5f + Sin(t, 300 + 500 * t)) * Env(t, 0.2f, 0.02f) * 0.4f),
+            Sfx.StepFabric => Tone(0.1f, t => (Noise() * 0.6f + Sin(t, 110)) * Exp(t, 35) * 0.4f),
             _ => Tone(0.1f, _ => 0),
         };
     }

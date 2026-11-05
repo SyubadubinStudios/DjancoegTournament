@@ -9,7 +9,9 @@ $jobs = @(
   @("menu", "id", ""), @("menu", "en", ""), @("fighters", "id", ""), @("fighters", "en", ""), @("setup", "id", ""),
   @("browser", "id", ""), @("workshop", "id", ""), @("settings", "id", ""), @("credits", "id", ""),
   @("game", "id", "pasar-malam"), @("game-tps", "id", "atap-kampung"), @("game", "en", "terminal-bus"),
-  @("game-tps", "id", "sawah-ronda"), @("scoreboard", "id", "terminal-bus"), @("game-tps", "en", "lapangan-17an")
+  @("game-tps", "id", "sawah-ronda"), @("scoreboard", "id", "terminal-bus"), @("game-tps", "en", "lapangan-17an"),
+  @("controls", "id", ""), @("controls", "en", ""), @("settings-graphics", "id", ""), @("settings-access", "en", ""),
+  @("spectate", "id", "pasar-malam"), @("setup", "en", "")
 )
 foreach ($j in $jobs) {
   $name = "$($j[0])-$($j[1])" + $(if ($j[2]) { "-$($j[2])" } else { "" })

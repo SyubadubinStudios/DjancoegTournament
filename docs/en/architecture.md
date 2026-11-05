@@ -38,7 +38,7 @@ Single UDP socket per endpoint (`UdpTransport`) using the allocation-free `Socke
 
 | Packet | Direction | Contents |
 |---|---|---|
-| Connect / Accept / Reject | C→S / S→C | name, fighter, content signature / slot, arena, mode, limits |
+| Connect / Accept / Reject | C→S / S→C | name, fighter, content signature, spectator flag / slot (255 = spectator), arena, mode, limits |
 | Input | C→S, 60 Hz | echo time, event ack, RTT, the last 4 inputs (16 bytes each) |
 | Snapshot | S→C, 30 Hz | tick, input ack, match state, all players, own inventory, pickup bitmask, events, projectiles, props |
 | PlayerInfo | S→C, 1 Hz + on change | names and bot flags |
@@ -63,7 +63,9 @@ Snapshots are budgeted to **1200 bytes** (below typical MTU): players always fit
 - **`GameView`** turns snapshots + events into the world: one baked mesh per arena chunk (vertex colours + surface kind in a texcoord), skinned glTF fighters with idle/run/shoot/die clips, Rodin prop models fitted to their physics boxes, procedural pickups/weapons/projectiles, pooled particles and tracers, dynamic lights from explosions, a viewmodel drawn without depth testing, and the HUD.
 - **`WorldShader`** — one GLSL 330 shader: sun + hemispheric ambient + up to 16 point lights, exponential fog and procedural surface patterns, so the whole arena is a single draw call per chunk.
 - **`SoundBank`** synthesizes every effect at start-up (no audio files), plays them through alias pools with distance attenuation and stereo pan, and loads optional voice lines from `assets/audio/voice`.
-- **UI** — immediate-mode `Gui` with keyboard and mouse focus; the visual identity lives in `Ui/Theme.cs`.
+- **UI** — immediate-mode `Gui` with keyboard, mouse and gamepad focus; the visual identity lives in `Ui/Theme.cs`.
+- **`Controls`** maps rebindable actions (keyboard key or mouse button codes stored in settings) plus a fixed gamepad layout; gameplay code asks `Controls.Down/Pressed(GameAction)`.
+- **v1.1 view features** live in `GameView.Extras.cs`: spectator follow/free-fly cameras, surface footsteps (`CollisionWorld.SurfaceBelow`), blob shadows and announcer subtitles. A low-resolution render target implements *render scale*; arena thumbnails are rendered once into textures by `App.ArenaThumbnail`.
 
 ## Performance and memory
 

@@ -15,6 +15,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
 
     public bool ShowScoreboardForShot { get; init; }
     public override bool ReadyForScreenshot =>
+        (session.Client.IsSpectator && _age > 8f) ||
         _age > 7f && session.Client.State == ClientState.Connected &&
         session.Client.Latest is { } s && s.TryGetPlayer(session.Client.LocalId, out var me) && me.Has(NetPlayerFlags.Alive) && !me.Has(NetPlayerFlags.Protected) && (_age > 30f || (me.Health >= 60 && (!session.Autopilot || session.AutopilotEngaged)));
 
@@ -44,7 +45,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
             App.Go(new MessageScreen(App, session.Client.RejectReason, new MainMenuScreen(App)));
             return;
         }
-        if (!_view.Chatting && IsKeyPressed(KeyboardKey.Escape))
+        if (!_view.Chatting && Controls.PausePressed)
         {
             _view.Paused = !_view.Paused;
             if (_view.Paused) EnableCursor(); else DisableCursor();

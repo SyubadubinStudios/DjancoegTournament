@@ -14,6 +14,7 @@ public sealed class CollisionWorld
 {
     private const float CellSize = 6f;
     private readonly Aabb[] _solids;
+    private readonly SurfaceKind[] _surfaces;
     private readonly Aabb[] _pads;
     private readonly Vector3[] _padLaunch;
 
@@ -31,8 +32,15 @@ public sealed class CollisionWorld
     public CollisionWorld(ArenaDef arena)
     {
         var solids = new List<Aabb>(arena.Boxes.Count);
-        foreach (var b in arena.Boxes) if (b.Solid) solids.Add(new Aabb(b.MinV, b.MaxV));
+        var surfaces = new List<SurfaceKind>(arena.Boxes.Count);
+        foreach (var b in arena.Boxes)
+        {
+            if (!b.Solid) continue;
+            solids.Add(new Aabb(b.MinV, b.MaxV));
+            surfaces.Add(b.Surface);
+        }
         _solids = [.. solids];
+        _surfaces = [.. surfaces];
         _pads = new Aabb[arena.JumpPads.Count];
         _padLaunch = new Vector3[arena.JumpPads.Count];
         for (int i = 0; i < _pads.Length; i++)
@@ -171,6 +179,19 @@ public sealed class CollisionWorld
             }
         }
         return hit;
+    }
+
+    /// <summary>Surface directly below <paramref name="feet"/> (within <paramref name="maxDrop"/>), used for footstep sounds.</summary>
+    public bool SurfaceBelow(Vector3 feet, float maxDrop, out SurfaceKind surface)
+    {
+        var origin = feet + new Vector3(0, 0.1f, 0);
+        var inv = VectorMath.SafeInverse(-Vector3.UnitY);
+        float best = maxDrop + 0.1f;
+        int hit = -1;
+        for (int i = 0; i < _solids.Length; i++)
+            if (_solids[i].Raycast(origin, inv, best, out float t, out _) && t < best) { best = t; hit = i; }
+        surface = hit >= 0 ? _surfaces[hit] : SurfaceKind.Ground;
+        return hit >= 0;
     }
 
     public bool LineOfSight(Vector3 a, Vector3 b)

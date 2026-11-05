@@ -40,13 +40,15 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
             var r = new Rectangle(cx, cy + i * (ch + 14 * u), cw, ch);
             if (Gui.Row(r, i == arenaIndex, out _)) st.ArenaId = arenas[i].Id;
             var a = arenas[i];
-            var top = Theme.Rgba(ColorUtil.ParseRgba(a.SkyTop));
-            var bottom = Theme.Rgba(ColorUtil.ParseRgba(a.SkyBottom));
-            DrawRectangleGradientV((int)(r.X + 10 * u), (int)(r.Y + 10 * u), (int)(84 * u), (int)(ch - 20 * u), top, bottom);
-            DrawRectangleLinesEx(new Rectangle(r.X + 10 * u, r.Y + 10 * u, 84 * u, ch - 20 * u), 2, Theme.Aspal);
+            var thumb = App.ArenaThumbnail(a);
+            float tw = (ch - 20 * u) * 16f / 9f;
+            var dst = new Rectangle(r.X + 10 * u, r.Y + 10 * u, tw, ch - 20 * u);
+            DrawTexturePro(thumb, new Rectangle(0, 0, thumb.Width, -thumb.Height), dst, Vector2.Zero, 0, Color.White);
+            DrawRectangleLinesEx(dst, 2, Theme.Aspal);
             bool sel = i == arenaIndex;
-            Theme.Text(Theme.Display, S.T(a.Name).ToUpperInvariant(), new Vector2(r.X + 110 * u, r.Y + 14 * u), 24 * u, sel ? Theme.Aspal : Theme.Kuning);
-            Theme.Paragraph(Theme.Body, S.T(a.Description), new Vector2(r.X + 110 * u, r.Y + 48 * u), 17 * u, cw - 130 * u, sel ? Theme.Aspal : Theme.Kapur, 1.25f);
+            float lx = dst.X + dst.Width + 16 * u;
+            Theme.Text(Theme.Display, S.T(a.Name).ToUpperInvariant(), new Vector2(lx, r.Y + 14 * u), 24 * u, sel ? Theme.Aspal : Theme.Kuning);
+            Theme.Paragraph(Theme.Body, S.T(a.Description), new Vector2(lx, r.Y + 48 * u), 17 * u, r.X + cw - lx - 16 * u, sel ? Theme.Aspal : Theme.Kapur, 1.25f);
         }
 
         // Options column.
@@ -72,6 +74,12 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
         if (Gui.Slider(new Rectangle(x, y, w, rh), S.T("setup.time"), ref time, 0, 30, time < 0.5f ? "-" : ((int)time).ToString(Inv))) st.TimeLimitMinutes = (int)time;
         y += rh;
 
+        if (!host)
+        {
+            bool spectate = st.SpectatePractice;
+            if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("setup.spectate"), ref spectate)) st.SpectatePractice = spectate;
+            y += rh;
+        }
         if (host)
         {
             if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("setup.serverName"), ref _serverName, 32)) st.ServerName = _serverName;
@@ -99,7 +107,7 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
         };
         try
         {
-            var session = Session.StartLocal(App.Content, st, match, host, host && _public ? st.MasterServer : null);
+            var session = Session.StartLocal(App.Content, st, match, host, host && _public ? st.MasterServer : null, spectator: !host && st.SpectatePractice);
             App.Go(new PlayScreen(App, session));
         }
         catch (System.Net.Sockets.SocketException ex)

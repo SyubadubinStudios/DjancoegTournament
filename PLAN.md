@@ -23,15 +23,15 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 | Assets | Rodin portraits/key art/props/voice, Blender sculpt+rig+animate pipeline | Aset Rodin & Blender | ✅ |
 | Quality | 57 automated tests, bilingual docs, screenshots, publish scripts | Tes, dokumentasi, screenshot, skrip rilis | ✅ |
 
-## v1.1 — "Ronda Malam" (polish & feel) ⬜
+## v1.1 — "Ronda Malam" (polish & feel) ✅
 
-- ⬜ Rendered arena thumbnails in the setup screen / *thumbnail arena hasil render*
-- ⬜ Key rebinding and gamepad support / *atur ulang tombol dan dukungan gamepad*
-- ⬜ Per-weapon crosshair styles and hit sounds / *gaya crosshair per senjata*
-- ⬜ Footstep sounds by surface kind / *suara langkah sesuai permukaan*
-- ⬜ Spectator mode and kill cam / *mode penonton dan kill cam*
-- ⬜ Graphics options: MSAA level, render scale, shadow quality / *opsi grafis*
-- ⬜ Accessibility: colour-blind team colours, subtitles for voice lines / *aksesibilitas*
+- ✅ Rendered arena thumbnails in the setup screen / *thumbnail arena hasil render*
+- ✅ Key rebinding and gamepad support (gameplay + menus) / *atur ulang tombol dan dukungan gamepad*
+- ✅ Per-weapon crosshair styles and hit sounds (headshot tink) / *crosshair per senjata dan bunyi kena*
+- ✅ Footstep sounds by surface kind; crouching is silent / *suara langkah sesuai permukaan; jongkok tanpa suara*
+- ✅ Spectator mode (follow + free camera, protocol v2) and kill cam / *mode penonton dan kill cam*
+- ✅ Graphics options: effects quality, render scale, blob shadows, MSAA / *opsi grafis*
+- ✅ Accessibility: colour-blind team colours, subtitles, reduce shake, reduce flashes / *aksesibilitas*
 
 ## v1.2 — "Pasar Rakyat" (content) ⬜
 

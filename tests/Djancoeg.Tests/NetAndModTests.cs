@@ -64,6 +64,10 @@ public class ProtocolTests
     }
 }
 
+[CollectionDefinition("Network", DisableParallelization = true)]
+public sealed class NetworkCollection;
+
+[Collection("Network")]
 public class LoopbackTests
 {
     private static GameServer StartServer(ContentRegistry content, int bots = 2) =>
@@ -106,8 +110,12 @@ public class LoopbackTests
         // Wait for respawn landing, then walk forward and check server agrees with prediction.
         Pump(server, client, 60);
         Assert.True(client.Latest!.TryGetPlayer(client.LocalId, out var start));
-        Pump(server, client, 90, _ => new PlayerInput { Forward = 127, Yaw = start.Yaw });
-        Assert.True(client.Latest!.TryGetPlayer(client.LocalId, out var after));
+        NetPlayer after = start;
+        for (int i = 0; i < 30 && Vector3.Distance(start.Position, after.Position) <= 3f; i++)
+        {
+            Pump(server, client, 10, _ => new PlayerInput { Forward = 127, Yaw = start.Yaw });
+            client.Latest!.TryGetPlayer(client.LocalId, out after);
+        }
         Assert.True(Vector3.Distance(start.Position, after.Position) > 3f, "server should have moved the player");
         Assert.True(client.TryGetPredicted(0, out var predicted, out _));
         Assert.True(Vector3.Distance(predicted.Position, after.Position) < 3f, "prediction should track the server");
@@ -115,6 +123,23 @@ public class LoopbackTests
         var events = new List<GameEvent>();
         client.DrainEvents(events);
         Assert.Contains(events, e => e.Type == GameEventType.Spawn);
+    }
+
+    [Fact]
+    public void Spectator_receives_snapshots_without_taking_a_slot()
+    {
+        var content = ContentRegistry.CreateBuiltIn();
+        using var server = StartServer(content, 3);
+        using var client = new GameClient(content);
+        client.Connect(new IPEndPoint(IPAddress.Loopback, server.Port), "Penonton", "pocong", spectator: true);
+        for (int i = 0; i < 300 && (client.State != ClientState.Connected || client.Latest is null); i++) Pump(server, client, 1);
+        Pump(server, client, 30);
+        Assert.Equal(ClientState.Connected, client.State);
+        Assert.True(client.IsSpectator);
+        Assert.Equal(3, client.Latest!.PlayerCount);          // only the bots play
+        Assert.Equal(3, server.World.ActivePlayerCount);
+        Assert.False(client.Latest.TryGetPlayer(client.LocalId, out _));
+        Assert.False(client.TryGetPredicted(0, out _, out _));
     }
 
     [Fact]

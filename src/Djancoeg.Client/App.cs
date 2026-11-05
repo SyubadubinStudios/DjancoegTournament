@@ -52,6 +52,7 @@ public sealed class App : IDisposable
         if (options.Language is "en") Settings.Language = Core.Localization.Language.English;
         if (options.Language is "id") Settings.Language = Core.Localization.Language.Indonesian;
         S.Lang = Settings.Language;
+        Controls.Settings = Settings;
         AssetsDir = Path.Combine(AppContext.BaseDirectory, "assets");
         ModsDir = ModLoader.DefaultModsDirectory;
         ReloadContent();
@@ -60,6 +61,7 @@ public sealed class App : IDisposable
     /// <summary>Rebuilds the content registry from built-ins plus enabled mods (only safe outside a match).</summary>
     public void ReloadContent()
     {
+        ClearThumbnails();
         Content = ContentRegistry.CreateBuiltIn();
         Mods = ModLoader.ApplyEnabled(Content, ModsDir, msg => Console.WriteLine(msg));
         if (Content.CharacterIndexOf(Settings.CharacterId) < 0) Settings.CharacterId = Content.Characters[0].Id;
@@ -68,7 +70,7 @@ public sealed class App : IDisposable
 
     public void Run()
     {
-        var flags = ConfigFlags.Msaa4xHint | (Options.NoVsync ? 0 : ConfigFlags.VSyncHint);
+        var flags = (Settings.Msaa ? ConfigFlags.Msaa4xHint : 0) | (Options.NoVsync ? 0 : ConfigFlags.VSyncHint);
         flags |= Options.Shot is null ? ConfigFlags.ResizableWindow : ConfigFlags.UndecoratedWindow;
         SetConfigFlags(flags);
         SetTraceLogLevel(TraceLogLevel.Warning);
@@ -158,8 +160,11 @@ public sealed class App : IDisposable
             "browser" => new BrowserScreen(this),
             "workshop" => new WorkshopScreen(this),
             "settings" => new SettingsScreen(this),
+            "settings-graphics" => new SettingsScreen(this, null, 1),
+            "settings-access" => new SettingsScreen(this, null, 2),
+            "controls" => new ControlsScreen(this),
             "credits" => new CreditsScreen(this),
-            "game" or "game-tps" or "scoreboard" => StartShotGame(),
+            "game" or "game-tps" or "scoreboard" or "spectate" => StartShotGame(),
             _ => new MainMenuScreen(this),
         };
     }
@@ -171,13 +176,63 @@ public sealed class App : IDisposable
             ArenaId = Options.Arena ?? Settings.ArenaId, BotCount = 7, BotSkill = 0.6f, ScoreLimit = 999, TimeLimitSeconds = 600,
             Mode = GameModeKind.FreeForAll,
         };
-        var session = Game.Session.StartLocal(Content, Settings, match, host: false, null);
+        var session = Game.Session.StartLocal(Content, Settings, match, host: false, null, spectator: Options.Shot == "spectate");
         session.Autopilot = true;
         session.ThirdPerson = Options.Shot == "game-tps";
         return new PlayScreen(this, session) { ShowScoreboardForShot = Options.Shot == "scoreboard" };
     }
 
     public void Go(Screen next) => _pending = next;
+
+    // ------------------------------------------------------------------ arena thumbnails
+
+    private readonly Dictionary<string, RenderTexture2D> _thumbs = [];
+
+    /// <summary>A small rendered preview of an arena (cached; built on first request).</summary>
+    public Texture2D ArenaThumbnail(ArenaDef arena)
+    {
+        if (_thumbs.TryGetValue(arena.Id, out var rt)) return rt.Texture;
+        rt = LoadRenderTexture(320, 180);
+        SetTextureFilter(rt.Texture, TextureFilter.Bilinear);
+        using (var renderer = new ArenaRenderer(arena, Shader))
+        {
+            var min = new System.Numerics.Vector3(float.MaxValue);
+            var max = new System.Numerics.Vector3(float.MinValue);
+            foreach (var b in arena.Boxes) { min = System.Numerics.Vector3.Min(min, b.MinV); max = System.Numerics.Vector3.Max(max, b.MaxV); }
+            var center = (min + max) * 0.5f;
+            var size = max - min;
+            var cam = new Camera3D
+            {
+                Position = new System.Numerics.Vector3(center.X + size.X * 0.55f, MathF.Max(max.Y, 4) + size.Z * 0.45f, center.Z - size.Z * 0.75f),
+                Target = new System.Numerics.Vector3(center.X, 0, center.Z),
+                Up = System.Numerics.Vector3.UnitY, FovY = 45, Projection = CameraProjection.Perspective,
+            };
+            Shader.SetEnvironment(arena);
+            Shader.SetFrame(cam.Position, 0);
+            Shader.BeginLights();
+            foreach (var l in arena.Lights.Take(WorldShader.MaxLights))
+                Shader.AddLight(l.PositionV, l.Radius, ColorUtil.ToVector3(ColorUtil.ParseRgba(l.Color)));
+            Shader.CommitLights();
+            Shader.SetEmissive(0);
+            BeginTextureMode(rt);
+            ClearBackground(Theme.Rgba(ColorUtil.ParseRgba(arena.SkyBottom)));
+            DrawRectangleGradientV(0, 0, 320, 180, Theme.Rgba(ColorUtil.ParseRgba(arena.SkyTop)), Theme.Rgba(ColorUtil.ParseRgba(arena.SkyBottom)));
+            BeginMode3D(cam);
+            BeginShaderMode(Shader.Shader);
+            renderer.Draw(Shader);
+            EndShaderMode();
+            EndMode3D();
+            EndTextureMode();
+        }
+        _thumbs[arena.Id] = rt;
+        return rt.Texture;
+    }
+
+    private void ClearThumbnails()
+    {
+        foreach (var t in _thumbs.Values) UnloadRenderTexture(t);
+        _thumbs.Clear();
+    }
     public void Quit() => _quit = true;
 
     public void ApplyVolume()
@@ -239,6 +294,7 @@ public sealed class App : IDisposable
 
     public void Dispose()
     {
+        if (IsWindowReady()) ClearThumbnails();
         Models?.Dispose();
         Shader?.Dispose();
         Sounds?.Dispose();

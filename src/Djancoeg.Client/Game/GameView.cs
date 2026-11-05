@@ -40,6 +40,22 @@ public sealed partial class GameView : IDisposable
     private Vector3[] _propPos = [], _propRot = [], _propTarget = [], _propRotTarget = [];
 
     private float _kick, _bob, _hitMarker, _damageFlash;
+    private int _killerId = -1;
+    private float _stepDist;
+    private readonly float[] _remoteStep = new float[SimConstants.MaxPlayers];
+
+    // Spectator camera.
+    private int _followId = -1;
+    private bool _freeFly;
+    private Vector3 _freePos = new(0, 12, -20);
+
+    // Optional low-resolution 3D target (Settings > Render scale).
+    private RenderTexture2D _target;
+    private bool _hasTarget;
+
+    // Subtitle for the last announcer line.
+    private string _caption = "";
+    private float _captionUntil;
     private int _lastHealth = 100;
     private string _killedBy = "";
 
@@ -69,7 +85,7 @@ public sealed partial class GameView : IDisposable
         for (int i = 0; i < n; i++) _propPos[i] = _propTarget[i] = arena.Props[i].PositionV;
         _adoptYaw = true;
         _app.Sounds.Play(Audio.Sfx.Gong, 0.8f);
-        _app.Sounds.PlayVoice("tawuran-dimulai");
+        Voice("tawuran-dimulai");
         Shout(S.Lang == Core.Localization.Language.Indonesian ? "TAWURAN DIMULAI!" : "LET THE BRAWL BEGIN!", Theme.Kuning);
     }
 
@@ -85,6 +101,13 @@ public sealed partial class GameView : IDisposable
         if (_latest is null || client.Arena is null) return;
 
         BuildView();
+        if (_session.CameraTogglePressed)
+        {
+            _session.CameraTogglePressed = false;
+            if (client.IsSpectator) { _freeFly = !_freeFly; _freePos = _camera.Position; }
+            else _session.ThirdPerson = !_session.ThirdPerson;
+        }
+        if (client.IsSpectator) UpdateSpectator(dt, inputEnabled);
         if (_adoptYaw && _latest.TryGetPlayer(client.LocalId, out var me) && me.Has(NetPlayerFlags.Alive))
         {
             _session.Yaw = me.Yaw; _session.Pitch = 0; _adoptYaw = false;
@@ -98,6 +121,8 @@ public sealed partial class GameView : IDisposable
         foreach (var (from, text) in _chatIn) AddChat(NameOf(from), text, Theme.Kuning);
 
         UpdateProps(dt);
+        UpdateFootsteps(dt);
+        _fx.Density = _app.Settings.Quality switch { 0 => 0.4f, 1 => 0.7f, _ => 1f };
         _fx.Update(dt);
         _kick = MathF.Max(0, _kick - dt * 6f);
         _hitMarker = MathF.Max(0, _hitMarker - dt * 3f);
@@ -154,7 +179,7 @@ public sealed partial class GameView : IDisposable
         }
     }
 
-    private string NameOf(int id) => (uint)id < SimConstants.MaxPlayers && _session.Client.Names[id].Length > 0 ? _session.Client.Names[id] : "???";
+    private string NameOf(int id) => id == Protocol.SpectatorSlot ? "" : (uint)id < SimConstants.MaxPlayers && _session.Client.Names[id].Length > 0 ? _session.Client.Names[id] : "???";
 
     private bool TryView(int id, out NetPlayer p)
     {
@@ -194,7 +219,7 @@ public sealed partial class GameView : IDisposable
                 break;
             }
             case GameEventType.Hit:
-                if (e.B == me && e.A != me) { _hitMarker = 1; sounds.Play(Sfx.Hit, 0.7f, 1f + MathF.Min(0.5f, e.Value / 200f)); _fx.AddText(e.Position + new Vector3(0, 2.0f, 0), e.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), (e.Flags & (byte)KillFlags.Headshot) != 0 ? Theme.Cabe : Theme.Kuning); }
+                if (e.B == me && e.A != me) { _hitMarker = 1; bool head = (e.Flags & (byte)KillFlags.Headshot) != 0; sounds.Play(head ? Sfx.HitHead : Sfx.Hit, head ? 0.8f : 0.7f, (head ? 1f : 0.85f + e.Weapon * 0.05f) + MathF.Min(0.4f, e.Value / 250f)); _fx.AddText(e.Position + new Vector3(0, 2.0f, 0), e.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), (e.Flags & (byte)KillFlags.Headshot) != 0 ? Theme.Cabe : Theme.Kuning); }
                 if (e.A == me) _fx.AddShake(MathF.Min(0.5f, e.Value / 80f));
                 _fx.Burst(e.Position + new Vector3(0, 1.1f, 0), 6, 3f, null, 0.5f, 0.04f);
                 break;
@@ -243,7 +268,7 @@ public sealed partial class GameView : IDisposable
                 break;
             case GameEventType.MatchStart:
                 sounds.Play(Sfx.Gong, 0.9f);
-                _app.Sounds.PlayVoice("tawuran-dimulai");
+                Voice("tawuran-dimulai");
                 Shout(S.Lang == Core.Localization.Language.Indonesian ? "TAWURAN DIMULAI!" : "LET THE BRAWL BEGIN!", Theme.Kuning);
                 break;
             case GameEventType.MatchEnd:
@@ -256,7 +281,7 @@ public sealed partial class GameView : IDisposable
                 sounds.PlayAt(Sfx.PropHit, e.Position, ListenerPos, _session.Yaw, 1f);
                 break;
             case GameEventType.Streak:
-                if (e.A == me) { Shout(S.StreakShout(e.Value), Theme.Cabe); _app.Sounds.PlayVoice(e.Value >= 8 ? "sakti" : "ngamuk"); }
+                if (e.A == me) { Shout(S.StreakShout(e.Value), Theme.Cabe); Voice(e.Value >= 8 ? "sakti" : "ngamuk"); }
                 else AddFeed(NameOf(e.A) + " - " + S.StreakShout(e.Value), Theme.Cabe);
                 break;
             case GameEventType.ProjectileBounce:
@@ -292,12 +317,13 @@ public sealed partial class GameView : IDisposable
             _app.Sounds.Play(Sfx.Kill, 0.9f);
             if ((flags & KillFlags.Headshot) != 0) Shout(S.T("hud.headshot"), Theme.Cabe);
             else Shout(S.KillShouts[(int)(e.Id % (uint)S.KillShouts.Length)], Theme.Kuning);
-            if (e.Id % 3 == 0 || (flags & KillFlags.Headshot) != 0) _app.Sounds.PlayVoice("mantap");
+            if (e.Id % 3 == 0 || (flags & KillFlags.Headshot) != 0) Voice("mantap");
         }
         if (e.A == me)
         {
             _app.Sounds.Play(Sfx.Death, 0.8f);
             _killedBy = e.A == e.B || (flags & KillFlags.Suicide) != 0 ? "" : killer;
+            _killerId = _killedBy.Length > 0 ? e.B : -1;
         }
         else _app.Sounds.PlayAt(Sfx.Death, e.Position, ListenerPos, _session.Yaw, 0.4f, 1.3f);
     }
@@ -354,6 +380,7 @@ public sealed partial class GameView : IDisposable
         _camera.Up = Vector3.UnitY;
         _camera.FovY = Math.Clamp(fovY, 40, 100);
         _camera.Projection = CameraProjection.Perspective;
+        if (_session.Client.IsSpectator) { SpectatorCamera(); return; }
         if (!LocalState(out var me, out var feet, out var mp)) { _camera.Position = new Vector3(0, 10, -20); _camera.Target = Vector3.Zero; return; }
 
         bool alive = me.Has(NetPlayerFlags.Alive);
@@ -361,8 +388,22 @@ public sealed partial class GameView : IDisposable
         var fwd = Forward();
         float speed = VectorMath.Horizontal(me.Velocity).Length();
         if (me.Has(NetPlayerFlags.OnGround)) _bob += GetFrameTime() * speed * 1.4f;
-        var shake = _fx.Shake > 0 ? new Vector3(MathF.Sin(_time * 63f), MathF.Sin(_time * 71f), MathF.Cos(_time * 57f)) * _fx.Shake * 0.08f : Vector3.Zero;
+        var shake = _fx.Shake > 0 && !settings.ReduceShake ? new Vector3(MathF.Sin(_time * 63f), MathF.Sin(_time * 71f), MathF.Cos(_time * 57f)) * _fx.Shake * 0.08f : Vector3.Zero;
 
+        if (!alive && _killerId >= 0 && TryView(_killerId, out var killer) && killer.Has(NetPlayerFlags.Alive))
+        {
+            // Kill cam: from just above your body, looking at whoever got you.
+            float since = _time - _deathTime[me.Id];
+            var target = killer.Position + new Vector3(0, 1.2f, 0);
+            var from = me.Position + new Vector3(0, 2.4f, 0);
+            var dir = target - from;
+            float dist = dir.Length();
+            float push = MathF.Min(1, since / 1.5f) * MathF.Max(0, dist - 5f) * 0.45f;
+            var desired = from + (dist > 0.01f ? dir / dist : Vector3.UnitZ) * push;
+            _camera.Position = ClipCamera(from, desired);
+            _camera.Target = target;
+            return;
+        }
         if (!alive)
         {
             float a = (_time - _deathTime[me.Id]) * 0.4f;
@@ -416,6 +457,21 @@ public sealed partial class GameView : IDisposable
         }
 
         UpdateCamera();
+        float scale = Math.Clamp(_app.Settings.RenderScale, 0.4f, 1f);
+        bool lowRes = scale < 0.99f;
+        if (lowRes)
+        {
+            int tw = Math.Max(64, (int)(sw * scale)), th = Math.Max(36, (int)(sh * scale));
+            if (!_hasTarget || _target.Texture.Width != tw || _target.Texture.Height != th)
+            {
+                if (_hasTarget) UnloadRenderTexture(_target);
+                _target = LoadRenderTexture(tw, th);
+                SetTextureFilter(_target.Texture, TextureFilter.Bilinear);
+                _hasTarget = true;
+            }
+            BeginTextureMode(_target);
+            sw = tw; sh = th;
+        }
         var top = Theme.Rgba(ColorUtil.ParseRgba(arena.SkyTop));
         var bottom = Theme.Rgba(ColorUtil.ParseRgba(arena.SkyBottom));
         ClearBackground(bottom);
@@ -425,7 +481,7 @@ public sealed partial class GameView : IDisposable
         shader.SetFrame(_camera.Position, _time);
         shader.BeginLights();
         PushArenaLights(arena);
-        _fx.PushLights(shader);
+        _fx.PushLights(shader, _app.Settings.ReduceFlashes ? 0.4f : 1f, _app.Settings.Quality == 0 ? 2 : 8);
         // The jamu (quad) holder glows red.
         for (int i = 0; i < _viewCount; i++)
             if (_view[i].Has(NetPlayerFlags.Quad) && _view[i].Has(NetPlayerFlags.Alive)) shader.AddLight(_view[i].Position + new Vector3(0, 1.2f, 0), 4f, new Vector3(1.2f, 0.2f, 0.1f));
@@ -438,14 +494,22 @@ public sealed partial class GameView : IDisposable
         DrawPadsAndZone(arena);
         DrawPickups(arena);
         DrawProps(arena);
+        if (_app.Settings.BlobShadows) DrawBlobShadows();
         DrawPlayers();
         DrawProjectiles();
         shader.SetEmissive(0.7f);
         _fx.Draw(_camera.Position);
         shader.SetEmissive(0);
         EndShaderMode();
-        if (!_session.ThirdPerson) DrawViewModel();
+        if (!_session.ThirdPerson && !_session.Client.IsSpectator) DrawViewModel();
         EndMode3D();
+
+        if (lowRes)
+        {
+            EndTextureMode();
+            var tex = _target.Texture;
+            DrawTexturePro(tex, new Rectangle(0, 0, tex.Width, -tex.Height), new Rectangle(0, 0, GetScreenWidth(), GetScreenHeight()), Vector2.Zero, 0, Color.White);
+        }
 
         DrawHud();
     }
@@ -458,7 +522,8 @@ public sealed partial class GameView : IDisposable
         for (int i = 0; i < n; i++) _lightSort[i] = (Vector3.DistanceSquared(arena.Lights[i].PositionV, _camera.Position), i);
         var span = _lightSort.AsSpan(0, n);
         span.Sort(static (a, b) => a.d.CompareTo(b.d));
-        for (int k = 0; k < Math.Min(n, 10); k++)
+        int maxArena = _app.Settings.Quality switch { 0 => 3, 1 => 6, _ => 10 };
+        for (int k = 0; k < Math.Min(n, maxArena); k++)
         {
             var l = arena.Lights[span[k].i];
             float flicker = 1f + 0.05f * MathF.Sin(_time * 7f + span[k].i);
@@ -640,5 +705,6 @@ public sealed partial class GameView : IDisposable
     {
         _session.Client.ArenaChanged -= OnArena;
         _arena?.Dispose();
+        if (_hasTarget) UnloadRenderTexture(_target);
     }
 }

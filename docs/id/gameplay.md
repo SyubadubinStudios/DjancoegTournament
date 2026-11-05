@@ -18,6 +18,16 @@
 | Y | Chat |
 | Esc | Menu jeda (ganti jagoan, kamera, pengaturan, keluar) |
 
+Semua aksi kecuali tombol angka senjata bisa **diatur ulang** di *Pengaturan → Atur tombol* (klik aksi, lalu tekan tombol keyboard atau mouse yang baru). Tombol panah, C (jongkok), klik kanan (jurus), dan scroll mouse selalu berfungsi sebagai cadangan.
+
+**Gamepad** (tata letak XInput): stik kiri jalan · stik kanan bidik · RT tembak · A lompat · B jongkok · X jurus · Y kamera · RB/LB senjata · D-pad atas ejek · View papan skor · Menu jeda. Menu bisa dipakai dengan D-pad, A (pilih), dan B (kembali).
+
+![Atur tombol](../screenshots/controls-id.png)
+
+## Crosshair dan suara
+
+Crosshair berubah sesuai senjata: lingkaran untuk raket, cincin seukuran sebaran peluru asli untuk Shotgun Panci, garis panjang untuk Bambu Runcing yang menembus, tanda jatuh untuk proyektil melengkung, dan cincin ledakan untuk senjata peledak. Kena kepala punya bunyi *ting* sendiri. Suara langkah mengikuti permukaan (papan, logam, keramik, rumput, air, terpal) — **jongkok untuk bergerak tanpa suara**.
+
 ## HUD
 
 Info vital dilukis seperti pelat nomor kendaraan: **Darah** dan **Zirah** di kiri bawah, **Peluru** di kanan bawah lengkap dengan label nama senjata dan deretan slot di atasnya. Lingkaran di tengah adalah jeda jurus; berubah kuning dengan tulisan **SIAP** saat bisa dipakai. Jam pertandingan dan baris skor ada di atas, dan kabar pembunuhan di kanan memberi tahu siapa *nyentil* siapa.
@@ -96,3 +106,19 @@ Ledakan yang mengenai diri sendiri hanya separuh damage, tapi dorongannya penuh 
 | **Raja Warung** | Berdiri di zona **sendirian** untuk dapat 1 poin per detik. Dua orang di dalam = direbutkan. |
 
 Setelah pertandingan selesai papan skor menampilkan pemenang selama 10 detik; server yang dibuka lalu pindah ke arena berikutnya.
+
+## Kill cam dan menonton
+
+Saat kamu tumbang, kamera naik dari tubuhmu dan mengarah ke yang menghajarmu, lengkap dengan sisa darahnya, sampai kamu bangkit lagi.
+
+**Tonton** pertandingan lewat tombol *Tonton* di pencari server, atau *Nonton saja* di pengaturan latihan untuk menonton bot. Tembak (atau Senjata berikutnya) berpindah ke pemain lain, Jurus/Senjata sebelumnya kembali, dan tombol kamera beralih ke **kamera bebas** (tombol gerak, Lompat/Jongkok untuk naik/turun, Shift untuk ngebut). Penonton tidak memakai slot pemain (maksimal 8 per server).
+
+![Menonton](../screenshots/spectate-id-pasar-malam.png)
+
+## Grafis dan aksesibilitas
+
+| Tab pengaturan | Pilihan |
+|---|---|
+| Grafis | Kualitas efek (jumlah lampu dan partikel), skala render 3D (50–100%, cocok untuk GPU lambat), sudut pandang, bayangan bulat, MSAA (perlu buka ulang), layar penuh, FPS/ping |
+| Aksesibilitas | Warna tim ramah buta warna (oranye/biru langit menggantikan merah/biru dan label hijau/merah), subtitle suara penyiar, kurangi guncangan layar, kurangi kilatan |
+

@@ -23,6 +23,8 @@ public sealed class Gui
     public bool MouseDown { get; private set; }
     public bool Confirm { get; private set; }
     public bool Back { get; private set; }
+    public bool PadLeft { get; private set; }
+    public bool PadRight { get; private set; }
     public float Time { get; private set; }
     public float Dt { get; private set; }
     public int TextFocus { get; set; } = -1;
@@ -39,13 +41,20 @@ public sealed class Gui
         Clicked = Raylib.IsMouseButtonPressed(MouseButton.Left);
         MouseDown = Raylib.IsMouseButtonDown(MouseButton.Left);
         if (!MouseDown) _dragSlot = -1;
-        Confirm = Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.KpEnter);
-        Back = Raylib.IsKeyPressed(KeyboardKey.Escape);
+        bool pad = Raylib.IsGamepadAvailable(0);
+        Confirm = Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.KpEnter) || (pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.RightFaceDown));
+        Back = Raylib.IsKeyPressed(KeyboardKey.Escape) || (pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.RightFaceRight));
+        PadLeft = pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.LeftFaceLeft);
+        PadRight = pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.LeftFaceRight);
 
         int prevFocus = Focus;
         if (_slotCount > 0)
         {
             bool shift = Raylib.IsKeyDown(KeyboardKey.LeftShift);
+            bool padDown = pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.LeftFaceDown);
+            bool padUp = pad && Raylib.IsGamepadButtonPressed(0, GamepadButton.LeftFaceUp);
+            if (padDown) { Focus = (Focus + 1) % _slotCount; _usingKeyboard = true; }
+            if (padUp) { Focus = (Focus - 1 + _slotCount) % _slotCount; _usingKeyboard = true; }
             if (Raylib.IsKeyPressed(KeyboardKey.Down) || (Raylib.IsKeyPressed(KeyboardKey.Tab) && !shift)) { Focus = (Focus + 1) % _slotCount; _usingKeyboard = true; }
             if (Raylib.IsKeyPressed(KeyboardKey.Up) || (Raylib.IsKeyPressed(KeyboardKey.Tab) && shift)) { Focus = (Focus - 1 + _slotCount) % _slotCount; _usingKeyboard = true; }
         }
@@ -153,8 +162,8 @@ public sealed class Gui
         if (focused)
         {
             float step = (max - min) / 20f;
-            if (Raylib.IsKeyPressed(KeyboardKey.Left) || Raylib.IsKeyPressedRepeat(KeyboardKey.Left)) value = MathF.Max(min, value - step);
-            if (Raylib.IsKeyPressed(KeyboardKey.Right) || Raylib.IsKeyPressedRepeat(KeyboardKey.Right)) value = MathF.Min(max, value + step);
+            if (Raylib.IsKeyPressed(KeyboardKey.Left) || Raylib.IsKeyPressedRepeat(KeyboardKey.Left) || PadLeft) value = MathF.Max(min, value - step);
+            if (Raylib.IsKeyPressed(KeyboardKey.Right) || Raylib.IsKeyPressedRepeat(KeyboardKey.Right) || PadRight) value = MathF.Min(max, value + step);
         }
         DrawRowLabel(r, label, focused);
         float t = (value - min) / (max - min);
@@ -171,7 +180,7 @@ public sealed class Gui
     {
         int slot = Next();
         bool hit = Interact(slot, r, out bool focused);
-        if (hit || (focused && (Raylib.IsKeyPressed(KeyboardKey.Left) || Raylib.IsKeyPressed(KeyboardKey.Right)))) { value = !value; hit = true; }
+        if (hit || (focused && (Raylib.IsKeyPressed(KeyboardKey.Left) || Raylib.IsKeyPressed(KeyboardKey.Right) || PadLeft || PadRight))) { value = !value; hit = true; }
         DrawRowLabel(r, label, focused);
         var pill = new Rectangle(r.X + r.Width - 150, r.Y + r.Height / 2 - 18, 150, 36);
         Raylib.DrawRectangleRec(pill, Theme.Aspal);
@@ -189,8 +198,8 @@ public sealed class Gui
         bool hit = Interact(slot, r, out bool focused);
         bool changed = false;
         if (hit) { index = (index + 1) % options.Count; changed = true; }
-        if (focused && Raylib.IsKeyPressed(KeyboardKey.Right)) { index = (index + 1) % options.Count; changed = true; }
-        if (focused && Raylib.IsKeyPressed(KeyboardKey.Left)) { index = (index - 1 + options.Count) % options.Count; changed = true; }
+        if (focused && (Raylib.IsKeyPressed(KeyboardKey.Right) || PadRight)) { index = (index + 1) % options.Count; changed = true; }
+        if (focused && (Raylib.IsKeyPressed(KeyboardKey.Left) || PadLeft)) { index = (index - 1 + options.Count) % options.Count; changed = true; }
         DrawRowLabel(r, label, focused);
         string text = "< " + options[index] + " >";
         Theme.TextRight(Theme.BodyBold, text, new Vector2(r.X + r.Width, r.Y + r.Height / 2 - 13), 24, focused ? Theme.Kuning : Theme.Kapur);

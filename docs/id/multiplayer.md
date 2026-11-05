@@ -13,6 +13,7 @@ Semua cara bermain memakai kode server otoritatif yang sama. Latihan menjalankan
 | Cari server → LAN | Menyebar paket pencarian ke port 27960–27963 dan menampilkan semua server yang menjawab. |
 | Cari server → Online | Meminta daftar dari master server (Pengaturan → *Alamat master server*), lalu ping tiap server. |
 | Sambung langsung | Ketik `ip:port` atau `hostname:port`. |
+| Tonton | Gabung ke server terpilih sebagai penonton (tanpa slot pemain, maksimal 8 per server). |
 
 ![Pencari server](../screenshots/browser-id.png)
 

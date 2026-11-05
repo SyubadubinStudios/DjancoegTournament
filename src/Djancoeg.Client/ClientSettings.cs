@@ -21,6 +21,25 @@ public sealed class ClientSettings
     public string MasterServer { get; set; } = "127.0.0.1:27950";
     public string LastDirectConnect { get; set; } = "127.0.0.1:27960";
 
+    // Controls (action -> binding code, see Controls.cs).
+    public Dictionary<string, int> Bindings { get; set; } = new(Controls.Defaults);
+    public float GamepadLookSpeed { get; set; } = 1.0f;
+
+    // Graphics.
+    public bool Msaa { get; set; } = true;
+    public float RenderScale { get; set; } = 1.0f;
+    /// <summary>0 = low (4 lights, fewer particles), 1 = medium, 2 = high (16 lights).</summary>
+    public int Quality { get; set; } = 2;
+    public bool BlobShadows { get; set; } = true;
+
+    // Accessibility.
+    public bool ColorBlindTeams { get; set; }
+    public bool Subtitles { get; set; } = true;
+    public bool ReduceShake { get; set; }
+    public bool ReduceFlashes { get; set; }
+
+    public bool SpectatePractice { get; set; }
+
     // Last practice / host setup.
     public string ArenaId { get; set; } = "pasar-malam";
     public int Mode { get; set; }

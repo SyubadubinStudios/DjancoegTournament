@@ -30,6 +30,8 @@ public sealed class Effects
     private Core.Geometry.FastRandom _rng = new(1234);
 
     public float Shake { get; private set; }
+    /// <summary>Fraction of requested particles actually emitted (graphics quality).</summary>
+    public float Density { get; set; } = 1f;
     public ReadOnlySpan<FloatingText> Texts => _texts;
 
     private static readonly Color[] Confetti =
@@ -41,6 +43,7 @@ public sealed class Effects
 
     public void Emit(Vector3 pos, Vector3 vel, Color color, float life, float size, float gravity = 9f, float drag = 1f, bool glow = false)
     {
+        if (Density < 1f && _rng.NextFloat() > Density) return;
         ref var p = ref _particles[_pNext];
         _pNext = (_pNext + 1) % _particles.Length;
         p = new Particle { Pos = pos, Vel = vel, Color = color, Life = life, MaxLife = life, Size = size, Gravity = gravity, Drag = drag, Glow = glow };
@@ -125,14 +128,16 @@ public sealed class Effects
     }
 
     /// <summary>Feeds the brightest active flashes into the world shader's light list.</summary>
-    public void PushLights(WorldShader shader)
+    public void PushLights(WorldShader shader, float intensity = 1f, int max = 8)
     {
-        for (int i = 0; i < _flashes.Length; i++)
+        int n = 0;
+        for (int i = 0; i < _flashes.Length && n < max; i++)
         {
             ref var f = ref _flashes[i];
             if (f.Life <= 0) continue;
             float k = f.Life / f.MaxLife;
-            shader.AddLight(f.Pos, f.Radius, f.Color * k * 2f);
+            shader.AddLight(f.Pos, f.Radius, f.Color * k * 2f * intensity);
+            n++;
         }
     }
 
