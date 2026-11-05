@@ -40,7 +40,7 @@ public struct MoveState
     public float PadCooldown;
 }
 
-public readonly record struct MoveParams(float SpeedMultiplier, float JumpMultiplier, float Scale)
+public readonly record struct MoveParams(float SpeedMultiplier, float JumpMultiplier, float Scale, float GravityScale = 1f, bool Levitate = false)
 {
     public static readonly MoveParams Default = new(1f, 1f, 1f);
     public float HalfWidth => SimConstants.PlayerHalfWidth * MathF.Max(0.75f, Scale);
@@ -106,7 +106,11 @@ public static class PlayerMovement
             AirAccelerate(ref s.Velocity, wishDir, wishSpeed, dt);
         }
 
-        if (!s.OnGround) s.Velocity.Y = MathF.Max(s.Velocity.Y - Gravity * dt, -MaxFallSpeed);
+        if (!s.OnGround)
+        {
+            s.Velocity.Y = MathF.Max(s.Velocity.Y - Gravity * p.GravityScale * dt, p.Levitate ? -3f : -MaxFallSpeed);
+            if (p.Levitate && input.Has(InputButtons.Jump)) s.Velocity.Y = MathF.Max(s.Velocity.Y, 3.5f);
+        }
 
         // Sub-step so fast bodies never tunnel through thin geometry.
         Vector3 total = s.Velocity * dt;

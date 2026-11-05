@@ -17,12 +17,13 @@
 
 | | |
 |---|---|
-| **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*) |
+| **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*), Snack Snatch capture-the-flag (*Rebutan Gorengan*), Greased Pole Race (*Panjat Pinang*) |
 | **Views** | First person and third person — press **V** at any time |
 | **Multiplayer** | Practice vs bots, LAN (auto-discovery), online via a master server, direct IP, dedicated server |
 | **Cross platform** | Windows, Linux, macOS (x64 / Apple Silicon) — .NET 10 + raylib |
-| **Fighters** | 13 built-in: legends, professions, ghosts, animals and memes, each with a signature ability |
-| **Arenas** | Night Market, Intercity Bus Terminal, Rice Fields & Watch Post, Kampung Rooftops |
+| **Fighters** | 17 built-in: legends, professions, ghosts, animals and memes, each with a signature ability |
+| **Arenas** | Night Market, Bus Terminal, Rice Fields & Watch Post, Kampung Rooftops, Harbour, Old Train Station, Village Office |
+| **Weapons** | 10, from a mosquito racket to a satay fan that blows rockets back at their owner |
 | **Chaos** | Knockback and rocket jumps, kickable carts and water jugs that hurt, jump pads, confetti instead of gore |
 | **Modding** | Data-driven fighters, weapons and arenas in JSON; `.djmod` packages; in-game Workshop |
 | **Controls** | Rebindable keys, full gamepad support, per-weapon crosshairs, surface footsteps |
@@ -86,12 +87,13 @@ tools/blender          Reproducible character sculpt + rig + animation script
 
 | | |
 |---|---|
-| **Mode** | Tawuran Bebas (semua lawan semua), Perang Kampung (tim), Raja Warung (kuasai zona) |
+| **Mode** | Tawuran Bebas, Perang Kampung (tim), Raja Warung (kuasai zona), Rebutan Gorengan (capture the flag), Panjat Pinang (balapan ke puncak) |
 | **Kamera** | Orang pertama dan orang ketiga — tekan **V** kapan saja |
 | **Multiplayer** | Latihan lawan bot, LAN (server terdeteksi otomatis), online lewat master server, IP langsung, dedicated server |
 | **Lintas platform** | Windows, Linux, macOS (x64 / Apple Silicon) — .NET 10 + raylib |
-| **Jagoan** | 13 bawaan: legenda, profesi, hantu, hewan, dan meme, masing-masing punya jurus |
-| **Arena** | Pasar Malam Ceria, Terminal Antar Kota, Sawah & Pos Ronda, Atap Kampung |
+| **Jagoan** | 17 bawaan: legenda, profesi, hantu, hewan, dan meme, masing-masing punya jurus |
+| **Arena** | Pasar Malam Ceria, Terminal Antar Kota, Sawah & Pos Ronda, Atap Kampung, Pelabuhan, Stasiun Kereta Tua, Kantor Kelurahan |
+| **Senjata** | 10, dari raket nyamuk sampai kipas sate yang memantulkan roket ke pemiliknya |
 | **Kekacauan** | Knockback dan rocket jump, gerobak dan galon yang bisa ditendang (dan menyakitkan), kasur lompat, konfeti, bukan darah |
 | **Modding** | Jagoan, senjata, dan arena berbasis JSON; paket `.djmod`; Workshop di dalam game |
 | **Kontrol** | Tombol bisa diatur ulang, dukungan gamepad penuh, crosshair per senjata, suara langkah sesuai permukaan |
@@ -104,6 +106,7 @@ tools/blender          Reproducible character sculpt + rig + animation script
 | Orang pertama | Orang ketiga |
 |---|---|
 | ![Orang pertama](docs/screenshots/game-id-pasar-malam.png) | ![Orang ketiga](docs/screenshots/game-tps-id-atap-kampung.png) |
+| ![Rebutan Gorengan](docs/screenshots/game-tps-id-pelabuhan-ctf.png) | ![Panjat Pinang](docs/screenshots/game-tps-en-stasiun-kereta-race.png) |
 
 ### Mulai cepat
 

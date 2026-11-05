@@ -60,9 +60,9 @@ public static class Program
           --config <file.json>   Load MatchSettings from JSON (see docs/en/server.md)
           --port <n>             UDP port (default 27960)
           --name <text>          Server name shown in the browser
-          --arena <id>           pasar-malam | terminal-bus | sawah-ronda | atap-kampung | <mod arena>
+          --arena <id>           pasar-malam | terminal-bus | sawah-ronda | atap-kampung | pelabuhan | stasiun-kereta | kantor-kelurahan | <mod arena>
           --rotation <a,b,c>     Arena rotation after each match
-          --mode <m>             ffa | tdm | koth
+          --mode <m>             ffa | tdm | koth | ctf (Rebutan Gorengan) | race (Panjat Pinang)
           --score <n>            Score limit (frags / team frags / zone seconds)
           --time <seconds>       Time limit (0 = none)
           --bots <n>             Bots to fill the server with
@@ -193,6 +193,8 @@ public static class Program
         "ffa" or "tawuran" or "freeforall" => GameModeKind.FreeForAll,
         "tdm" or "perang" or "team" => GameModeKind.TeamDeathmatch,
         "koth" or "raja" or "kingofthehill" => GameModeKind.KingOfTheHill,
-        _ => throw new ArgumentException($"Unknown mode '{m}'. Use ffa, tdm or koth."),
+        "ctf" or "gorengan" or "capturetheflag" => GameModeKind.CaptureTheFlag,
+        "race" or "pinang" or "panjat" => GameModeKind.Race,
+        _ => throw new ArgumentException($"Unknown mode '{m}'. Use ffa, tdm, koth, ctf or race."),
     };
 }

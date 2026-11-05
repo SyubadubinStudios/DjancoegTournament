@@ -51,6 +51,10 @@ The vitals are painted like Indonesian license plates: **HP** (*Darah*) and **Ar
 | Komodo Dragon | Animal | 130 | 95% | **Dragon Lunge** — dash that bites whoever it hits |
 | Orange Cat (*Kucing Oren*) | Animal | 85 | 115%, small | **Feral Mode** — haste |
 | Deadly Kid (*Bocil Kematian*) | Meme | 80 | 112%, small | **Mic Spam** — shockwave |
+| Kancil the Mouse-Deer (*Si Kancil*) | Legend | 80 | 115%, small | **Clever Leap** — teleport up to 9 m where you look |
+| Leak | Ghost | 95 | 100% | **Night Flight** — float for 5 s, hold jump to rise |
+| Parking Attendant (*Tukang Parkir*) | Profession | 105 | 100% | **Back It Up!** — whistle that pulls everyone nearby towards you |
+| Night-Watch Uncle (*Bapak-Bapak Ronda*) | Meme | 125 | 95%, big | **Danger Drum** — heal 30 and speed up yourself and nearby teammates |
 
 Size matters: small fighters are harder to hit and big ones get pushed around less. The example mod adds **Abang Bakso** (meatball seller, *Runaway Cart* dash).
 
@@ -65,6 +69,11 @@ Size matters: small fighters are harder to hit and big ones get pushed around le
 | 5 | Bouncing Firecracker | Projectile, bounces | Splash damage, great around corners |
 | 6 | Chili Sauce Bazooka | Rocket | Big splash; shoot your feet while jumping to **rocket-jump** |
 | 7 | Sacred Bamboo Spear | Hitscan, piercing | Goes through everyone in a line |
+| 8 | Thrown Stone Mortar (*Cobek Lempar*) | Heavy lob | 95 damage on a direct hit, high arc |
+| 9 | Satay Fan (*Kipas Sate*) | Wind cone | Shoves players and props off ledges and **turns enemy projectiles around** |
+| 4 | Cracker Shuriken (*Kerupuk Shuriken*) | 3 fast projectiles | Shares slot 4 with the Gatling — press 4 again to switch |
+
+Weapons that share a number key cycle when you press it again.
 
 Self-inflicted splash damage is halved, but the knockback is full — that is how rocket jumps work.
 
@@ -95,6 +104,9 @@ Self-inflicted splash damage is halved, but the knockback is full — that is ho
 | Intercity Bus Terminal (*Terminal Antar Kota*) | Golden hour | Overpass, platforms, bus roofs reached by pads |
 | Rice Fields & Watch Post (*Sawah & Pos Ronda*) | Bright day | Open paddies, terraced hills, watch-post hut — sniper heaven |
 | Kampung Rooftops (*Atap Kampung*) | Sunset | Rooftops of different heights, alleys, a river you can fall into |
+| Harbour (*Pelabuhan Sunda Kelapa*) | Dawn | Container stacks, a pinisi schooner with a crow's nest, a channel you can fall into |
+| Old Train Station (*Stasiun Kereta Tua*) | Afternoon | Carriage roofs, footbridge, clock tower |
+| Village Office (*Kantor Kelurahan*) | Noon | Indoor rooms and counters, courtyard with flagpole, walkable roof |
 | Independence Day Field (*Lapangan Tujuhbelasan*, mod) | Day | Greased pole with the Jamu on top |
 
 ## Modes
@@ -104,6 +116,10 @@ Self-inflicted splash damage is halved, but the knockback is full — that is ho
 | **Free-for-All Brawl** (*Tawuran Bebas*) | +1 per kill, −1 per suicide. First to the score limit, or highest at the time limit. |
 | **Village vs Village** (*Perang Kampung*) | Upper vs Lower Village. Team kills count; friendly fire off by default. |
 | **King of the Warung** (*Raja Warung*) | Stand in the zone **alone** to earn 1 point per second. Two people inside = contested. |
+| **Snack Snatch** (*Rebutan Gorengan*) | Capture the flag with a giant fried banana. Grab the other village's gorengan and bring it to your plate while yours is at home (team +1, carrier +5). Dropped gorengan return after 20 s or when a defender touches them. |
+| **Greased Pole Race** (*Panjat Pinang*) | Race to the prize at the top of the arena (crow's nest, clock tower, office roof…). Touch it to score, then you start again from a spawn. Knock climbers off! |
+
+![Rebutan Gorengan at the harbour](../screenshots/game-tps-id-pelabuhan-ctf.png)
 
 After a match ends the scoreboard shows the winner for 10 seconds; hosted servers then rotate to the next arena.
 

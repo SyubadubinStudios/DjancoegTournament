@@ -43,6 +43,7 @@ public sealed partial class GameWorld
             case WeaponKind.Projectile:
                 for (int i = 0; i < w.Pellets; i++) SpawnProjectile(id, w, eye + fwd * 0.4f, Spread(fwd, w.SpreadDegrees) * w.ProjectileSpeed);
                 break;
+            case WeaponKind.Blast: FireBlast(id, w, eye, fwd); break;
         }
     }
 
@@ -117,6 +118,49 @@ public sealed partial class GameWorld
             HitPropsAlongRay(eye, dir, maxDist, w.Knockback * 2f, id);
         }
         Push(new GameEvent { Type = GameEventType.Shot, A = (byte)id, Weapon = (byte)Players[id].Weapon, Position = eye, Vector = eye + dir * endDist });
+    }
+
+    /// <summary>Kipas Sate: a cone of wind that shoves players and props and turns enemy projectiles around.</summary>
+    private void FireBlast(int id, WeaponDef w, Vector3 eye, Vector3 fwd)
+    {
+        float cos = MathF.Cos(w.BlastConeDegrees * MathF.PI / 180f);
+        Push(new GameEvent { Type = GameEventType.Shot, A = (byte)id, Weapon = (byte)Players[id].Weapon, Position = eye, Vector = eye + fwd * w.Range, Flags = 2 });
+        for (int i = 0; i < Players.Length; i++)
+        {
+            if (i == id || !Players[i].Active || !Players[i].Alive) continue;
+            var center = BodyBox(Players[i]).Center;
+            var to = center - eye;
+            float d = to.Length();
+            if (d > w.Range || d < 0.01f || Vector3.Dot(to / d, fwd) < cos) continue;
+            if (!Collision.LineOfSight(eye, center)) continue;
+            float falloff = 1f - d / w.Range * 0.6f;
+            var dir = Vector3.Normalize(fwd + new Vector3(0, 0.35f, 0));
+            ApplyDamage(i, id, Players[id].Weapon, w.Damage * falloff, dir, w.Knockback * falloff, KillFlags.None);
+        }
+        for (int i = 0; i < Props.Length; i++)
+        {
+            ref var pr = ref Props[i];
+            var to = pr.Position - eye;
+            float d = to.Length();
+            if (!pr.Active || d > w.Range * 1.2f || d < 0.01f || Vector3.Dot(to / d, fwd) < cos) continue;
+            pr.Velocity += (fwd + new Vector3(0, 0.4f, 0)) * w.Knockback * 1.2f * (20f / pr.Mass);
+            pr.AngularVelocity += _rng.InsideUnitSphere() * 8f;
+            pr.LastToucher = id; pr.LastTouchTime = MatchTime;
+        }
+        for (int i = 0; i < Projectiles.Length; i++)
+        {
+            ref var pr = ref Projectiles[i];
+            if (!pr.Active || pr.Owner == id) continue;
+            var to = pr.Position - eye;
+            float d = to.Length();
+            if (d > w.Range * 1.3f || d < 0.01f || Vector3.Dot(to / d, fwd) < cos * 0.9f) continue;
+            float speed = MathF.Max(12f, pr.Velocity.Length());
+            pr.Velocity = fwd * speed;
+            pr.Owner = (byte)id;
+            pr.Age = 0;
+            pr.Life = MathF.Max(pr.Life, 1.5f);
+            Push(new GameEvent { Type = GameEventType.Deflect, A = (byte)id, Weapon = pr.Weapon, Position = pr.Position });
+        }
     }
 
     private void HitPropsAlongRay(Vector3 origin, Vector3 dir, float maxDist, float impulse, int attacker)
@@ -323,7 +367,7 @@ public sealed partial class GameWorld
         if (suicide)
         {
             flags |= KillFlags.Suicide;
-            if (Settings.Mode != GameModeKind.KingOfTheHill) v.Score--;
+            if (Settings.Mode is GameModeKind.FreeForAll or GameModeKind.TeamDeathmatch) v.Score--;
             attacker = victim;
         }
         else
@@ -331,8 +375,8 @@ public sealed partial class GameWorld
             ref var a = ref Players[attacker];
             a.Kills++;
             a.Streak++;
-            if (IsTeamMode) TeamScores[a.Team]++;
-            else if (Settings.Mode == GameModeKind.FreeForAll) a.Score++;
+            if (Settings.Mode == GameModeKind.TeamDeathmatch) TeamScores[a.Team]++;
+            else if (Settings.Mode is GameModeKind.FreeForAll or GameModeKind.CaptureTheFlag) a.Score++;
             if (a.Streak is 3 or 5 or 8 or 12)
                 Push(new GameEvent { Type = GameEventType.Streak, A = (byte)attacker, Value = (short)a.Streak });
         }
@@ -377,7 +421,22 @@ public sealed partial class GameWorld
             case AbilityKind.Invisibility:
             case AbilityKind.Haste:
             case AbilityKind.StoneSkin:
+            case AbilityKind.Levitate:
                 p.AbilityTimer = ab.Duration;
+                if (ab.Kind == AbilityKind.Levitate) { p.Move.Velocity.Y = MathF.Max(p.Move.Velocity.Y, 4f); p.Move.OnGround = false; }
+                break;
+            case AbilityKind.Teleport:
+            {
+                var from = p.Move.Position;
+                if (!Teleport(id, ab.Power)) { p.AbilityCooldown = 0.5f; return; }
+                Push(new GameEvent { Type = GameEventType.Ability, A = (byte)id, Value = (short)ab.Kind, Position = from, Vector = Players[id].Move.Position });
+                return;
+            }
+            case AbilityKind.Pull:
+                Shockwave(id, 9f * MathF.Sqrt(ab.Power), 6f * ab.Power, -11f * ab.Power);
+                break;
+            case AbilityKind.Rally:
+                Rally(id, ab.Power);
                 break;
         }
         Push(new GameEvent { Type = GameEventType.Ability, A = (byte)id, Value = (short)ab.Kind, Position = p.Move.Position });
@@ -393,8 +452,8 @@ public sealed partial class GameWorld
             float d = to.Length();
             if (d > radius) continue;
             var dir = Vector3.Normalize(VectorMath.Horizontal(to) + new Vector3(0, 0.01f, 0));
-            dir = Vector3.Normalize(dir + new Vector3(0, 0.55f, 0));
-            ApplyDamage(i, id, 255, damage * (1f - d / radius * 0.5f), dir, force, KillFlags.Ability);
+            dir = force >= 0 ? Vector3.Normalize(dir + new Vector3(0, 0.55f, 0)) : Vector3.Normalize(-dir + new Vector3(0, 0.3f, 0));
+            ApplyDamage(i, id, 255, damage * (1f - d / radius * 0.5f), dir, MathF.Abs(force) * (force < 0 ? MathF.Min(1, d / radius + 0.3f) : 1f), KillFlags.Ability);
         }
         for (int i = 0; i < Props.Length; i++)
         {
@@ -402,11 +461,47 @@ public sealed partial class GameWorld
             var to = pr.Position - center;
             float d = to.Length();
             if (!pr.Active || d > radius) continue;
-            pr.Velocity += (Vector3.Normalize(to + new Vector3(0, 0.01f, 0)) + new Vector3(0, 0.7f, 0)) * force * (20f / pr.Mass);
+            pr.Velocity += (Vector3.Normalize(to + new Vector3(0, 0.01f, 0)) * MathF.Sign(force) + new Vector3(0, 0.7f, 0)) * MathF.Abs(force) * (20f / pr.Mass);
             pr.AngularVelocity += _rng.InsideUnitSphere() * 10f;
             pr.LastToucher = id; pr.LastTouchTime = MatchTime;
         }
         Push(new GameEvent { Type = GameEventType.Explosion, A = (byte)id, Weapon = 255, Position = center, Value = (short)(radius * 10), Flags = 1 });
+    }
+
+    /// <summary>Si Kancil: blink forward up to 9 m x power, stopping before walls; fails if there is no room.</summary>
+    private bool Teleport(int id, float power)
+    {
+        ref var p = ref Players[id];
+        var mp = ParamsFor(p);
+        var dir = VectorMath.Forward(p.Yaw, MathF.Max(-0.2f, MathF.Min(0.5f, p.Pitch)));
+        var eye = EyePosition(p);
+        float max = 9f * power;
+        if (Collision.Raycast(eye, dir, max, out float hit, out _)) max = hit - 0.6f;
+        for (float d = max; d >= 2f; d -= 0.5f)
+        {
+            var feet = p.Move.Position + dir * d;
+            if (Collision.Overlaps(Aabb.FromFeet(feet, mp.HalfWidth, mp.Height(false)))) continue;
+            p.Move.Position = feet;
+            p.Move.Velocity = dir * 6f;
+            p.Move.OnGround = false;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>Bapak-bapak Ronda: heal and speed up yourself and nearby teammates.</summary>
+    private void Rally(int id, float power)
+    {
+        ref readonly var caster = ref Players[id];
+        for (int i = 0; i < Players.Length; i++)
+        {
+            ref var p = ref Players[i];
+            if (!p.Active || !p.Alive) continue;
+            bool friend = i == id || (IsTeamMode && p.Team == caster.Team);
+            if (!friend || Vector3.Distance(p.Move.Position, caster.Move.Position) > 9f) continue;
+            p.Health = MathF.Min(p.MaxHealthOf(this) + 15, p.Health + power);
+            p.BoostTimer = 4f;
+        }
     }
 
     private void DashContact(int id)

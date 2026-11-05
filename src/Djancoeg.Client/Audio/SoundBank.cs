@@ -6,6 +6,7 @@ namespace Djancoeg.Client.Audio;
 public enum Sfx
 {
     UiMove, UiClick, Slingshot, Shotgun, Gatling, Thump, Rocket, Zap, Spear, Explosion, Jump, Pad, Land, Pickup, Hit, Kill, Death, Ability, Taunt, Gong, Bounce, PropHit,
+    Wind, Crunch, Whistle, Drum, Blink,
     HitHead, StepGround, StepWood, StepMetal, StepGrass, StepTile, StepWater, StepFabric,
 }
 
@@ -125,6 +126,11 @@ public sealed unsafe class SoundBank : IDisposable
             Sfx.Gong => Tone(2.2f, t => (Sin(t, 110) + Sin(t, 113.5f) * 0.8f + Sin(t, 220.7f) * 0.3f) * Exp(t, 1.4f) * 0.5f), // gamelan gong with beating
             Sfx.Bounce => Tone(0.08f, t => Sin(t, 600) * Exp(t, 50) * 0.4f),
             Sfx.PropHit => Tone(0.25f, t => (Noise() * 0.6f + Sin(t, 120)) * Exp(t, 16) * 0.7f),
+            Sfx.Wind => Tone(0.45f, t => Noise() * Env(t, 0.45f, 0.05f) * (0.4f + 0.3f * MathF.Sin(t * 30)) * 0.6f),
+            Sfx.Crunch => Tone(0.12f, t => (Noise() * (MathF.Sin(t * 400) > 0 ? 1 : 0.3f)) * Exp(t, 25) * 0.6f),
+            Sfx.Whistle => Tone(0.6f, t => Sin(t, 2800 + 120 * MathF.Sin(t * 70)) * Env(t, 0.6f, 0.01f) * 0.35f),
+            Sfx.Drum => Tone(0.5f, t => (Sin(t, 330) * Exp(t, 9) + Sin(t, 330) * Exp(MathF.Max(0, t - 0.18f), 9) * (t > 0.18f ? 1 : 0)) * 0.5f), // kentongan "tok tok"
+            Sfx.Blink => Tone(0.25f, t => Sin(t, 600 + t * 3000) * Env(t, 0.25f, 0.005f) * 0.35f),
             Sfx.HitHead => Tone(0.16f, t => (Sin(t, 2400) * 0.5f + Sin(t, 3600) * 0.3f) * Exp(t, 22) * 0.45f),
             Sfx.StepGround => Tone(0.09f, t => (Noise() * 0.5f + Sin(t, 70)) * Exp(t, 45) * 0.5f),
             Sfx.StepWood => Tone(0.1f, t => (Sin(t, 210 - t * 400) + Noise() * 0.2f) * Exp(t, 38) * 0.55f),

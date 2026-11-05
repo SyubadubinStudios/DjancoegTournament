@@ -182,6 +182,8 @@ public static class ModeNames
         GameModeKind.FreeForAll => ("Free-for-All Brawl", "Tawuran Bebas"),
         GameModeKind.TeamDeathmatch => ("Village vs Village", "Perang Kampung"),
         GameModeKind.KingOfTheHill => ("King of the Warung", "Raja Warung"),
+        GameModeKind.CaptureTheFlag => ("Snack Snatch", "Rebutan Gorengan"),
+        GameModeKind.Race => ("Greased Pole Race", "Panjat Pinang"),
         _ => (m.ToString(), m.ToString()),
     };
 }

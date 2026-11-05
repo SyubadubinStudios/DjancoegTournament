@@ -1,5 +1,6 @@
 using System.Numerics;
 using Djancoeg.Client.Audio;
+using Djancoeg.Client.Render;
 using Djancoeg.Client.Ui;
 using Djancoeg.Core;
 using Djancoeg.Core.Content;
@@ -85,6 +86,126 @@ public sealed partial class GameView
         {
             var wr = new Rectangle(24 * u, sh - 108 * u, 210 * u, 84 * u);
             Gui.Plate(wr, S.T("hud.health"), Math.Max(0, (int)p.Health).ToString(System.Globalization.CultureInfo.InvariantCulture), p.Health <= 35 ? Theme.Cabe : Theme.Kapur, 50 * u);
+        }
+    }
+
+    // ------------------------------------------------------------------ v1.2 objectives
+
+    private void WindGust(Vector3 from, Vector3 to)
+    {
+        var dir = to - from;
+        float len = dir.Length();
+        if (len < 0.01f) return;
+        dir /= len;
+        var rng = new FastRandom((ulong)(_time * 1000));
+        for (int i = 0; i < 26; i++)
+        {
+            var jitter = rng.InsideUnitSphere() * 0.35f;
+            _fx.Emit(from + dir * 0.6f, (dir + jitter) * rng.Range(9f, 15f), new Color(245, 240, 225, 160), 0.45f, 0.06f, 0f, 3f);
+        }
+    }
+
+    private string TeamName(int team) => S.T(team == 0 ? "hud.team0" : "hud.team1");
+
+    private void OnFlagEvent(in GameEvent e, int me)
+    {
+        int team = e.Value;
+        string key = e.Type switch
+        {
+            GameEventType.FlagTaken => "hud.flagTaken",
+            GameEventType.FlagDropped => "hud.flagDropped",
+            GameEventType.FlagReturned => "hud.flagReturned",
+            _ => "hud.flagCaptured",
+        };
+        string line = S.T(key).Replace("{0}", NameOf(e.A)).Replace("{1}", TeamName(team));
+        AddFeed(line, TeamColor(team));
+        var sfx = e.Type switch { GameEventType.FlagCaptured => Sfx.Gong, GameEventType.FlagTaken => Sfx.Whistle, GameEventType.FlagReturned => Sfx.Drum, _ => Sfx.PropHit };
+        _app.Sounds.Play(sfx, 0.7f);
+        if (e.Type == GameEventType.FlagCaptured)
+        {
+            _fx.Burst(e.Position + new Vector3(0, 1.5f, 0), 80, 9f, null, 1.5f, 0.08f);
+            Shout(line.ToUpperInvariant().Length > 26 ? (S.Lang == Core.Localization.Language.Indonesian ? "GORENGAN MASUK!" : "SNACK SCORED!") : line.ToUpperInvariant(), TeamColor(1 - team));
+        }
+        if (e.Type == GameEventType.FlagTaken && e.A == me) Shout(S.T("hud.youCarry"), Theme.Kuning);
+    }
+
+    private void DrawObjectives(ArenaDef arena)
+    {
+        var s = _latest!;
+        var mode = _session.Client.Mode;
+        if (mode == GameModeKind.CaptureTheFlag)
+        {
+            var world = new GameWorldProbe(arena, _session.Client.Collision);
+            for (int t = 0; t < 2; t++)
+            {
+                Primitives.FlagBase(world.Home(t), TeamColor(t));
+                var f = s.Flags[t];
+                var pos = f.Position;
+                if (f.State == 1 && TryView(f.Carrier, out var carrier))
+                {
+                    var cd = _session.Content.Characters[Math.Min(carrier.Character, _session.Content.Characters.Count - 1)];
+                    pos = carrier.Position + new Vector3(0, SimConstants.PlayerHeight * cd.Scale - 0.6f, 0);
+                    if (carrier.Id == _session.Client.LocalId && !_session.ThirdPerson) continue;
+                }
+                Primitives.Gorengan(pos, _time + t, TeamColor(t), f.State == 1);
+            }
+        }
+        else if (mode == GameModeKind.Race)
+        {
+            var goal = arena.RaceGoal is { Length: 3 } g ? new Vector3(g[0], g[1], g[2]) : arena.ZoneCenterV;
+            Primitives.RaceGoal(goal, MathF.Max(1.2f, arena.ZoneRadius), _time);
+        }
+    }
+
+    private void DrawObjectiveHud(int sw, int sh, float u)
+    {
+        var s = _latest!;
+        var mode = _session.Client.Mode;
+        if (mode == GameModeKind.CaptureTheFlag)
+        {
+            for (int t = 0; t < 2; t++)
+            {
+                var f = s.Flags[t];
+                string state = f.State switch { 0 => S.T("hud.flagHome"), 1 => S.T("hud.flagCarried") + ": " + NameOf(f.Carrier), _ => S.T("hud.flagDroppedShort") };
+                var r = new Rectangle(sw / 2f + (t == 0 ? -320 * u : 20 * u), 150 * u, 300 * u, 34 * u);
+                DrawRectangleRec(r, Theme.Fade(Theme.Aspal, 0.8f));
+                DrawRectangleRec(new Rectangle(r.X, r.Y, 8 * u, r.Height), TeamColor(t));
+                Theme.Text(Theme.BodyBold, "GORENGAN " + TeamName(t).ToUpperInvariant() + " · " + state, new Vector2(r.X + 16 * u, r.Y + 7 * u), 16 * u, f.State == 0 ? Theme.Kapur : Theme.Kuning);
+            }
+            if (s.Flags[0].Carrier == _session.Client.LocalId || s.Flags[1].Carrier == _session.Client.LocalId)
+                Theme.TextCentered(Theme.Display, S.T("hud.youCarry"), new Vector2(sw / 2f, sh * 0.72f), 26 * u, Theme.Lerp(Theme.Kuning, Theme.Cabe, 0.5f + 0.5f * MathF.Sin(_time * 6)));
+        }
+        else if (mode == GameModeKind.Race && s.TryGetPlayer(_session.Client.LocalId, out var me) && me.Has(Net.NetPlayerFlags.Alive))
+        {
+            var arena = _session.Client.Arena!;
+            var goal = arena.RaceGoal is { Length: 3 } g ? new Vector3(g[0], g[1], g[2]) : arena.ZoneCenterV;
+            float d = Vector3.Distance(goal, me.Position);
+            Theme.TextCentered(Theme.BodyBold, S.T("hud.raceHint").Replace("{0}", d.ToString("0", System.Globalization.CultureInfo.InvariantCulture)), new Vector2(sw / 2f, 150 * u), 20 * u, Theme.Kuning);
+            // Edge arrow pointing at the goal when it is off-screen.
+            var sp = GetWorldToScreen(goal + new Vector3(0, 1.5f, 0), _camera);
+            var fwd = Vector3.Normalize(_camera.Target - _camera.Position);
+            bool behind = Vector3.Dot(goal - _camera.Position, fwd) < 0;
+            if (behind) sp = new Vector2(sw - sp.X, sh - sp.Y);
+            var c = new Vector2(Math.Clamp(sp.X, 40 * u, sw - 40 * u), Math.Clamp(sp.Y, 60 * u, sh - 140 * u));
+            DrawCircleV(c, 16 * u, Theme.Aspal);
+            DrawCircleV(c, 12 * u, Theme.Kuning);
+            Theme.TextCentered(Theme.Display, "!", c, 18 * u, Theme.Aspal);
+        }
+    }
+
+    /// <summary>Client-side mirror of <see cref="GameWorld.FlagHome"/> so bases render where the server keeps them.</summary>
+    private readonly struct GameWorldProbe(ArenaDef arena, CollisionWorld? col)
+    {
+        public Vector3 Home(int team)
+        {
+            if (arena.FlagBases.Count >= 2 && arena.FlagBases[team].Length == 3)
+                return new Vector3(arena.FlagBases[team][0], arena.FlagBases[team][1], arena.FlagBases[team][2]);
+            Vector3 sum = Vector3.Zero; int n = 0;
+            foreach (var s in arena.Spawns) if (s.Team == team) { sum += s.PositionV; n++; }
+            if (n == 0) return arena.ZoneCenterV + new Vector3(team == 0 ? -10 : 10, 0, 0);
+            var c = sum / n;
+            if (col is not null && col.Raycast(c + new Vector3(0, 3, 0), -Vector3.UnitY, 10, out float d, out _)) c.Y = c.Y + 3 - d;
+            return c;
         }
     }
 

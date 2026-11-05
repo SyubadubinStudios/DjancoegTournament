@@ -89,6 +89,7 @@ public sealed partial class GameView
         DrawChat(u, sh);
         if (haveMe) DrawVitals(sw, sh, u, me, s);
         else if (_session.Client.IsSpectator && s.Phase == MatchPhase.Playing) DrawSpectatorHud(sw, sh, u);
+        DrawObjectiveHud(sw, sh, u);
         DrawShout(sw, sh, u);
         DrawCaption(sw, sh, u);
 

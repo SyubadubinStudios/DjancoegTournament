@@ -40,7 +40,7 @@ Single UDP socket per endpoint (`UdpTransport`) using the allocation-free `Socke
 |---|---|---|
 | Connect / Accept / Reject | C→S / S→C | name, fighter, content signature, spectator flag / slot (255 = spectator), arena, mode, limits |
 | Input | C→S, 60 Hz | echo time, event ack, RTT, the last 4 inputs (16 bytes each) |
-| Snapshot | S→C, 30 Hz | tick, input ack, match state, all players, own inventory, pickup bitmask, events, projectiles, props |
+| Snapshot | S→C, 30 Hz | tick, input ack, match state, gorengan flags, all players, own inventory, pickup bitmask, events, projectiles, props |
 | PlayerInfo | S→C, 1 Hz + on change | names and bot flags |
 | Chat, ChangeCharacter, Disconnect | both | |
 | DiscoveryRequest/Response | browser↔server | LAN broadcast / unicast ping |

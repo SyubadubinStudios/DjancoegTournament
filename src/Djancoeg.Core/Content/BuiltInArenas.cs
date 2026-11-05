@@ -4,11 +4,11 @@ using Djancoeg.Core.Localization;
 namespace Djancoeg.Core.Content;
 
 /// <summary>The four arenas that ship with the game, generated procedurally from box primitives.</summary>
-public static class BuiltInArenas
+public static partial class BuiltInArenas
 {
     private static LocalizedText T(string en, string id) => new(en, id);
 
-    public static IReadOnlyList<ArenaDef> All { get; } = [PasarMalam(), TerminalBus(), SawahRonda(), AtapKampung()];
+    public static IReadOnlyList<ArenaDef> All { get; } = [PasarMalam(), TerminalBus(), SawahRonda(), AtapKampung(), Pelabuhan(), Stasiun(), Kelurahan()];
 
     // ------------------------------------------------------------------ Pasar Malam
     private static ArenaDef PasarMalam()

@@ -193,6 +193,8 @@ public sealed partial class GameWorld
     private void UpdateRules(float dt)
     {
         if (Settings.Mode == GameModeKind.KingOfTheHill) UpdateZone(dt);
+        else if (Settings.Mode == GameModeKind.CaptureTheFlag) UpdateFlags(dt);
+        else if (Settings.Mode == GameModeKind.Race) UpdateRace();
 
         int limit = Settings.ScoreLimit;
         int winner = -1;
@@ -229,6 +231,95 @@ public sealed partial class GameWorld
                 (Players[i].Score == Players[best].Score && Players[i].Deaths < Players[best].Deaths)) best = i;
         }
         return best;
+    }
+
+    // ------------------------------------------------------------------ Rebutan Gorengan (capture the flag)
+
+    private const float FlagTouch = 1.4f;
+    private const float FlagReturnSeconds = 20f;
+
+    private void UpdateFlags(float dt)
+    {
+        for (int t = 0; t < 2; t++)
+        {
+            ref var f = ref Flags[t];
+            if (f.Carrier >= 0)
+            {
+                ref readonly var c = ref Players[f.Carrier];
+                if (!c.Active || !c.Alive)
+                {
+                    Push(new GameEvent { Type = GameEventType.FlagDropped, A = (byte)f.Carrier, Value = (short)t, Position = f.Position });
+                    f.Carrier = -1;
+                    f.ReturnTimer = FlagReturnSeconds;
+                    if (f.Position.Y < Collision.KillY + 1) ReturnFlag(t, -1);
+                }
+                else f.Position = c.Move.Position + new Vector3(0, 0.2f, 0);
+            }
+            else if (!f.AtHome)
+            {
+                f.ReturnTimer -= dt;
+                if (f.ReturnTimer <= 0) ReturnFlag(t, -1);
+            }
+
+            for (int i = 0; i < Players.Length && f.Carrier < 0; i++)
+            {
+                ref var p = ref Players[i];
+                if (!p.Active || !p.Alive) continue;
+                if (Vector3.DistanceSquared(p.Move.Position, f.Position) > FlagTouch * FlagTouch) continue;
+                if (p.Team == t)
+                {
+                    if (!f.AtHome) { p.Score += 1; ReturnFlag(t, i); }
+                }
+                else
+                {
+                    f.Carrier = i;
+                    f.AtHome = false;
+                    Push(new GameEvent { Type = GameEventType.FlagTaken, A = (byte)i, Value = (short)t, Position = f.Position });
+                }
+            }
+        }
+
+        // Capture: bring the enemy gorengan to your own base while yours is at home.
+        for (int t = 0; t < 2; t++)
+        {
+            int enemy = 1 - t;
+            ref var ef = ref Flags[enemy];
+            if (ef.Carrier < 0 || !Flags[t].AtHome) continue;
+            ref var carrier = ref Players[ef.Carrier];
+            if (carrier.Team != t) continue;
+            if (Vector3.DistanceSquared(carrier.Move.Position, Flags[t].Home) > FlagTouch * FlagTouch * 1.5f) continue;
+            TeamScores[t]++;
+            carrier.Score += 5;
+            Push(new GameEvent { Type = GameEventType.FlagCaptured, A = (byte)ef.Carrier, Value = (short)enemy, Position = Flags[t].Home });
+            ef.Carrier = -1;
+            ef.AtHome = true;
+            ef.Position = ef.Home;
+        }
+    }
+
+    private void ReturnFlag(int team, int by)
+    {
+        ref var f = ref Flags[team];
+        f.Carrier = -1; f.AtHome = true; f.Position = f.Home; f.ReturnTimer = 0;
+        Push(new GameEvent { Type = GameEventType.FlagReturned, A = (byte)Math.Max(0, by), B = (byte)(by < 0 ? 1 : 0), Value = (short)team, Position = f.Home });
+    }
+
+    // ------------------------------------------------------------------ Panjat Pinang (race to the top)
+
+    private void UpdateRace()
+    {
+        var goal = RaceGoal;
+        float r = MathF.Max(1.2f, Arena.ZoneRadius);
+        for (int i = 0; i < Players.Length; i++)
+        {
+            ref var p = ref Players[i];
+            if (!p.Active || !p.Alive) continue;
+            var d = p.Move.Position - goal;
+            if (d.X * d.X + d.Z * d.Z > r * r || d.Y < -0.6f || d.Y > 2.5f) continue;
+            p.Score++;
+            Push(new GameEvent { Type = GameEventType.RaceGoal, A = (byte)i, Value = (short)p.Score, Position = goal });
+            Respawn(i);
+        }
     }
 
     private void UpdateZone(float dt)

@@ -51,6 +51,10 @@ Info vital dilukis seperti pelat nomor kendaraan: **Darah** dan **Zirah** di kir
 | Komodo | Hewan | 130 | 95% | **Terjangan Naga** — terjang dan gigit yang tertabrak |
 | Kucing Oren | Hewan | 85 | 115%, kecil | **Mode Barbar** — ngebut |
 | Bocil Kematian | Meme | 80 | 112%, kecil | **Teriak Mabar** — gelombang kejut |
+| Si Kancil | Legenda | 80 | 115%, kecil | **Lompat Cerdik** — pindah kilat sampai 9 m ke arah pandangan |
+| Leak | Hantu | 95 | 100% | **Terbang Malam** — melayang 5 detik, tahan lompat untuk naik |
+| Tukang Parkir | Profesi | 105 | 100% | **Terus, Terus, Mundur!** — peluit yang menarik semua orang di dekatmu |
+| Bapak-Bapak Ronda | Meme | 125 | 95%, besar | **Kentongan Bahaya** — pulih 30 dan ngebut untuk diri sendiri dan teman setim di dekatmu |
 
 Ukuran berpengaruh: jagoan kecil lebih susah ditembak, jagoan besar lebih susah didorong. Contoh mod menambahkan **Abang Bakso** (jurus *Gerobak Ngebut*).
 
@@ -65,6 +69,11 @@ Ukuran berpengaruh: jagoan kecil lebih susah ditembak, jagoan besar lebih susah 
 | 5 | Petasan Banting | Proyektil memantul | Ledakan area, cocok buat pojokan |
 | 6 | Bazooka Sambal | Roket | Ledakan besar; tembak kaki sambil lompat untuk **rocket jump** |
 | 7 | Bambu Runcing Sakti | Hitscan menembus | Tembus semua yang berbaris |
+| 8 | Cobek Lempar | Lemparan berat | Damage 95 kalau kena langsung, lengkungan tinggi |
+| 9 | Kipas Sate | Hembusan angin | Mendorong pemain dan properti jatuh, dan **memantulkan proyektil musuh** |
+| 4 | Kerupuk Shuriken | 3 proyektil cepat | Satu slot dengan Gatling — tekan 4 lagi untuk ganti |
+
+Senjata yang berbagi tombol angka akan bergiliran saat tombolnya ditekan lagi.
 
 Ledakan yang mengenai diri sendiri hanya separuh damage, tapi dorongannya penuh — itulah cara rocket jump.
 
@@ -95,6 +104,9 @@ Ledakan yang mengenai diri sendiri hanya separuh damage, tapi dorongannya penuh 
 | Terminal Antar Kota | Senja | Jembatan penyeberangan, peron, atap bus lewat kasur lompat |
 | Sawah & Pos Ronda | Siang terang | Sawah terbuka, terasering, pos ronda — surganya penembak jitu |
 | Atap Kampung | Matahari terbenam | Atap berbeda tinggi, gang sempit, kali yang bisa bikin kecebur |
+| Pelabuhan Sunda Kelapa | Subuh | Tumpukan kontainer, kapal pinisi dengan sarang pengintai, kanal yang bisa bikin kecebur |
+| Stasiun Kereta Tua | Sore | Atap gerbong, jembatan penyeberangan, menara jam |
+| Kantor Kelurahan | Siang | Ruangan dan loket di dalam gedung, halaman dengan tiang bendera, atap yang bisa dipijak |
 | Lapangan Tujuhbelasan (mod) | Siang | Panjat pinang dengan Jamu di puncaknya |
 
 ## Mode
@@ -104,6 +116,10 @@ Ledakan yang mengenai diri sendiri hanya separuh damage, tapi dorongannya penuh 
 | **Tawuran Bebas** | +1 tiap membunuh, −1 tiap bunuh diri. Duluan capai batas skor, atau skor tertinggi saat waktu habis. |
 | **Perang Kampung** | Kampung Atas vs Kampung Bawah. Skor dihitung per tim; tembak teman mati secara bawaan. |
 | **Raja Warung** | Berdiri di zona **sendirian** untuk dapat 1 poin per detik. Dua orang di dalam = direbutkan. |
+| **Rebutan Gorengan** | Capture the flag dengan pisang goreng raksasa. Rebut gorengan kampung lawan lalu bawa ke piringmu selama gorenganmu ada di rumah (tim +1, pembawa +5). Gorengan yang jatuh pulang sendiri setelah 20 detik atau saat disentuh pembela. |
+| **Panjat Pinang** | Balapan ke hadiah di puncak arena (sarang pengintai, menara jam, atap kantor…). Sentuh untuk dapat poin, lalu mulai lagi dari titik lahir. Jatuhkan yang sedang memanjat! |
+
+![Rebutan Gorengan di pelabuhan](../screenshots/game-tps-id-pelabuhan-ctf.png)
 
 Setelah pertandingan selesai papan skor menampilkan pemenang selama 10 detik; server yang dibuka lalu pindah ke arena berikutnya.
 

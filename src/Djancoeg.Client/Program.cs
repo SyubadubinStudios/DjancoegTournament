@@ -16,6 +16,7 @@ for (int i = 0; i < args.Length; i++)
         case "--connect": opts = opts with { Connect = Next() }; break;
         case "--lang": opts = opts with { Language = Next() }; break;
         case "--novsync": opts = opts with { NoVsync = true }; break;
+        case "--mode": opts = opts with { Mode = Next() }; break;
         case "--size":
         {
             var p = Next().Split('x');

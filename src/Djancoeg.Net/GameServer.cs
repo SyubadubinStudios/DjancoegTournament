@@ -363,6 +363,13 @@ public sealed class GameServer : IDisposable
         w.U8((byte)world.ArenaIndex);
         w.U8(c.IsSpectator ? Protocol.SpectatorSlot : (byte)c.Slot);
         w.U8(_generation);
+        for (int t = 0; t < 2; t++)
+        {
+            ref readonly var f = ref world.Flags[t];
+            w.U8(f.Carrier >= 0 ? (byte)1 : f.AtHome ? (byte)0 : (byte)2);
+            w.I8((sbyte)f.Carrier);
+            w.Pos(f.Position);
+        }
 
         // Players (always all of them).
         int countPos = w.Position; w.U8(0);
@@ -457,6 +464,7 @@ public sealed class GameServer : IDisposable
         if (p.SpawnProtect > 0) f |= NetPlayerFlags.Protected;
         if (p.DashTimer > 0) f |= NetPlayerFlags.Dashing;
         if (p.QuadTimer > 0) f |= NetPlayerFlags.Quad;
+        if (world.IsLevitating(p)) f |= NetPlayerFlags.Levitating;
         var c = _bySlot[i];
         return new NetPlayer
         {

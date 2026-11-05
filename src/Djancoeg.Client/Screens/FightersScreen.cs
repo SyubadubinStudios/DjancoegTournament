@@ -47,8 +47,13 @@ public sealed class FightersScreen(App app, Screen? returnTo = null, Action<stri
         var chars = App.Content.Characters;
 
         // Grid of portrait stickers.
-        int cols = 5;
-        float gx = 84 * u, gy = 200 * u, cell = 128 * u, gap = 14 * u;
+        // Fit the grid between the header and the name field, whatever the roster size (mods add fighters).
+        int cols = chars.Count > 15 ? 6 : 5;
+        int rows = (chars.Count + cols - 1) / cols;
+        float gx = 84 * u, gy = 190 * u, gap = 12 * u;
+        float availH = sh - 110 * u - gy - 10 * u;
+        float cell = MathF.Min(128 * u, (availH - (rows - 1) * gap) / rows / 1.2f);
+        cell = MathF.Min(cell, (sw * 0.46f - gx - (cols - 1) * gap) / cols);
         for (int i = 0; i < chars.Count; i++)
         {
             int c = i % cols, r = i / cols;
@@ -84,7 +89,10 @@ public sealed class FightersScreen(App app, Screen? returnTo = null, Action<stri
         DrawRectangleRec(new Rectangle(tx, ty, cm.X + 18 * u, 26 * u), Theme.Cabe);
         Theme.Text(Theme.Mono, cat, new Vector2(tx + 9 * u, ty + 4 * u), 15 * u, Theme.Kapur);
         ty += 38 * u;
-        Theme.Text(Theme.Display, S.T(cd.Name).ToUpperInvariant(), new Vector2(tx, ty), 38 * u, Theme.Aspal);
+        string title = S.T(cd.Name).ToUpperInvariant();
+        float titleSize = 38 * u;
+        while (titleSize > 20 * u && Theme.Measure(Theme.Display, title, titleSize).X > tw) titleSize -= u;
+        Theme.Text(Theme.Display, title, new Vector2(tx, ty), titleSize, Theme.Aspal);
         ty += 52 * u;
         ty = Theme.Paragraph(Theme.Body, S.T(cd.Description), new Vector2(tx, ty), 19 * u, tw, Theme.Aspal) + 14 * u;
 
@@ -109,7 +117,7 @@ public sealed class FightersScreen(App app, Screen? returnTo = null, Action<stri
     private static void Stat(ref float y, float x, float w, float u, string label, float frac, string value)
     {
         Theme.Text(Theme.BodyBold, label, new Vector2(x, y), 17 * u, Theme.Aspal);
-        var track = new Rectangle(x + 150 * u, y + 4 * u, w - 230 * u, 14 * u);
+        var track = new Rectangle(x + 120 * u, y + 4 * u, MathF.Max(60 * u, w - 180 * u), 14 * u);
         DrawRectangleRec(track, Theme.Fade(Theme.Aspal, 0.15f));
         DrawRectangleRec(new Rectangle(track.X, track.Y, track.Width * Math.Clamp(frac, 0, 1), track.Height), Theme.Aspal);
         Theme.TextRight(Theme.Mono, value, new Vector2(x + w, y), 16 * u, Theme.Aspal);

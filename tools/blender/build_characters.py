@@ -19,7 +19,7 @@ from mathutils import Matrix, Vector, Euler
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__) if "__file__" in globals() else ".", "..", ".."))
 if not os.path.isdir(os.path.join(REPO, "assets")):
-    REPO = r"C:/Users/mifma/Documents/CodeSandbox/DjancoegTournament"
+    REPO = r"C:/experiment/syubadubin/DjancoegTournament"
 OUT = os.path.join(REPO, "assets", "models", "characters")
 FPS = 24
 
@@ -54,6 +54,11 @@ CHARACTERS = {
     "kucing-oren": ("cat", "#E67E22", "#FDEBD0", "#E67E22"),
     "bocil-kematian": ("kid", "#2980B9", "#E74C3C", "#C68642"),
     "abang-bakso": ("humanoid", "#FAFAFA", "#1565C0", "#A0663C"),
+    # v1.2 "Pasar Rakyat"
+    "si-kancil": ("deer", "#A1662F", "#F3D9B1", "#A1662F"),
+    "leak": ("leak", "#2E1A47", "#C0392B", "#D5C4A1"),
+    "tukang-parkir": ("humanoid", "#F57C00", "#37474F", "#8D5524"),
+    "bapak-ronda": ("humanoid", "#263238", "#4E6E58", "#8D5524"),
 }
 
 DARK = "#1B1B1B"
@@ -161,6 +166,18 @@ def sculpt(cid, shape, prim, sec, skin):
             part(P, 'cyl', (0.54, 0.5, 0.05), (0, 0, z), sec, b, segs=12)
         return P
 
+    if shape == "leak":  # Balinese leak: floating crowned head, trailing ribbons
+        part(P, 'sphere', (0.62, 0.58, 0.6), (0, 0, 1.45), skin, "head", segs=14)
+        part(P, 'sphere', (0.82, 0.5, 0.7), (0, 0.12, 1.5), "#1B1B1B", "head", segs=10)  # wild hair
+        face(P, 1.52, skin, eye="#F4D03F", y=-0.28, spread=0.13, size=0.12)
+        part(P, 'box', (0.12, 0.06, 0.3), (0, -0.3, 1.25), "#E74C3C", "head", rot=(-25, 0, 0))   # tongue
+        part(P, 'cone', (0.7, 0.6, 0.22), (0, 0, 1.82), "#F5B041", "head", segs=8, r2=0.2)        # crown
+        part(P, 'box', (0.66, 0.08, 0.1), (0, -0.25, 1.72), "#C0392B", "head")
+        for i, x in enumerate((-0.16, -0.05, 0.06, 0.17)):
+            bone = ("hips", "spine", "chest", "hips")[i]
+            part(P, 'cone', (0.1, 0.1, 0.9), (x, 0.02, 0.75), sec, bone, segs=6, r2=0.02)   # glowing ribbons
+        return P
+
     if shape == "ghostly":  # kuntilanak: long dress, long hair, floats
         part(P, 'cone', (0.62, 0.5, 1.1), (0, 0, 0.72), prim, "hips", segs=12, r2=0.32)
         part(P, 'box', (0.38, 0.24, 0.36), (0, 0, 1.33), prim, "spine")
@@ -200,6 +217,15 @@ def sculpt(cid, shape, prim, sec, skin):
         face(P, 1.71, skin, eye="#F4D03F", y=-0.14, spread=0.1)
         part(P, 'cone', (0.42, 0.42, 0.16), (0, -0.02, 1.47), "#E74C3C", "chest", segs=8, r2=0.18)  # bandana
         part(P, 'cone', (0.22, 0.22, 0.9), (0, 0.38, 0.62), prim, "hips", rot=(-60, 0, 0), segs=8)  # tail
+    elif shape == "deer":
+        part(P, 'sphere', (0.32, 0.36, 0.3), (0, 0, 1.68), prim, "head", segs=12)
+        part(P, 'box', (0.16, 0.22, 0.14), (0, -0.2, 1.62), sec, "head")                       # snout
+        part(P, 'sphere', (0.06, 0.04, 0.05), (0, -0.31, 1.64), "#1B1B1B", "head", segs=6)     # nose
+        face(P, 1.73, skin, eye="#1B1B1B", y=-0.155, spread=0.09, size=0.06)
+        for x in (-1, 1):
+            part(P, 'cone', (0.16, 0.06, 0.3), (x * 0.15, 0, 1.9), prim, "head", rot=(0, x * 25, 0), segs=5, r2=0.03)
+        part(P, 'box', (torso_w * 0.7, 0.05, 0.3), (0, -0.14, 1.27), sec, "spine")
+        part(P, 'cone', (0.12, 0.12, 0.2), (0, 0.18, 1.0), sec, "hips", rot=(-60, 0, 0), segs=5)  # tail tuft
     elif shape == "cat":
         part(P, 'sphere', (0.36, 0.33, 0.32), (0, 0, 1.67), prim, "head", segs=12)
         part(P, 'sphere', (0.18, 0.1, 0.12), (0, -0.15, 1.61), sec, "head", segs=8)  # muzzle
@@ -235,6 +261,8 @@ def sculpt(cid, shape, prim, sec, skin):
         limbs(P, prim, prim, skin, shoes=prim, arm_r=0.075, leg_r=0.1)
     elif shape == "cat":
         limbs(P, prim, prim, prim, shoes=sec, arm_r=0.06, leg_r=0.08)
+    elif shape == "deer":
+        limbs(P, prim, prim, prim, shoes="#3E2723", arm_r=0.05, leg_r=0.06)
     else:
         sleeves = prim
         limbs(P, prim, sec, skin, sleeves=sleeves)
@@ -276,6 +304,20 @@ def sculpt(cid, shape, prim, sec, skin):
         part(P, 'box', (0.08, 0.04, 0.3), (-0.12, -0.15, 1.32), "#85C1E9", "chest")
     elif cid == "genderuwo":
         pass
+    elif cid == "tukang-parkir":
+        part(P, 'cyl', (0.31, 0.31, 0.1), (0, 0, 1.83), "#455A64", "head", segs=12)          # cap
+        part(P, 'box', (0.22, 0.14, 0.03), (0, -0.2, 1.8), "#455A64", "head")
+        part(P, 'box', (0.44, 0.04, 0.05), (0, -0.14, 1.38), "#ECEFF1", "chest")              # reflective stripes
+        part(P, 'box', (0.42, 0.04, 0.05), (0, -0.14, 1.2), "#ECEFF1", "spine")
+        part(P, 'cyl', (0.05, 0.05, 0.08), (0, -0.17, 1.6), "#FDD835", "head", rot=(90, 0, 0), segs=6)  # whistle
+    elif cid == "bapak-ronda":
+        part(P, 'sphere', (0.46, 0.36, 0.42), (0, -0.06, 1.18), prim, "spine", segs=10)      # belly
+        part(P, 'cyl', (0.29, 0.29, 0.12), (0, 0, 1.83), "#111111", "head", segs=12)         # peci
+        part(P, 'cone', (0.5, 0.42, 0.6), (0, 0, 0.72), sec, "hips", segs=12, r2=0.32)       # sarong
+        part(P, 'box', (0.12, 0.3, 0.6), (0.1, 0, 1.32), "#C0392B", "chest", rot=(0, -28, 0))  # sarong over shoulder
+        part(P, 'box', (0.03, 0.025, 0.05), (-0.045, -0.155, 1.62), "#111111", "head")       # moustache
+        part(P, 'box', (0.03, 0.025, 0.05), (0.045, -0.155, 1.62), "#111111", "head")
+        part(P, 'cyl', (0.1, 0.1, 0.45), (-0.26, -0.12, 0.98), "#C8A951", "forearm.R", rot=(70, 0, 0), segs=8)  # kentongan
     return P
 
 
@@ -388,7 +430,7 @@ def animate(ao, shape):
         for f, br in ((1, 0), (25, 3), (49, 0)):
             p = arms(br * 0.5)
             p.update({"chest": (-br * s_spine, 0, 0), "head": (br * 0.5 * s_spine, 0, 0)})
-            if shape == "ghostly":
+            if shape in ("ghostly", "leak"):
                 key(ao, f, p, hips_loc=(0, 0, 0.12 + br * 0.02))
             else:
                 key(ao, f, p, hips_loc=(0, 0, 0))
@@ -399,7 +441,7 @@ def animate(ao, shape):
             for f, h, sq in ((1, 0.0, 0), (6, 0.32, 0), (11, 0.42, 0), (16, 0.18, 0), (21, 0.0, 0)):
                 key(ao, f, {"spine": (lean, 0, 0), "head": (-lean, 0, 0)}, hips_loc=(0, 0, h))
             return 21
-        if shape == "ghostly":
+        if shape in ("ghostly", "leak"):
             for f, b in ((1, 0.12), (11, 0.2), (21, 0.12)):
                 p = arms()
                 p.update({"spine": (lean * 2, 0, 0)})

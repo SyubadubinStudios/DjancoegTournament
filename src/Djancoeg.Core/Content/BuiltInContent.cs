@@ -71,6 +71,32 @@ public static class BuiltInContent
             Damage = 85, FireInterval = 1.4f, Range = 300f, Knockback = 4f, Piercing = true,
             MaxAmmo = 20, StartAmmo = 5, PickupAmmo = 5,
         },
+        new WeaponDef
+        {
+            Id = "cobek-lempar", Slot = 8, Kind = WeaponKind.Projectile, Model = "cobek", Color = "#6D6A66",
+            Name = T("Thrown Stone Mortar", "Cobek Lempar"),
+            Description = T("A heavy stone mortar on a high arc. One good hit flattens anyone.", "Cobek batu berat dengan lengkungan tinggi. Sekali kena, gepeng."),
+            KillVerb = T("{killer} ground {victim} into sambal", "{killer} mengulek {victim} jadi sambal"),
+            Damage = 95, FireInterval = 1.1f, ProjectileSpeed = 21f, ProjectileGravity = 16f, ProjectileLifetime = 3f, Knockback = 9f,
+            MaxAmmo = 12, StartAmmo = 4, PickupAmmo = 4,
+        },
+        new WeaponDef
+        {
+            Id = "kipas-sate", Slot = 9, Kind = WeaponKind.Blast, Model = "fan", Color = "#D4A259", BlastConeDegrees = 38f,
+            Name = T("Satay Fan", "Kipas Sate"),
+            Description = T("A gust that shoves people off ledges and sends projectiles back.", "Hembusan angin yang mendorong orang jatuh dan memantulkan proyektil."),
+            KillVerb = T("{killer} fanned {victim} like satay smoke", "{killer} mengipas {victim} kayak asap sate"),
+            Damage = 8, FireInterval = 0.7f, Range = 7f, Knockback = 17f, MaxAmmo = 40, StartAmmo = 15, PickupAmmo = 15,
+        },
+        new WeaponDef
+        {
+            Id = "kerupuk-shuriken", Slot = 4, Kind = WeaponKind.Projectile, Model = "kerupuk", Color = "#F6E3A1",
+            Name = T("Cracker Shuriken", "Kerupuk Shuriken"),
+            Description = T("Three crunchy stars in a fan. Shares slot 4 with the Gatling.", "Tiga bintang renyah sekaligus. Satu slot dengan Gatling (tekan 4 lagi)."),
+            KillVerb = T("{killer} crunched {victim} with crackers", "{killer} meremukkan {victim} pakai kerupuk"),
+            Damage = 22, Pellets = 3, SpreadDegrees = 5f, FireInterval = 0.55f, ProjectileSpeed = 38f, ProjectileGravity = 1f, ProjectileLifetime = 1.6f,
+            Knockback = 1.5f, MaxAmmo = 60, StartAmmo = 15, PickupAmmo = 15,
+        },
     ];
 
     public static IReadOnlyList<CharacterDef> Characters { get; } =
@@ -191,6 +217,42 @@ public static class BuiltInContent
             PrimaryColor = "#E74C3C", SecondaryColor = "#2980B9", SkinColor = "#C68642", MaxHealth = 80, SpeedMultiplier = 1.12f, Scale = 0.75f,
             Ability = new AbilityDef { Kind = AbilityKind.Shockwave, Cooldown = 8, Power = 0.9f, Name = T("Mic Spam", "Teriak Mabar"), Description = T("A scream that pushes everyone away.", "Teriakan yang mendorong semua orang.") },
             Taunts = [T("Noob! Uninstall!", "Noob! Uninstall aja!"), T("Mom said one more game.", "Kata Mama satu game lagi.")],
+        },
+        new CharacterDef
+        {
+            Id = "si-kancil", Category = CharacterCategory.Legend, Shape = BodyShape.Cat,
+            Name = T("Kancil the Mouse-Deer", "Si Kancil"),
+            Description = T("The folk-tale trickster who outsmarted crocodiles. Small, quick and always somewhere else.", "Si cerdik dari dongeng yang mengakali buaya. Kecil, gesit, dan selalu sudah pindah tempat."),
+            PrimaryColor = "#A1662F", SecondaryColor = "#F3D9B1", SkinColor = "#A1662F", MaxHealth = 80, SpeedMultiplier = 1.15f, Scale = 0.75f, JumpMultiplier = 1.1f,
+            Ability = new AbilityDef { Kind = AbilityKind.Teleport, Cooldown = 7, Power = 1f, Name = T("Clever Leap", "Lompat Cerdik"), Description = T("Blink up to 9 metres where you look.", "Pindah kilat sampai 9 meter ke arah pandangan.") },
+            Taunts = [T("Brains beat brawn!", "Akal lebih kuat dari otot!"), T("Count the crocodiles!", "Ayo baris, biar kuhitung!")],
+        },
+        new CharacterDef
+        {
+            Id = "leak", Category = CharacterCategory.Ghost, Shape = BodyShape.Ghostly,
+            Name = T("Leak", "Leak"),
+            Description = T("Balinese night spirit who prefers to float above the fight.", "Makhluk malam dari Bali yang lebih suka melayang di atas keributan."),
+            PrimaryColor = "#2E1A47", SecondaryColor = "#C0392B", SkinColor = "#D5C4A1", MaxHealth = 95,
+            Ability = new AbilityDef { Kind = AbilityKind.Levitate, Cooldown = 12, Duration = 5, Name = T("Night Flight", "Terbang Malam"), Description = T("Float for 5 s; hold jump to rise.", "Melayang 5 detik; tahan lompat untuk naik.") },
+            Taunts = [T("Look up~", "Lihat ke atas~"), T("I float, you fall.", "Aku melayang, kamu jatuh.")],
+        },
+        new CharacterDef
+        {
+            Id = "tukang-parkir", Category = CharacterCategory.Profession, Shape = BodyShape.Humanoid,
+            Name = T("Parking Attendant", "Tukang Parkir"),
+            Description = T("Appears from nowhere the moment you try to leave. Priiit!", "Muncul entah dari mana begitu kamu mau pergi. Priiit!"),
+            PrimaryColor = "#F57C00", SecondaryColor = "#37474F", SkinColor = "#8D5524", MaxHealth = 105,
+            Ability = new AbilityDef { Kind = AbilityKind.Pull, Cooldown = 10, Power = 1f, Name = T("Back It Up!", "Terus, Terus, Mundur!"), Description = T("Whistle everyone nearby towards you.", "Peluit yang menarik semua orang di dekatmu.") },
+            Taunts = [T("Back, back, okay stop!", "Terus, terus... yak, stop!"), T("That'll be two thousand.", "Dua ribu, Bos.")],
+        },
+        new CharacterDef
+        {
+            Id = "bapak-ronda", Category = CharacterCategory.Meme, Shape = BodyShape.Brute,
+            Name = T("Night-Watch Uncle", "Bapak-Bapak Ronda"),
+            Description = T("Sarong, coffee, kentongan and opinions on everything. Keeps the team going.", "Sarung, kopi, kentongan, dan pendapat soal segala hal. Bikin tim semangat."),
+            PrimaryColor = "#4E6E58", SecondaryColor = "#7B4B2A", SkinColor = "#8D5524", MaxHealth = 125, SpeedMultiplier = 0.95f, Scale = 1.05f,
+            Ability = new AbilityDef { Kind = AbilityKind.Rally, Cooldown = 15, Power = 30, Name = T("Danger Drum", "Kentongan Bahaya"), Description = T("Heal 30 and speed up yourself and teammates nearby.", "Pulihkan 30 darah dan percepat dirimu serta teman setim di dekatmu.") },
+            Taunts = [T("Back in my day...", "Zaman Bapak dulu..."), T("Who's on watch tonight?", "Malam ini siapa yang ronda?")],
         },
     ];
 }

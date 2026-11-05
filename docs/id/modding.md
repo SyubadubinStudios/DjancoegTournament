@@ -65,7 +65,7 @@ Id memakai `a-z`, `0-9`, dan `-` (2–40 karakter). Setiap teks berupa pasangan 
 
 | Field | Bawaan | Catatan |
 |---|---|---|
-| `kind` | Hitscan | `Melee`, `Hitscan`, atau `Projectile` |
+| `kind` | Hitscan | `Melee`, `Hitscan`, `Projectile`, atau `Blast` (kerucut angin: dorongan + memantulkan proyektil; memakai `range` dan `blastConeDegrees`) |
 | `slot` | 1 | Tombol 1–9 |
 | `damage` | 10 | Per peluru / kena langsung (0–500) |
 | `fireInterval` | 0.5 | Detik antar tembakan (≥ 0.05) |
@@ -77,7 +77,8 @@ Id memakai `a-z`, `0-9`, dan `-` (2–40 karakter). Setiap teks berupa pasangan 
 | `maxAmmo`, `startAmmo`, `pickupAmmo`, `infiniteAmmo` | 100, 25, 10, false | Peluru |
 | `piercing` | false | Hitscan menembus semua yang segaris |
 | `startsWith` | false | Semua jagoan langsung punya |
-| `model` | slingshot | `racket`, `slingshot`, `pan`, `sandal`, `firecracker`, `bazooka`, `bamboo` |
+| `model` | slingshot | `racket`, `slingshot`, `pan`, `sandal`, `firecracker`, `bazooka`, `bamboo`, `cobek`, `fan`, `kerupuk` |
+| `blastConeDegrees` | 35 | Setengah sudut kerucut senjata `Blast` |
 | `killVerb` | | Kalimat kabar pembunuhan dengan `{killer}` dan `{victim}` |
 
 Senjata didapat saat lahir (`startsWith`) atau dari item `Weapon` di arena.
@@ -105,7 +106,7 @@ Senjata didapat saat lahir (`startsWith`) atau dari item `Weapon` di arena.
 | `speedMultiplier` | 0.5–1.6 | |
 | `jumpMultiplier` | 0.5–2 | |
 | `scale` | 0.5–1.6 | Mengubah hitbox juga |
-| `ability.kind` | SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin, None | `power`: kekuatan lompat/melesat/gelombang, jumlah pulih, pengali ngebut, atau faktor damage untuk StoneSkin; `duration` untuk jurus berdurasi |
+| `ability.kind` | SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin, Teleport, Levitate, Pull, Rally, None | `power`: kekuatan lompat/melesat/gelombang, jumlah pulih, pengali ngebut, atau faktor damage untuk StoneSkin; `duration` untuk jurus berdurasi |
 | `model`, `portrait` | opsional | Path relatif terhadap folder `assets/` game. Tanpa model, game menggambar kapsul berwarna; tanpa potret, kotak warna. |
 
 Untuk model ber-rig dengan gaya yang sama, tambahkan jagoanmu di `tools/blender/build_characters.py` (lihat [aset.md](aset.md)) — game memakai klip bernama `idle`, `run`, `shoot`, dan `die`.
@@ -138,7 +139,9 @@ Arena adalah daftar kotak sejajar sumbu plus penanda gameplay. Satuan meter, **Y
 | `spawns[].team` | 0, 1, atau -1 untuk tim mana saja; `yaw` dalam radian (0 menghadap +Z) |
 | `pickups[].kind` | HealthSmall, HealthMega, Armor, ArmorSmall, Weapon, Ammo, Quad |
 | `jumpPads[].launch` | Kecepatan dalam m/s. Gravitasi 20 m/s². Untuk mendarat di satu titik: `v_y = sqrt(2·20·(puncak−y0))`, lalu horizontal = jarak / waktu terbang. |
-| `props[].kind` | crate, galon, gerobak, karung, ban (menentukan model) |
+| `props[].kind` | crate, galon, gerobak, karung, ban, kursi, motor, jerigen (menentukan model) |
+| `flagBases` | Opsional `[[x,y,z],[x,y,z]]` piring gorengan tim 0 dan 1 (Rebutan Gorengan); kalau kosong, pusat titik lahir tiap tim |
+| `raceGoal` | Opsional `[x,y,z]` hadiah Panjat Pinang; kalau kosong, `zoneCenter` (radius = `zoneRadius`) |
 | `killY` | Jatuh di bawah ketinggian ini = tewas |
 | `zoneCenter`, `zoneRadius` | Zona Raja Warung |
 

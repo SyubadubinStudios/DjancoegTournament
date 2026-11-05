@@ -33,13 +33,13 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Graphics options: effects quality, render scale, blob shadows, MSAA / *opsi grafis*
 - ✅ Accessibility: colour-blind team colours, subtitles, reduce shake, reduce flashes / *aksesibilitas*
 
-## v1.2 — "Pasar Rakyat" (content) ⬜
+## v1.2 — "Pasar Rakyat" (content) ✅
 
-- ⬜ Arenas: Pelabuhan (harbour), Stasiun Kereta, Kantor Kelurahan / *arena baru*
-- ⬜ Fighters: Si Kancil, Nyi Pelet (leak), Tukang Parkir, Bapak-bapak Ronda / *jagoan baru*
-- ⬜ Weapons: Cobek Lempar, Kipas Sate (wind push), Kerupuk Shuriken / *senjata baru*
-- ⬜ Modes: Rebutan Gorengan (capture the flag), Panjat Pinang (race to the top) / *mode baru*
-- ⬜ Rodin-generated textured hero props per arena / *properti ikonik per arena*
+- ✅ Arenas: Pelabuhan (harbour), Stasiun Kereta, Kantor Kelurahan / *arena baru*
+- ✅ Fighters: Si Kancil (teleport), Leak (levitate), Tukang Parkir (pull), Bapak-Bapak Ronda (team rally) / *jagoan baru*
+- ✅ Weapons: Cobek Lempar, Kipas Sate (wind push + projectile deflect), Kerupuk Shuriken; shared weapon slots / *senjata baru*
+- ✅ Modes: Rebutan Gorengan (capture the flag), Panjat Pinang (race to the top) / *mode baru*
+- ✅ Rodin-generated props: plastic chair, scooter, jerrycan (decimated in Blender) / *properti Rodin*
 
 ## v1.3 — "Kampung Online" (online services) ⬜
 

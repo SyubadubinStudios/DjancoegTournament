@@ -22,6 +22,7 @@ public sealed record AppOptions
     public int Height { get; init; } = 900;
     public string? Language { get; init; }
     public bool NoVsync { get; init; }
+    public string? Mode { get; init; }      // ffa | tdm | koth | ctf | race (screenshot matches)
 }
 
 /// <summary>Owns the window, shared resources and the active screen.</summary>
@@ -174,7 +175,7 @@ public sealed class App : IDisposable
         var match = new MatchSettings
         {
             ArenaId = Options.Arena ?? Settings.ArenaId, BotCount = 7, BotSkill = 0.6f, ScoreLimit = 999, TimeLimitSeconds = 600,
-            Mode = GameModeKind.FreeForAll,
+            Mode = Options.Mode switch { "tdm" => GameModeKind.TeamDeathmatch, "koth" => GameModeKind.KingOfTheHill, "ctf" => GameModeKind.CaptureTheFlag, "race" => GameModeKind.Race, _ => GameModeKind.FreeForAll },
         };
         var session = Game.Session.StartLocal(Content, Settings, match, host: false, null, spectator: Options.Shot == "spectate");
         session.Autopilot = true;

@@ -15,7 +15,7 @@ Raylib's native libraries for `win-x64`, `win-x86`, `linux-x64`, `osx-x64` and `
 ```bash
 git clone <repo> && cd DjancoegTournament
 dotnet build                    # builds all 6 projects
-dotnet test                     # 59 tests: physics, combat, arenas, bots, networking, mods
+dotnet test                     # 80 tests: physics, combat, arenas, bots, networking, mods
 dotnet run --project src/Djancoeg.Client
 ```
 

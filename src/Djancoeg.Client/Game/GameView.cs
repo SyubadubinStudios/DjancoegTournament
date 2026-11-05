@@ -216,6 +216,7 @@ public sealed partial class GameView : IDisposable
                     if (e.Flags == 0 && w is { Kind: WeaponKind.Hitscan }) _fx.AddTracer(e.Position + new Vector3(0, -0.25f, 0), e.Vector, color, w.Piercing ? 0.05f : 0.02f, w.Piercing ? 0.35f : 0.12f);
                 }
                 if (w is { Kind: WeaponKind.Hitscan } && e.Flags == 0) for (int k = 0; k < 3; k++) _fx.Spark(e.Vector, color);
+                if (e.Flags == 2) WindGust(e.Position, e.Vector);
                 break;
             }
             case GameEventType.Hit:
@@ -255,8 +256,36 @@ public sealed partial class GameView : IDisposable
                 for (int k = 0; k < 16; k++) _fx.Smoke(e.Position + new Vector3(0, 0.3f + k * 0.1f, 0), 1.2f);
                 break;
             case GameEventType.Ability:
-                sounds.PlayAt(Sfx.Ability, e.Position, ListenerPos, _session.Yaw, 1f);
+            {
+                var kind = (AbilityKind)e.Value;
+                var sfx = kind switch { AbilityKind.Teleport => Sfx.Blink, AbilityKind.Pull => Sfx.Whistle, AbilityKind.Rally => Sfx.Drum, _ => Sfx.Ability };
+                sounds.PlayAt(sfx, e.Position, ListenerPos, _session.Yaw, 1f);
                 _fx.Burst(e.Position + new Vector3(0, 1, 0), 24, 5f, Theme.Kuning, 0.6f, 0.05f);
+                if (kind == AbilityKind.Teleport)
+                {
+                    for (int k = 0; k < 14; k++) _fx.Smoke(e.Vector + new Vector3(0, 0.3f + k * 0.1f, 0), 1.2f);
+                    _fx.AddTracer(e.Position + new Vector3(0, 1, 0), e.Vector + new Vector3(0, 1, 0), Theme.Kuning, 0.08f, 0.35f);
+                    if (e.A == _session.Client.LocalId) _session.Client.ResetPrediction();
+                }
+                if (kind == AbilityKind.Rally) _fx.Burst(e.Position + new Vector3(0, 1, 0), 40, 6f, Theme.Daun, 0.8f, 0.06f);
+                break;
+            }
+            case GameEventType.Deflect:
+                sounds.PlayAt(Sfx.Bounce, e.Position, ListenerPos, _session.Yaw, 1f, 0.7f);
+                for (int k = 0; k < 10; k++) _fx.Spark(e.Position, Theme.Kapur);
+                if (e.A == me) Shout(S.T("hud.deflect"), Theme.Kuning);
+                break;
+            case GameEventType.FlagTaken:
+            case GameEventType.FlagDropped:
+            case GameEventType.FlagReturned:
+            case GameEventType.FlagCaptured:
+                OnFlagEvent(e, me);
+                break;
+            case GameEventType.RaceGoal:
+                sounds.Play(Sfx.Gong, e.A == me ? 0.9f : 0.5f, 1.3f);
+                _fx.Burst(e.Position + new Vector3(0, 1, 0), 60, 8f, null, 1.4f, 0.07f);
+                AddFeed(S.T("hud.raceGoal").Replace("{0}", NameOf(e.A)), e.A == me ? Theme.Kuning : Theme.Kapur);
+                if (e.A == me) { Shout(S.Lang == Core.Localization.Language.Indonesian ? "DAPAT HADIAH!" : "PRIZE GET!", Theme.Kuning); _adoptYaw = true; }
                 break;
             case GameEventType.Taunt:
                 if (e.A < _tauntUntil.Length && TryCharacter(e.A, out var cd) && cd.Taunts.Length > 0)
@@ -337,6 +366,9 @@ public sealed partial class GameView : IDisposable
         "firecracker" => Sfx.Thump,
         "bazooka" => Sfx.Rocket,
         "bamboo" => Sfx.Spear,
+        "fan" => Sfx.Wind,
+        "kerupuk" => Sfx.Crunch,
+        "cobek" => Sfx.Thump,
         _ => w?.Kind == WeaponKind.Projectile ? Sfx.Thump : Sfx.Slingshot,
     };
 
@@ -492,6 +524,7 @@ public sealed partial class GameView : IDisposable
         BeginShaderMode(shader.Shader);
         _arena.Draw(shader);
         DrawPadsAndZone(arena);
+        DrawObjectives(arena);
         DrawPickups(arena);
         DrawProps(arena);
         if (_app.Settings.BlobShadows) DrawBlobShadows();

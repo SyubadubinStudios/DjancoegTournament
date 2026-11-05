@@ -2,22 +2,38 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **1.1.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **1.2.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 59 passing / lulus |
-| Fighters / Jagoan | 13 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
-| Weapons / Senjata | 7 built-in + 1 mod |
-| Arenas | 4 built-in + 1 mod |
-| Modes | 3 |
+| Automated tests / Tes otomatis | 80 passing / lulus |
+| Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
+| Weapons / Senjata | 10 built-in + 1 mod |
+| Arenas | 7 built-in + 1 mod |
+| Modes | 5 |
 | Languages / Bahasa | English, Bahasa Indonesia (UI, docs, content) |
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v1.2.0 "Pasar Rakyat"
+
+**Done / Selesai**
+
+- [x] Arenas: Pelabuhan Sunda Kelapa (containers, pinisi with crow's nest, channel kill plane), Stasiun Kereta Tua (carriage roofs, footbridge, clock tower), Kantor Kelurahan (interior rooms, counters, walkable roof)
+- [x] Modes: Rebutan Gorengan (capture the flag: take/drop/return/capture, 20 s auto-return, bot objectives) and Panjat Pinang (race to the goal, respawn on score)
+- [x] Weapons: Cobek Lempar (heavy lob), Kipas Sate (new `Blast` kind: knockback cone that deflects projectiles), Kerupuk Shuriken (3-way); weapons sharing a key cycle
+- [x] Fighters: Si Kancil (Teleport), Leak (Levitate, predicted on the client), Tukang Parkir (Pull), Bapak-Bapak Ronda (Rally: team heal + speed boost)
+- [x] Protocol v3: gorengan state in snapshots, levitation flag; client mirrors Rally/Haste speed rules
+- [x] Assets: 4 Rodin portraits, Rodin chair/scooter/jerrycan props (decimated in Blender), 4 new Blender fighters (new `deer` and `leak` silhouettes)
+- [x] Client: gorengan, plates and race-goal beacon, objective HUD with off-screen goal marker, wind/teleport/rally/deflect effects, 5 new synthesized sounds, fighter grid that fits any roster size
+- [x] Server CLI: `--mode ctf|race`; arena list updated
+- [x] Tests: 9 new mechanic tests; new arenas covered by the arena and bot-match suites (80 tests)
+- [x] Docs EN/ID, README, screenshots (25)
+
 
 ### 2026-11-05 — v1.1.0 "Ronda Malam"
 
@@ -78,4 +94,4 @@ Current version / Versi sekarang: **1.1.0** · Roadmap / Peta jalan: [PLAN.md](P
 
 ## Next up / Berikutnya
 
-See v1.2 "Pasar Rakyat" in [PLAN.md](PLAN.md): new arenas (Pelabuhan, Stasiun Kereta, Kantor Kelurahan), fighters, weapons and modes.
+See v1.3 "Kampung Online" in [PLAN.md](PLAN.md): NAT punch-through, encryption, admin console, online Workshop, delta snapshots, stats.

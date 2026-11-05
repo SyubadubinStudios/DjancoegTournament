@@ -41,6 +41,7 @@ public struct Player
     public float DashTimer;
     public ushort DashHitMask;
     public float QuadTimer;
+    public float BoostTimer; // Rally speed boost
     public float TauntCooldown;
 
     public int LastAttacker;
@@ -85,6 +86,16 @@ public struct Prop
     public uint Color;
 }
 
+/// <summary>A gorengan "flag" in Rebutan Gorengan.</summary>
+public struct FlagState
+{
+    public Vector3 Home;
+    public Vector3 Position;
+    public int Carrier;     // -1 = not carried
+    public bool AtHome;
+    public float ReturnTimer;
+}
+
 public struct PickupState
 {
     public bool Available;
@@ -107,6 +118,7 @@ public enum GameEventType : byte
 {
     Shot, Hit, Kill, Explosion, Pickup, Jump, JumpPad, Spawn, Ability, Taunt,
     MatchStart, MatchEnd, ZoneScore, PropHit, Land, Join, Leave, Streak, ProjectileBounce,
+    FlagTaken, FlagDropped, FlagReturned, FlagCaptured, RaceGoal, Deflect,
 }
 
 /// <summary>Something that happened this tick, used for effects, sounds, HUD and the kill feed.</summary>

@@ -31,7 +31,8 @@ public sealed partial class GameWorld
     public int Winner { get; private set; } = -1;
     public int ZoneHolder { get; private set; } = -1;
 
-    public bool IsTeamMode => Settings.Mode == GameModeKind.TeamDeathmatch;
+    public bool IsTeamMode => Settings.Mode is GameModeKind.TeamDeathmatch or GameModeKind.CaptureTheFlag;
+    public readonly FlagState[] Flags = new FlagState[2];
     public float TimeLeft => MathF.Max(0, Settings.TimeLimitSeconds - MatchTime);
 
     private FastRandom _rng;
@@ -41,7 +42,7 @@ public sealed partial class GameWorld
     private ushort _nextProjectileId = 1;
     private readonly int[] _propKinds;
 
-    public static readonly string[] PropKindNames = ["crate", "galon", "gerobak", "karung", "ban"];
+    public static readonly string[] PropKindNames = ["crate", "galon", "gerobak", "karung", "ban", "kursi", "motor", "jerigen"];
 
     public GameWorld(ContentRegistry content, MatchSettings settings, ulong seed = 0x5EED)
     {
@@ -74,6 +75,11 @@ public sealed partial class GameWorld
         }
         for (int i = 0; i < Pickups.Length; i++) Pickups[i] = new PickupState { Available = true };
         Array.Clear(Projectiles);
+        for (int t = 0; t < 2; t++)
+        {
+            var home = FlagHome(t);
+            Flags[t] = new FlagState { Home = home, Position = home, Carrier = -1, AtHome = true };
+        }
     }
 
     // ------------------------------------------------------------------ players
@@ -178,12 +184,15 @@ public sealed partial class GameWorld
     {
         var c = Content.Characters[p.CharacterIndex];
         float speed = c.SpeedMultiplier;
+        bool levitate = false;
         if (p.AbilityTimer > 0)
         {
             if (c.Ability.Kind == AbilityKind.Haste) speed *= c.Ability.Power;
             else if (c.Ability.Kind == AbilityKind.StoneSkin) speed *= 0.75f;
+            else if (c.Ability.Kind == AbilityKind.Levitate) levitate = true;
         }
-        return new MoveParams(speed, c.JumpMultiplier, c.Scale);
+        if (p.BoostTimer > 0) speed *= 1.25f;
+        return new MoveParams(speed, c.JumpMultiplier, c.Scale, levitate ? 0.2f : 1f, levitate);
     }
 
     public Vector3 EyePosition(in Player p) => p.Move.Position + new Vector3(0, ParamsFor(p).EyeHeight(p.Move.Crouched), 0);
@@ -201,7 +210,49 @@ public sealed partial class GameWorld
         p.AbilityTimer > 0 && Content.Characters[p.CharacterIndex].Ability.Kind == AbilityKind.StoneSkin;
 
     public bool IsHasted(in Player p) =>
-        p.AbilityTimer > 0 && Content.Characters[p.CharacterIndex].Ability.Kind == AbilityKind.Haste;
+        p.BoostTimer > 0 || (p.AbilityTimer > 0 && Content.Characters[p.CharacterIndex].Ability.Kind == AbilityKind.Haste);
+
+    public bool IsLevitating(in Player p) =>
+        p.AbilityTimer > 0 && Content.Characters[p.CharacterIndex].Ability.Kind == AbilityKind.Levitate;
+
+    /// <summary>Where a gorengan sits when at home: the arena's base, or the centroid of that team's spawns.</summary>
+    public Vector3 FlagHome(int team)
+    {
+        if (Arena.FlagBases.Count >= 2 && Arena.FlagBases[team].Length == 3)
+            return new Vector3(Arena.FlagBases[team][0], Arena.FlagBases[team][1], Arena.FlagBases[team][2]);
+        Vector3 sum = Vector3.Zero; int n = 0;
+        foreach (var s in Arena.Spawns) if (s.Team == team) { sum += s.PositionV; n++; }
+        if (n == 0) return Arena.ZoneCenterV + new Vector3(team == 0 ? -10 : 10, 0, 0);
+        var c = sum / n;
+        // Snap to the floor below the centroid.
+        if (Collision.Raycast(c + new Vector3(0, 3, 0), -Vector3.UnitY, 10, out float d, out _)) c.Y = c.Y + 3 - d;
+        return c;
+    }
+
+    /// <summary>The point a player should head for in objective modes (used by bots).</summary>
+    public bool TryGetObjective(int id, out Vector3 target)
+    {
+        ref readonly var p = ref Players[id];
+        switch (Settings.Mode)
+        {
+            case GameModeKind.KingOfTheHill:
+                target = Arena.ZoneCenterV; return true;
+            case GameModeKind.Race:
+                target = RaceGoal; return true;
+            case GameModeKind.CaptureTheFlag:
+            {
+                int enemy = 1 - p.Team;
+                if (Flags[enemy].Carrier == id) { target = Flags[p.Team].Home; return true; }
+                if (!Flags[p.Team].AtHome && Flags[p.Team].Carrier < 0) { target = Flags[p.Team].Position; return true; }
+                if (Flags[enemy].Carrier < 0) { target = Flags[enemy].Position; return true; }
+                target = Flags[enemy].Position; return true; // escort or chase
+            }
+            default:
+                target = default; return false;
+        }
+    }
+
+    public Vector3 RaceGoal => Arena.RaceGoal is { Length: 3 } g ? new Vector3(g[0], g[1], g[2]) : Arena.ZoneCenterV;
 
     // ------------------------------------------------------------------ tick
 
@@ -255,6 +306,7 @@ public sealed partial class GameWorld
         if (p.AbilityCooldown > 0) p.AbilityCooldown -= dt;
         if (p.AbilityTimer > 0) p.AbilityTimer -= dt;
         if (p.QuadTimer > 0) p.QuadTimer -= dt;
+        if (p.BoostTimer > 0) p.BoostTimer -= dt;
         if (p.TauntCooldown > 0) p.TauntCooldown -= dt;
         if (p.Health > p.MaxHealthOf(this)) p.Health = MathF.Max(p.MaxHealthOf(this), p.Health - dt); // over-heal decays
 
@@ -293,8 +345,14 @@ public sealed partial class GameWorld
         int target = -1;
         if (input.WeaponSlot > 0)
         {
-            for (int w = 0; w < Content.Weapons.Count; w++)
+            // Pressing the slot of the current weapon cycles to the next weapon sharing that slot.
+            int n = Content.Weapons.Count;
+            int start = Content.Weapons[p.Weapon].Slot == input.WeaponSlot ? p.Weapon + 1 : 0;
+            for (int k = 0; k < n; k++)
+            {
+                int w = (start + k) % n;
                 if (Content.Weapons[w].Slot == input.WeaponSlot && p.Owns(w)) { target = w; break; }
+            }
         }
         else if (p.Pressed(InputButtons.NextWeapon) || p.Pressed(InputButtons.PrevWeapon))
         {
@@ -337,6 +395,7 @@ public sealed partial class GameWorld
         p.AbilityTimer = 0;
         p.DashTimer = 0;
         p.QuadTimer = 0;
+        p.BoostTimer = 0;
         p.Streak = 0;
         p.LastAttacker = -1;
         for (int w = 0; w < Content.Weapons.Count; w++)

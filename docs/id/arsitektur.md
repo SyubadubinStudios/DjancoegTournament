@@ -40,7 +40,7 @@ Satu socket UDP per endpoint (`UdpTransport`) memakai overload `SendTo`/`Receive
 |---|---|---|
 | Connect / Accept / Reject | K→S / S→K | nama, jagoan, tanda tangan konten, penanda penonton / slot (255 = penonton), arena, mode, batas |
 | Input | K→S, 60 Hz | waktu gema, konfirmasi event, RTT, 4 input terakhir (masing-masing 16 byte) |
-| Snapshot | S→K, 30 Hz | tick, konfirmasi input, status pertandingan, semua pemain, inventaris sendiri, bitmask item, event, proyektil, properti |
+| Snapshot | S→K, 30 Hz | tick, konfirmasi input, status pertandingan, gorengan, semua pemain, inventaris sendiri, bitmask item, event, proyektil, properti |
 | PlayerInfo | S→K, 1 Hz + saat berubah | nama dan penanda bot |
 | Chat, ChangeCharacter, Disconnect | dua arah | |
 | DiscoveryRequest/Response | browser↔server | broadcast LAN / ping langsung |

@@ -5,7 +5,7 @@ using Djancoeg.Core.Localization;
 namespace Djancoeg.Core.Content;
 
 [JsonConverter(typeof(JsonStringEnumConverter<WeaponKind>))]
-public enum WeaponKind : byte { Melee, Hitscan, Projectile }
+public enum WeaponKind : byte { Melee, Hitscan, Projectile, Blast }
 
 [JsonConverter(typeof(JsonStringEnumConverter<CharacterCategory>))]
 public enum CharacterCategory : byte { Legend, Profession, Ghost, Animal, Meme }
@@ -15,7 +15,7 @@ public enum CharacterCategory : byte { Legend, Profession, Ghost, Animal, Meme }
 public enum BodyShape : byte { Humanoid, Shrouded, Ghostly, Tiny, Brute, Reptile, Cat }
 
 [JsonConverter(typeof(JsonStringEnumConverter<AbilityKind>))]
-public enum AbilityKind : byte { None, SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin }
+public enum AbilityKind : byte { None, SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin, Teleport, Levitate, Pull, Rally }
 
 [JsonConverter(typeof(JsonStringEnumConverter<PickupKind>))]
 public enum PickupKind : byte { HealthSmall, HealthMega, Armor, ArmorSmall, Weapon, Ammo, Quad }
@@ -52,6 +52,8 @@ public sealed record WeaponDef
     public bool InfiniteAmmo { get; set; }
     public bool Piercing { get; set; }
     public bool StartsWith { get; set; }
+    /// <summary>Half-angle of the cone for <see cref="WeaponKind.Blast"/> weapons.</summary>
+    public float BlastConeDegrees { get; set; } = 35f;
     /// <summary>Hex color "#RRGGBB" used for tracers, projectiles and HUD accents.</summary>
     public string Color { get; set; } = "#FFFFFF";
     /// <summary>Procedural viewmodel key (racket, slingshot, pan, bamboo, bazooka, firecracker, sandal) or a .glb path.</summary>
@@ -172,12 +174,16 @@ public sealed record ArenaDef
     public List<ArenaJumpPad> JumpPads { get; set; } = [];
     public List<ArenaProp> Props { get; set; } = [];
     public List<ArenaLight> Lights { get; set; } = [];
+    /// <summary>Optional [team0, team1] gorengan bases for Rebutan Gorengan; derived from team spawns when empty.</summary>
+    public List<float[]> FlagBases { get; set; } = [];
+    /// <summary>Optional goal for Panjat Pinang; the zone centre is used when empty.</summary>
+    public float[]? RaceGoal { get; set; }
 
     [JsonIgnore] public Vector3 ZoneCenterV => new(ZoneCenter[0], ZoneCenter[1], ZoneCenter[2]);
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<GameModeKind>))]
-public enum GameModeKind : byte { FreeForAll, TeamDeathmatch, KingOfTheHill }
+public enum GameModeKind : byte { FreeForAll, TeamDeathmatch, KingOfTheHill, CaptureTheFlag, Race }
 
 /// <summary>Rules for one match. Shared by the dedicated server, listen server and practice mode.</summary>
 public sealed record MatchSettings

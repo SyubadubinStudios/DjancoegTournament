@@ -22,7 +22,7 @@ Semua cara bermain memakai kode server otoritatif yang sama. Latihan menjalankan
 ```bash
 dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" --arena pasar-malam --mode ffa --bots 6
 # atau dari paket rilis:
-./djancoeg-server --rotation pasar-malam,terminal-bus,sawah-ronda,atap-kampung --mode tdm --score 50 --time 900
+./djancoeg-server --rotation pelabuhan,stasiun-kereta,kantor-kelurahan --mode ctf --score 3 --score 50 --time 900
 ```
 
 | Opsi | Bawaan | Arti |
@@ -31,7 +31,7 @@ dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" -
 | `--name` | Warung Tawuran | Nama di daftar server |
 | `--arena` | pasar-malam | Arena pertama (id arena bawaan atau mod) |
 | `--rotation a,b,c` | — | Urutan arena setelah tiap pertandingan |
-| `--mode` | ffa | `ffa`, `tdm`, atau `koth` |
+| `--mode` | ffa | `ffa`, `tdm`, `koth`, `ctf` (Rebutan Gorengan), atau `race` (Panjat Pinang) |
 | `--score` | 25 | Batas skor |
 | `--time` | 600 | Batas waktu dalam detik (0 = tanpa batas) |
 | `--bots` | 5 | Bot pengisi slot kosong (otomatis keluar saat pemain datang) |

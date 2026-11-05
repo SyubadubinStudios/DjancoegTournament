@@ -26,7 +26,7 @@ public enum PacketType : byte
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 2;
+    public const byte Version = 3;
     public const byte SpectatorSlot = 255;
     public const int MaxSpectators = 8;
     public const int DefaultPort = 27960;
@@ -92,6 +92,7 @@ public enum NetPlayerFlags : ushort
     Protected = 1 << 8,
     Dashing = 1 << 9,
     Quad = 1 << 10,
+    Levitating = 1 << 11,
 }
 
 /// <summary>Replicated view of one player.</summary>
@@ -130,6 +131,14 @@ public struct NetPlayer
     private static byte Tenths(float s) => (byte)Math.Clamp(MathF.Ceiling(s * 10f), 0, 255);
 }
 
+/// <summary>Replicated gorengan state (Rebutan Gorengan).</summary>
+public struct NetFlag
+{
+    public byte State;     // 0 = home, 1 = carried, 2 = dropped
+    public sbyte Carrier;
+    public Vector3 Position;
+}
+
 public struct NetProjectile
 {
     public ushort Id;
@@ -160,6 +169,7 @@ public sealed class Snapshot
     public byte ArenaIndex;
     public byte LocalId;
     public byte Generation;
+    public readonly NetFlag[] Flags = new NetFlag[2];
 
     public readonly NetPlayer[] Players = new NetPlayer[SimConstants.MaxPlayers];
     public int PlayerCount;
@@ -183,7 +193,7 @@ public sealed class Snapshot
     public void CopyFrom(Snapshot o)
     {
         Tick = o.Tick; AckInput = o.AckInput; EchoTime = o.EchoTime; Phase = o.Phase; TimeLeft = o.TimeLeft; PhaseTimer = o.PhaseTimer;
-        TeamScore0 = o.TeamScore0; TeamScore1 = o.TeamScore1; ZoneHolder = o.ZoneHolder; Winner = o.Winner; ArenaIndex = o.ArenaIndex; LocalId = o.LocalId; Generation = o.Generation;
+        TeamScore0 = o.TeamScore0; TeamScore1 = o.TeamScore1; ZoneHolder = o.ZoneHolder; Winner = o.Winner; ArenaIndex = o.ArenaIndex; LocalId = o.LocalId; Generation = o.Generation; Flags[0] = o.Flags[0]; Flags[1] = o.Flags[1];
         PlayerCount = o.PlayerCount; Array.Copy(o.Players, Players, o.PlayerCount);
         OwnedWeapons = o.OwnedWeapons; Array.Copy(o.Ammo, Ammo, Ammo.Length);
         ProjectileCount = o.ProjectileCount; Array.Copy(o.Projectiles, Projectiles, o.ProjectileCount);

@@ -74,13 +74,19 @@ public sealed class BotBrain(ulong seed)
             desiredYaw = MathF.Atan2(to.X, to.Z);
             desiredPitch = MathF.Atan2(to.Y, MathF.Sqrt(to.X * to.X + to.Z * to.Z));
 
-            float preferred = w.Kind == WeaponKind.Melee ? 1.5f : w.Pellets > 1 ? 6f : w.Piercing ? 25f : 12f;
+            float preferred = w.Kind is WeaponKind.Melee or WeaponKind.Blast ? 2.5f : w.Pellets > 1 ? 6f : w.Piercing ? 25f : 12f;
             var flat = VectorMath.Horizontal(t.Move.Position - me.Move.Position);
             float flatLen = flat.Length();
             var toward = flatLen > 1e-3f ? flat / flatLen : VectorMath.FlatForward(me.Yaw);
             var side = new Vector3(toward.Z, 0, -toward.X) * _strafeDir;
             float approach = flatLen > preferred + 2 ? 1f : flatLen < preferred - 2 ? -0.7f : 0f;
             moveDir = toward * approach + side;
+            // Carrying the gorengan: keep running home while fighting.
+            if (world.Settings.Mode == GameModeKind.CaptureTheFlag && world.TryGetObjective(id, out var home) && world.Flags[1 - me.Team].Carrier == id)
+            {
+                var h = VectorMath.Horizontal(home - me.Move.Position);
+                if (h.LengthSquared() > 1f) moveDir = Vector3.Normalize(h) + side * 0.4f;
+            }
 
             _strafeTimer -= dt;
             if (_strafeTimer <= 0) { _strafeDir = -_strafeDir; _strafeTimer = _rng.Range(0.5f, 1.6f); }
@@ -97,7 +103,8 @@ public sealed class BotBrain(ulong seed)
         else
         {
             _goalTimer -= dt;
-            if (!_hasGoal || _goalTimer <= 0 || VectorMath.Horizontal(_goal - me.Move.Position).LengthSquared() < 2f) PickGoal(world, ref me);
+            if (world.TryGetObjective(id, out var objective) && (_rng.Chance(0.6f) || world.Settings.Mode != GameModeKind.KingOfTheHill)) { _goal = objective; _hasGoal = true; }
+            else if (!_hasGoal || _goalTimer <= 0 || VectorMath.Horizontal(_goal - me.Move.Position).LengthSquared() < 2f) PickGoal(world, ref me);
             var flat = VectorMath.Horizontal(_goal - me.Move.Position);
             moveDir = flat.LengthSquared() > 1e-4f ? Vector3.Normalize(flat) : Vector3.Zero;
             desiredYaw = moveDir == Vector3.Zero ? me.Yaw : MathF.Atan2(moveDir.X, moveDir.Z);
@@ -192,6 +199,7 @@ public sealed class BotBrain(ulong seed)
             float score = wd.Kind switch
             {
                 WeaponKind.Melee => dist < 3f ? 50f : -10f,
+                WeaponKind.Blast => dist < 5f ? 45f : -5f,
                 _ when wd.Pellets > 1 => dist < 10f ? 40f : 5f,
                 _ when wd.Piercing => dist > 15f ? 45f : 15f,
                 _ when wd.SplashRadius > 0 => dist is > 4f and < 25f ? 38f : 2f,

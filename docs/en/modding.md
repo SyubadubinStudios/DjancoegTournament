@@ -65,7 +65,7 @@ Ids use `a-z`, `0-9` and `-` (2–40 characters). Every text field is a `{ "en":
 
 | Field | Default | Notes |
 |---|---|---|
-| `kind` | Hitscan | `Melee`, `Hitscan` or `Projectile` |
+| `kind` | Hitscan | `Melee`, `Hitscan`, `Projectile` or `Blast` (cone of wind: knockback + deflects projectiles; uses `range` and `blastConeDegrees`) |
 | `slot` | 1 | Key 1–9 |
 | `damage` | 10 | Per pellet / direct hit (0–500) |
 | `fireInterval` | 0.5 | Seconds between shots (≥ 0.05) |
@@ -77,7 +77,8 @@ Ids use `a-z`, `0-9` and `-` (2–40 characters). Every text field is a `{ "en":
 | `maxAmmo`, `startAmmo`, `pickupAmmo`, `infiniteAmmo` | 100, 25, 10, false | Ammo |
 | `piercing` | false | Hitscan goes through everyone in line |
 | `startsWith` | false | Every fighter spawns with it |
-| `model` | slingshot | `racket`, `slingshot`, `pan`, `sandal`, `firecracker`, `bazooka`, `bamboo` |
+| `model` | slingshot | `racket`, `slingshot`, `pan`, `sandal`, `firecracker`, `bazooka`, `bamboo`, `cobek`, `fan`, `kerupuk` |
+| `blastConeDegrees` | 35 | Half-angle of a `Blast` weapon's cone |
 | `killVerb` | | Kill-feed sentence with `{killer}` and `{victim}` |
 
 A weapon is obtained by spawning with it (`startsWith`) or from a `Weapon` pickup in an arena.
@@ -105,7 +106,7 @@ A weapon is obtained by spawning with it (`startsWith`) or from a `Weapon` picku
 | `speedMultiplier` | 0.5–1.6 | |
 | `jumpMultiplier` | 0.5–2 | |
 | `scale` | 0.5–1.6 | Changes the hitbox too |
-| `ability.kind` | SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin, None | `power`: jump/dash/shockwave strength, heal amount, haste multiplier, or damage factor for StoneSkin; `duration` for timed abilities |
+| `ability.kind` | SuperJump, Dash, Shockwave, Heal, Invisibility, Haste, StoneSkin, Teleport, Levitate, Pull, Rally, None | `power`: jump/dash/shockwave strength, heal amount, haste multiplier, or damage factor for StoneSkin; `duration` for timed abilities |
 | `model`, `portrait` | optional | Paths relative to the game's `assets/` folder. Without a model the game draws a coloured capsule; without a portrait, a colour swatch. |
 
 To make a rigged model in the house style, add your fighter to `tools/blender/build_characters.py` (see [assets.md](assets.md)) — the game picks clips named `idle`, `run`, `shoot` and `die`.
@@ -138,7 +139,9 @@ Arenas are lists of axis-aligned boxes plus gameplay markers. Coordinates are me
 | `spawns[].team` | 0, 1, or -1 for any team; `yaw` in radians (0 faces +Z) |
 | `pickups[].kind` | HealthSmall, HealthMega, Armor, ArmorSmall, Weapon, Ammo, Quad |
 | `jumpPads[].launch` | Velocity in m/s. Gravity is 20 m/s². To land on a point, use `v_y = sqrt(2·20·(apex−y0))`, then horizontal = distance / flight time. |
-| `props[].kind` | crate, galon, gerobak, karung, ban (picks the model) |
+| `props[].kind` | crate, galon, gerobak, karung, ban, kursi, motor, jerigen (picks the model) |
+| `flagBases` | Optional `[[x,y,z],[x,y,z]]` gorengan plates for team 0 and 1 (Rebutan Gorengan); otherwise the centre of each team's spawns |
+| `raceGoal` | Optional `[x,y,z]` prize for Panjat Pinang; otherwise `zoneCenter` (radius = `zoneRadius`) |
 | `killY` | Falling below this height kills |
 | `zoneCenter`, `zoneRadius` | King of the Warung zone |
 

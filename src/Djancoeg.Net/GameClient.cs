@@ -237,7 +237,7 @@ public sealed class GameClient : IDisposable
         {
             // Out-of-order or duplicate snapshot - ignore unless the world was replaced.
             var peek = r; // copy to look ahead at generation
-            for (int k = 0; k < 4 + 4 + 1 + 2 + 1 + 2 + 2 + 1 + 1 + 1 + 1; k++) peek.U8();
+            for (int k = 0; k < 4 + 4 + 1 + 2 + 1 + 2 + 2 + 1 + 1 + 1 + 1; k++) peek.U8(); // generation follows LocalId
             if (peek.U8() == _generation) return;
         }
         s.AckInput = r.U32();
@@ -248,6 +248,7 @@ public sealed class GameClient : IDisposable
         s.TeamScore0 = r.I16(); s.TeamScore1 = r.I16();
         s.ZoneHolder = r.I8(); s.Winner = r.I8();
         s.ArenaIndex = r.U8(); s.LocalId = r.U8(); s.Generation = r.U8();
+        for (int t = 0; t < 2; t++) s.Flags[t] = new NetFlag { State = r.U8(), Carrier = r.I8(), Position = r.Pos() };
 
         s.PlayerCount = Math.Min((int)r.U8(), SimConstants.MaxPlayers);
         for (int i = 0; i < s.PlayerCount; i++) s.Players[i] = NetPlayer.Read(ref r);
@@ -316,9 +317,11 @@ public sealed class GameClient : IDisposable
     {
         var c = _content.Characters[Math.Min(me.Character, _content.Characters.Count - 1)];
         float speed = c.SpeedMultiplier;
-        if (me.Has(NetPlayerFlags.Hasted)) speed *= c.Ability.Power;
+        // Hasted covers both the Haste ability and the Rally boost (x1.25) - mirror GameWorld.ParamsFor.
+        if (me.Has(NetPlayerFlags.Hasted)) speed *= c.Ability.Kind == AbilityKind.Haste ? c.Ability.Power : 1.25f;
         if (me.Has(NetPlayerFlags.Stone)) speed *= 0.75f;
-        return new MoveParams(speed, c.JumpMultiplier, c.Scale);
+        bool lev = me.Has(NetPlayerFlags.Levitating);
+        return new MoveParams(speed, c.JumpMultiplier, c.Scale, lev ? 0.2f : 1f, lev);
     }
 
     private bool TryLocal(out NetPlayer me)
@@ -361,6 +364,9 @@ public sealed class GameClient : IDisposable
         visualPosition = _predicted.Position + _smoothingOffset;
         return _predictionValid;
     }
+
+    /// <summary>Drops local prediction until the next snapshot (after server-side teleports).</summary>
+    public void ResetPrediction() => _predictionValid = false;
 
     // ------------------------------------------------------------------ interpolation
 

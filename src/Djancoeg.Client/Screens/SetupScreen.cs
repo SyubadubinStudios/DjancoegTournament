@@ -53,7 +53,7 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
 
         // Options column.
         float x = 84 * u, y = 210 * u, w = 720 * u, rh = 54 * u;
-        var modes = new[] { ModeNames.Of(GameModeKind.FreeForAll), ModeNames.Of(GameModeKind.TeamDeathmatch), ModeNames.Of(GameModeKind.KingOfTheHill) }
+        var modes = new[] { ModeNames.Of(GameModeKind.FreeForAll), ModeNames.Of(GameModeKind.TeamDeathmatch), ModeNames.Of(GameModeKind.KingOfTheHill), ModeNames.Of(GameModeKind.CaptureTheFlag), ModeNames.Of(GameModeKind.Race) }
             .Select(m => S.Lang == Core.Localization.Language.Indonesian ? m.Id : m.En).ToArray();
         int mode = st.Mode;
         Gui.Choice(new Rectangle(x, y, w, rh), S.T("setup.mode"), ref mode, modes);

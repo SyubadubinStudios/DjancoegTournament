@@ -22,7 +22,7 @@ Every way of playing uses the same authoritative server code. Practice starts a 
 ```bash
 dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" --arena pasar-malam --mode ffa --bots 6
 # or, from a published package:
-./djancoeg-server --rotation pasar-malam,terminal-bus,sawah-ronda,atap-kampung --mode tdm --score 50 --time 900
+./djancoeg-server --rotation pelabuhan,stasiun-kereta,kantor-kelurahan --mode ctf --score 3 --score 50 --time 900
 ```
 
 | Option | Default | Meaning |
@@ -31,7 +31,7 @@ dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" -
 | `--name` | Warung Tawuran | Name in the server browser |
 | `--arena` | pasar-malam | First arena (any built-in or mod arena id) |
 | `--rotation a,b,c` | — | Arena rotation after each match |
-| `--mode` | ffa | `ffa`, `tdm` or `koth` |
+| `--mode` | ffa | `ffa`, `tdm`, `koth`, `ctf` (Rebutan Gorengan) or `race` (Panjat Pinang) |
 | `--score` | 25 | Score limit |
 | `--time` | 600 | Time limit in seconds (0 = none) |
 | `--bots` | 5 | Bots to fill empty slots (removed automatically as people join) |
