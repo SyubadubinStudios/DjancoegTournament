@@ -1,0 +1,19 @@
+Name: Djancoeg Tournament
+
+Deskripsi: Ultimate Indonesian Chaos Battle Arena
+
+Features
+---
+Desain dan Fitur bisa lihat di file @solution-design.md
+
+---
+Notes:
+- Dibangun dengan .NET 10 
+- Optimasi kode dengan best practice, best performance dan efisiensi memory
+- Dokumentasi yang lengkap, jelas, mudah dengan dua Bahasa (English dan Bahasa Indonesia)
+- Tambahkan screenshot-nya ke readme dan docs
+- Tambahkan info pada dokumentasi dan aplikasi: Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios  
+- PLAN.md untuk roadmap pengembangan, dan Progress.md untuk tracking development
+- UI UX-nya yang keren dan professional dibantu dengan skill 'frontend-design' 
+- Untuk sculpting, rigging, animating gunakan Blender MCP
+- Untuk generate 3D asset, Image dan 2D Art bisa dibantu Rodin MCP

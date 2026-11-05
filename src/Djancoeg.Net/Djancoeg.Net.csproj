@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Djancoeg.Core\Djancoeg.Core.csproj" />
+    <ProjectReference Include="..\Djancoeg.Modding\Djancoeg.Modding.csproj" />
+  </ItemGroup>
+</Project>

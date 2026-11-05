@@ -1,0 +1,181 @@
+using Djancoeg.Core.Localization;
+
+namespace Djancoeg.Client;
+
+/// <summary>All interface copy in English and Bahasa Indonesia. Keys are short and stable.</summary>
+public static class S
+{
+    public static Language Lang { get; set; } = Language.Indonesian;
+
+    public static string T(string key) => Table.TryGetValue(key, out var v) ? (Lang == Language.Indonesian ? v.Id : v.En) : key;
+    public static string T(Core.Localization.LocalizedText t) => t.Get(Lang);
+
+    private static readonly Dictionary<string, (string En, string Id)> Table = new()
+    {
+        // Main menu
+        ["menu.practice"] = ("Practice vs bots", "Latihan lawan bot"),
+        ["menu.host"] = ("Host a game", "Buka server"),
+        ["menu.find"] = ("Find a game", "Cari server"),
+        ["menu.fighters"] = ("Fighters", "Pilih jagoan"),
+        ["menu.workshop"] = ("Workshop", "Workshop mod"),
+        ["menu.settings"] = ("Settings", "Pengaturan"),
+        ["menu.credits"] = ("Credits", "Kredit"),
+        ["menu.quit"] = ("Quit", "Keluar"),
+        ["menu.playingAs"] = ("Playing as", "Main sebagai"),
+        ["menu.hint"] = ("Arrow keys or mouse to choose, Enter to confirm", "Panah atau mouse untuk memilih, Enter untuk lanjut"),
+
+        // Setup
+        ["setup.titlePractice"] = ("Practice match", "Pertandingan latihan"),
+        ["setup.titleHost"] = ("Host a game", "Buka server"),
+        ["setup.arena"] = ("Arena", "Arena"),
+        ["setup.mode"] = ("Mode", "Mode"),
+        ["setup.bots"] = ("Bots", "Jumlah bot"),
+        ["setup.skill"] = ("Bot skill", "Kehebatan bot"),
+        ["setup.score"] = ("Score limit", "Batas skor"),
+        ["setup.time"] = ("Time limit (min)", "Batas waktu (menit)"),
+        ["setup.serverName"] = ("Server name", "Nama server"),
+        ["setup.port"] = ("Port", "Port"),
+        ["setup.start"] = ("Start match", "Gas, mulai!"),
+        ["setup.public"] = ("List on master server", "Daftarkan ke master server"),
+        ["setup.modeDesc0"] = ("Everyone for themselves. First to the score limit wins.", "Semua lawan semua. Yang duluan capai batas skor menang."),
+        ["setup.modeDesc1"] = ("Two villages, one winner. Team frags count.", "Dua kampung, satu pemenang. Skor dihitung per tim."),
+        ["setup.modeDesc2"] = ("Hold the zone alone to score a point every second.", "Kuasai zona sendirian, dapat satu poin tiap detik."),
+
+        // Fighters
+        ["fighters.title"] = ("Choose your fighter", "Pilih jagoanmu"),
+        ["fighters.name"] = ("Your name", "Namamu"),
+        ["fighters.health"] = ("Health", "Darah"),
+        ["fighters.speed"] = ("Speed", "Kecepatan"),
+        ["fighters.jump"] = ("Jump", "Lompatan"),
+        ["fighters.size"] = ("Size", "Ukuran"),
+        ["fighters.ability"] = ("Ability (Q)", "Jurus (Q)"),
+        ["fighters.cooldown"] = ("cooldown", "jeda"),
+        ["fighters.confirm"] = ("Pick this fighter", "Pakai jagoan ini"),
+        ["cat.Legend"] = ("Legend", "Legenda"),
+        ["cat.Profession"] = ("Profession", "Profesi"),
+        ["cat.Ghost"] = ("Ghost", "Hantu"),
+        ["cat.Animal"] = ("Animal", "Hewan"),
+        ["cat.Meme"] = ("Meme", "Meme"),
+
+        // Browser
+        ["browser.title"] = ("Find a game", "Cari server"),
+        ["browser.lan"] = ("LAN", "LAN"),
+        ["browser.online"] = ("Online", "Online"),
+        ["browser.refresh"] = ("Refresh", "Muat ulang"),
+        ["browser.direct"] = ("Direct connect (IP:port)", "Sambung langsung (IP:port)"),
+        ["browser.join"] = ("Join", "Gabung"),
+        ["browser.empty"] = ("No servers found yet. Host one from the main menu, or connect directly by IP.", "Belum ada server. Buka server dari menu utama, atau sambung langsung lewat IP."),
+        ["browser.colName"] = ("Server", "Server"),
+        ["browser.colArena"] = ("Arena", "Arena"),
+        ["browser.colMode"] = ("Mode", "Mode"),
+        ["browser.colPlayers"] = ("Players", "Pemain"),
+        ["browser.colPing"] = ("Ping", "Ping"),
+        ["browser.mismatch"] = ("different mods", "mod beda"),
+        ["browser.master"] = ("Master server", "Master server"),
+
+        // Workshop
+        ["workshop.title"] = ("Workshop", "Workshop mod"),
+        ["workshop.desc"] = ("Mods add fighters, weapons and arenas. Put .djmod files in the inbox folder and press Install.", "Mod menambah jagoan, senjata, dan arena. Taruh file .djmod di folder inbox lalu tekan Pasang."),
+        ["workshop.install"] = ("Install from inbox", "Pasang dari inbox"),
+        ["workshop.open"] = ("Open mods folder", "Buka folder mod"),
+        ["workshop.enabled"] = ("Enabled", "Aktif"),
+        ["workshop.disabled"] = ("Disabled", "Nonaktif"),
+        ["workshop.turnOff"] = ("Disable mod", "Matikan mod"),
+        ["workshop.turnOn"] = ("Enable mod", "Aktifkan mod"),
+        ["workshop.invalid"] = ("Has errors", "Ada error"),
+        ["workshop.none"] = ("No mods installed. Create one with: djancoeg-server mod new my-mod", "Belum ada mod. Buat dengan: djancoeg-server mod new mod-saya"),
+        ["workshop.installed"] = ("Installed {0} package(s).", "{0} paket terpasang."),
+        ["workshop.contents"] = ("{0} weapons · {1} fighters · {2} arenas", "{0} senjata · {1} jagoan · {2} arena"),
+
+        // Settings
+        ["settings.title"] = ("Settings", "Pengaturan"),
+        ["settings.language"] = ("Language", "Bahasa"),
+        ["settings.sensitivity"] = ("Mouse sensitivity", "Sensitivitas mouse"),
+        ["settings.invert"] = ("Invert mouse Y", "Balik sumbu Y mouse"),
+        ["settings.fov"] = ("Field of view", "Sudut pandang (FOV)"),
+        ["settings.volume"] = ("Master volume", "Volume utama"),
+        ["settings.sfx"] = ("Effects volume", "Volume efek"),
+        ["settings.thirdPerson"] = ("Start in third person", "Mulai dengan kamera orang ketiga"),
+        ["settings.fullscreen"] = ("Fullscreen", "Layar penuh"),
+        ["settings.fps"] = ("Show FPS and ping", "Tampilkan FPS dan ping"),
+        ["settings.master"] = ("Master server address", "Alamat master server"),
+        ["settings.controls"] = ("Controls", "Kontrol"),
+        ["settings.controlsText"] = (
+            "WASD move · Space jump · Ctrl crouch · Mouse fire · Q ability · 1-7 / wheel weapons · V first/third person · T taunt · Tab scores · Y chat · Esc menu",
+            "WASD jalan · Spasi lompat · Ctrl jongkok · Klik tembak · Q jurus · 1-7 / scroll ganti senjata · V kamera 1/3 · T ejek · Tab skor · Y chat · Esc menu"),
+
+        // Credits
+        ["credits.title"] = ("Credits", "Kredit"),
+        ["credits.made"] = ("Made by Ariana Mischa Fadhila of Syubadubin Studios", "Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios"),
+        ["credits.tech"] = ("Built with .NET 10 and raylib. 3D and 2D art made with Blender and Rodin.", "Dibangun dengan .NET 10 dan raylib. Aset 3D dan 2D dibuat dengan Blender dan Rodin."),
+        ["credits.fonts"] = ("Fonts: Bungee (David Jonathan Ross), Plus Jakarta Sans (Tokotype), Space Mono (Colophon) - SIL Open Font License.", "Font: Bungee (David Jonathan Ross), Plus Jakarta Sans (Tokotype), Space Mono (Colophon) - SIL Open Font License."),
+        ["credits.thanks"] = ("Terima kasih for playing. Stay chaotic, stay kind.", "Terima kasih sudah main. Tetap rusuh, tetap baik."),
+
+        // Common
+        ["common.back"] = ("Back", "Kembali"),
+        ["common.on"] = ("On", "Nyala"),
+        ["common.off"] = ("Off", "Mati"),
+        ["common.connecting"] = ("Connecting to {0}...", "Menyambung ke {0}..."),
+        ["common.loading"] = ("Setting up the arena...", "Menyiapkan arena..."),
+
+        // In game
+        ["hud.health"] = ("HP", "DARAH"),
+        ["hud.armor"] = ("ARMOR", "ZIRAH"),
+        ["hud.ammo"] = ("AMMO", "PELURU"),
+        ["hud.respawn"] = ("Press fire to get back up", "Tekan tembak untuk bangkit lagi"),
+        ["hud.respawnIn"] = ("Back in {0}", "Bangkit dalam {0}"),
+        ["hud.killedBy"] = ("Taken out by {0}", "Dihajar {0}"),
+        ["hud.zone"] = ("Zone", "Zona"),
+        ["hud.zoneYou"] = ("YOU HOLD THE ZONE", "ZONA PUNYAMU"),
+        ["hud.zoneContested"] = ("Zone contested", "Zona direbutkan"),
+        ["hud.ready"] = ("READY", "SIAP"),
+        ["hud.quad"] = ("Jamu power x3", "Kekuatan jamu x3"),
+        ["hud.chat"] = ("Say:", "Ngomong:"),
+        ["hud.team0"] = ("Upper Village", "Kampung Atas"),
+        ["hud.team1"] = ("Lower Village", "Kampung Bawah"),
+        ["hud.winner"] = ("{0} wins the brawl!", "{0} juara tawuran!"),
+        ["hud.nextMatch"] = ("Next match in {0}", "Pertandingan berikut dalam {0}"),
+        ["hud.selfKill"] = ("{victim} played themselves", "{victim} celaka sendiri"),
+        ["hud.envKill"] = ("{victim} fell into the river", "{victim} kecebur kali"),
+        ["hud.envKillBy"] = ("{killer} pushed {victim} into the river", "{killer} nyemplungin {victim} ke kali"),
+        ["hud.propKill"] = ("{killer} flattened {victim} with a cart", "{killer} menggilas {victim} pakai gerobak"),
+        ["hud.abilityKill"] = ("{killer} used a secret move on {victim}", "{killer} mengeluarkan jurus ke {victim}"),
+        ["hud.headshot"] = ("HEADSHOT!", "KENA KEPALA!"),
+        ["pause.resume"] = ("Resume", "Lanjut"),
+        ["pause.fighter"] = ("Change fighter", "Ganti jagoan"),
+        ["pause.camera"] = ("Toggle camera (V)", "Ganti kamera (V)"),
+        ["pause.leave"] = ("Leave match", "Keluar pertandingan"),
+        ["score.player"] = ("Player", "Pemain"),
+        ["score.score"] = ("Score", "Skor"),
+        ["score.kills"] = ("K", "K"),
+        ["score.deaths"] = ("D", "M"),
+        ["score.ping"] = ("Ping", "Ping"),
+        ["score.bot"] = ("BOT", "BOT"),
+    };
+
+    /// <summary>Running-text tips for the LED marquee on the main menu.</summary>
+    public static readonly (string En, string Id)[] Tips =
+    [
+        ("Rocket-jump with the Chili Sauce Bazooka: aim at your feet and jump", "Rocket jump pakai Bazooka Sambal: tembak kaki sendiri sambil lompat"),
+        ("Push enemies into the river on Kampung Rooftops for a free point", "Dorong musuh ke kali di Atap Kampung, poin gratis"),
+        ("Carts and water jugs hurt when they fly fast. Kick them!", "Gerobak dan galon yang terbang kencang itu sakit. Tendang aja!"),
+        ("Jamu power triples your damage for 15 seconds", "Kekuatan jamu bikin damage tiga kali lipat selama 15 detik"),
+        ("Kuntilanak turns nearly invisible until she shoots", "Kuntilanak hampir tak terlihat sampai dia menembak"),
+        ("Nasi Padang overheals you up to 200", "Nasi Padang bisa nambah darah sampai 200"),
+        ("Press V to switch between first and third person", "Tekan V untuk ganti kamera orang pertama dan ketiga"),
+        ("Bamboo Spear shots pierce everyone in a line", "Bambu Runcing Sakti menembus semua yang berbaris"),
+        ("Make your own fighters with the Workshop - see docs/en/modding.md", "Bikin jagoanmu sendiri lewat Workshop - lihat docs/id/modding.md"),
+    ];
+
+    public static string Tip(int i) => Lang == Language.Indonesian ? Tips[i % Tips.Length].Id : Tips[i % Tips.Length].En;
+
+    /// <summary>Big centre-screen shouts for kills and streaks.</summary>
+    public static readonly string[] KillShouts = ["MANTAP JIWA!", "WADUH!", "ASTAGA!", "JOSS!", "AJIB!", "SIKAT!", "GASKEUN!"];
+    public static string StreakShout(int streak) => streak switch
+    {
+        3 => Lang == Language.Indonesian ? "NGAMUK!" : "RAMPAGE!",
+        5 => Lang == Language.Indonesian ? "KESURUPAN!" : "POSSESSED!",
+        8 => Lang == Language.Indonesian ? "SAKTI MANDRAGUNA!" : "UNSTOPPABLE!",
+        _ => Lang == Language.Indonesian ? "DEWA TAWURAN!" : "BRAWL GOD!",
+    };
+}

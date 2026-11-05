@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>DjancoegTournament</AssemblyName>
+    <!-- Screens own disposables released in Leave(); Theme fonts are mutable by design (loaded after window init). -->
+    <NoWarn>$(NoWarn);CA1001;CA2211;CA1863</NoWarn>
+    <ApplicationIcon Condition="Exists('..\..\assets\icon\djancoeg.ico')">..\..\assets\icon\djancoeg.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Raylib-cs" Version="7.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Djancoeg.Net\Djancoeg.Net.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Raw Rodin exports in models/source are kept in the repo for reference but never shipped. -->
+    <None Include="..\..\assets\**\*" Exclude="..\..\assets\models\source\**" LinkBase="assets" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\mods\**\*" LinkBase="mods" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

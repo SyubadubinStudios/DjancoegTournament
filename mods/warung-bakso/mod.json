@@ -1,0 +1,92 @@
+{
+  "id": "warung-bakso",
+  "name": {
+    "en": "Meatball Stall Pack",
+    "id": "Paket Warung Bakso"
+  },
+  "description": {
+    "en": "Example mod: a meatball seller, a throwable bowl and the Independence Day field.",
+    "id": "Contoh mod: abang bakso, mangkok lempar, dan lapangan tujuhbelasan."
+  },
+  "author": "Syubadubin Studios",
+  "version": "1.0.0",
+  "gameVersion": "1.0",
+  "weapons": [
+    {
+      "id": "mangkok-bakso",
+      "slot": 8,
+      "kind": "Projectile",
+      "model": "firecracker",
+      "color": "#FFCC80",
+      "name": {
+        "en": "Meatball Bowl Lobber",
+        "id": "Pelontar Mangkok Bakso"
+      },
+      "description": {
+        "en": "Lobs scalding-hot meatball bowls that splash.",
+        "id": "Melempar mangkok bakso panas yang muncrat."
+      },
+      "killVerb": {
+        "en": "{killer} served {victim} a scalding bowl",
+        "id": "{killer} menyiram {victim} pakai kuah bakso panas"
+      },
+      "damage": 40,
+      "splashDamage": 45,
+      "splashRadius": 2.8,
+      "knockback": 7,
+      "fireInterval": 0.7,
+      "projectileSpeed": 22,
+      "projectileGravity": 14,
+      "projectileLifetime": 3,
+      "maxAmmo": 30,
+      "startAmmo": 8,
+      "pickupAmmo": 8
+    }
+  ],
+  "characters": [
+    {
+      "id": "abang-bakso",
+      "category": "Profession",
+      "shape": "Humanoid",
+      "name": {
+        "en": "Meatball Seller",
+        "id": "Abang Bakso"
+      },
+      "description": {
+        "en": "Taps his bowl - ting ting ting - and the whole alley comes running.",
+        "id": "Tang ting tung mangkoknya bikin satu gang keluar rumah."
+      },
+      "maxHealth": 105,
+      "speedMultiplier": 1.0,
+      "primaryColor": "#FFFFFF",
+      "secondaryColor": "#1565C0",
+      "skinColor": "#A0663C",
+      "ability": {
+        "kind": "Dash",
+        "cooldown": 7,
+        "power": 1.1,
+        "name": {
+          "en": "Runaway Cart",
+          "id": "Gerobak Ngebut"
+        },
+        "description": {
+          "en": "Charge forward like a runaway cart.",
+          "id": "Seruduk ke depan kayak gerobak blong."
+        }
+      },
+      "taunts": [
+        {
+          "en": "Meatballs! Hot meatballs!",
+          "id": "Baksooo! Bakso panas!"
+        },
+        {
+          "en": "Ting ting ting!",
+          "id": "Ting ting ting!"
+        }
+      ]
+    }
+  ],
+  "arenaFiles": [
+    "arenas/lapangan-17an.json"
+  ]
+}

@@ -426,3 +426,10 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+## Djancoeg Tournament
+.claude/settings.local.json
+mods/settings.json
+mods/_inbox/
+*.djmod
+*_History.json

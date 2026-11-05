@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>djancoeg-server</AssemblyName>
+    <IsAotCompatible>true</IsAotCompatible>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Djancoeg.Net\Djancoeg.Net.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\mods\**\*" LinkBase="mods" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
