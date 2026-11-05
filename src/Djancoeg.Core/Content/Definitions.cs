@@ -101,6 +101,8 @@ public sealed record ArenaBox
     public string Color { get; set; } = "#888888";
     /// <summary>False for purely decorative geometry (e.g. lamp strings).</summary>
     public bool Solid { get; set; } = true;
+    /// <summary>Hit points for destructible boxes (stalls, counters, water tanks). 0 = indestructible.</summary>
+    public float Health { get; set; }
 
     [JsonIgnore] public Vector3 MinV => new(Min[0], Min[1], Min[2]);
     [JsonIgnore] public Vector3 MaxV => new(Max[0], Max[1], Max[2]);

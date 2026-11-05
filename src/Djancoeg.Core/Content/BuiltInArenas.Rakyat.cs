@@ -220,8 +220,8 @@ public static partial class BuiltInArenas
         b.Box(-16.32f, 3.6f, 5.68f, 16.32f, 4.0f, 5.72f, SurfaceKind.Neon, trim, solid: false);
         b.Block(0, 2.6f, 5.6f, 9, 0.9f, 0.06f, SurfaceKind.Fabric, "#E53935", solid: false);   // spanduk
         // Service counter (loket) with a gap in the middle, desks in the back rooms.
-        b.Box(-8, 0, 9.5f, -1.2f, 1.1f, 10.1f, SurfaceKind.Wood, "#8D6E63").Box(1.2f, 0, 9.5f, 8, 1.1f, 10.1f, SurfaceKind.Wood, "#8D6E63");
-        foreach (float x in (ReadOnlySpan<float>)[-11f, 0f, 11f]) b.Block(x, 0, 17.5f, 2.4f, 0.8f, 1.2f, SurfaceKind.Wood, "#795548");
+        b.Box(-8, 0, 9.5f, -1.2f, 1.1f, 10.1f, SurfaceKind.Wood, "#8D6E63", hp: 160).Box(1.2f, 0, 9.5f, 8, 1.1f, 10.1f, SurfaceKind.Wood, "#8D6E63", hp: 160);
+        foreach (float x in (ReadOnlySpan<float>)[-11f, 0f, 11f]) b.Block(x, 0, 17.5f, 2.4f, 0.8f, 1.2f, SurfaceKind.Wood, "#795548", hp: 100);
         // Exterior stairs to the roof (east side) and a toren on the roof.
         b.Stairs(17, 0, 8, 0, 1, 1.2f, 11, 0.4f, 0.7f, SurfaceKind.Tile, "#BDBDBD");
         b.Block(11, 4.4f, 17, 1.4f, 1.6f, 1.4f, SurfaceKind.Metal, "#FF7043");

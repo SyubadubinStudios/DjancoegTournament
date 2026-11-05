@@ -98,6 +98,7 @@ public sealed partial class GameView
             }
             case GameEventType.CreepKilled when def is not null:
             {
+                CorpseForCreep(e);
                 bool big = def.Scale >= 2f || def.Shape == CreepShape.Worm;
                 _fx.Gore(e.Position, Col(def.BloodColor), big);
                 sounds.PlayAt(Sfx.Splat, e.Position, ListenerPos, _session.Yaw, 1f, big ? 0.7f : 1f);

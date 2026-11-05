@@ -14,20 +14,20 @@ public sealed class ArenaBuilder
     private readonly List<ArenaProp> _props = [];
     private readonly List<ArenaLight> _lights = [];
 
-    public ArenaBuilder Box(float x0, float y0, float z0, float x1, float y1, float z1, SurfaceKind s, string color, bool solid = true)
+    public ArenaBuilder Box(float x0, float y0, float z0, float x1, float y1, float z1, SurfaceKind s, string color, bool solid = true, float hp = 0)
     {
         _boxes.Add(new ArenaBox
         {
             Min = [MathF.Min(x0, x1), MathF.Min(y0, y1), MathF.Min(z0, z1)],
             Max = [MathF.Max(x0, x1), MathF.Max(y0, y1), MathF.Max(z0, z1)],
-            Surface = s, Color = color, Solid = solid,
+            Surface = s, Color = color, Solid = solid, Health = hp,
         });
         return this;
     }
 
     /// <summary>Box from its bottom-center point and full size.</summary>
-    public ArenaBuilder Block(float cx, float y, float cz, float sx, float sy, float sz, SurfaceKind s, string color, bool solid = true) =>
-        Box(cx - sx / 2, y, cz - sz / 2, cx + sx / 2, y + sy, cz + sz / 2, s, color, solid);
+    public ArenaBuilder Block(float cx, float y, float cz, float sx, float sy, float sz, SurfaceKind s, string color, bool solid = true, float hp = 0) =>
+        Box(cx - sx / 2, y, cz - sz / 2, cx + sx / 2, y + sy, cz + sz / 2, s, color, solid, hp);
 
     /// <summary>A flight of stairs whose first (lowest) step starts at (x, y, z) and climbs along (dx, dz).</summary>
     public ArenaBuilder Stairs(float x, float y, float z, int dx, int dz, float width, int steps, float stepHeight, float stepDepth, SurfaceKind s, string color)

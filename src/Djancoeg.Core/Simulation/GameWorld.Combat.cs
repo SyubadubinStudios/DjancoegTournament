@@ -77,13 +77,18 @@ public sealed partial class GameWorld
         else if (best >= 0)
             ApplyDamage(best, id, Players[id].Weapon, w.Damage, fwd, w.Knockback, KillFlags.None);
         else
+        {
             HitPropsAlongRay(eye, fwd, w.Range, w.Knockback * 3f, id);
+            if (Collision.Raycast(eye, fwd, w.Range, out _, out _, out int box)) DamageBox(box, w.Damage, fwd);
+        }
     }
 
     private void FireHitscan(int id, WeaponDef w, Vector3 eye, Vector3 dir)
     {
         float maxDist = w.Range;
-        if (Collision.Raycast(eye, dir, maxDist, out float wallDist, out _)) maxDist = wallDist;
+        int wallBox = -1;
+        if (Collision.Raycast(eye, dir, maxDist, out float wallDist, out _, out wallBox)) maxDist = wallDist;
+        float wallAt = maxDist;
 
         int lag = Players[id].IsBot ? 0 : Players[id].LagCompensationTicks;
         var inv = VectorMath.SafeInverse(dir);
@@ -128,6 +133,7 @@ public sealed partial class GameWorld
         {
             HitPropsAlongRay(eye, dir, maxDist, w.Knockback * 2f, id);
         }
+        if (wallBox >= 0 && endDist >= wallAt - 0.01f) DamageBox(wallBox, w.Damage, dir);
         Push(new GameEvent { Type = GameEventType.Shot, A = (byte)id, Weapon = (byte)Players[id].Weapon, Position = eye, Vector = eye + dir * endDist });
     }
 
@@ -230,7 +236,7 @@ public sealed partial class GameWorld
             if (len > 1e-5f)
             {
                 var dir = move / len;
-                bool hitWorld = Collision.Raycast(pr.Position, dir, len, out float tw, out var normal);
+                bool hitWorld = Collision.Raycast(pr.Position, dir, len, out float tw, out var normal, out int hitBox);
                 float tHit = hitWorld ? tw : len;
 
                 // Players (sphere approximated by inflating their boxes).
@@ -298,7 +304,7 @@ public sealed partial class GameWorld
                             Push(new GameEvent { Type = GameEventType.ProjectileBounce, A = pr.Owner, Weapon = pr.Weapon, Position = pr.Position });
                         else pr.Velocity = Vector3.Zero;
                     }
-                    else { Detonate(ref pr, w, -1); continue; }
+                    else { DamageBox(hitBox, w.Damage, dir); Detonate(ref pr, w, -1); continue; }
                 }
                 else pr.Position += move;
             }
@@ -323,6 +329,7 @@ public sealed partial class GameWorld
     {
         Push(new GameEvent { Type = GameEventType.Explosion, A = (byte)Math.Max(0, owner), Weapon = (byte)weapon, Position = center, Value = (short)(radius * 10) });
         ExplodeOnCreeps(center, radius, damage, knockback, owner);
+        ExplodeOnBoxes(center, radius, damage);
         for (int i = 0; i < Players.Length; i++)
         {
             if (!Players[i].Active || !Players[i].Alive || i == skipVictim) continue;

@@ -107,8 +107,8 @@ public static partial class BuiltInArenas
     private static void Stall(ArenaBuilder b, float cx, float cz, bool rotated, string canopyColor, string wood)
     {
         float hx = rotated ? 1.4f : 2f, hz = rotated ? 2f : 1.4f;
-        b.Block(cx, 0, cz, rotated ? 1.6f : 3.2f, 0.95f, rotated ? 3.2f : 1.6f, SurfaceKind.Wood, wood);
-        b.Box(cx - hx, 2.6f, cz - hz, cx + hx, 2.75f, cz + hz, SurfaceKind.Fabric, canopyColor);
+        b.Block(cx, 0, cz, rotated ? 1.6f : 3.2f, 0.95f, rotated ? 3.2f : 1.6f, SurfaceKind.Wood, wood, hp: 120);
+        b.Box(cx - hx, 2.6f, cz - hz, cx + hx, 2.75f, cz + hz, SurfaceKind.Fabric, canopyColor, hp: 70);
         for (int i = -1; i <= 1; i += 2)
             for (int j = -1; j <= 1; j += 2)
                 b.Block(cx + i * (hx - 0.1f), 0, cz + j * (hz - 0.1f), 0.12f, 2.6f, 0.12f, SurfaceKind.Metal, "#9E9E9E");
@@ -143,8 +143,8 @@ public static partial class BuiltInArenas
         // Platform shelters with benches.
         for (int i = -2; i <= 2; i++)
         {
-            b.Block(i * 9f, 1.2f, 15.4f, 3f, 0.45f, 0.5f, SurfaceKind.Wood, "#8D6E63");
-            b.Block(i * 9f, 1.2f, -15.4f, 3f, 0.45f, 0.5f, SurfaceKind.Wood, "#8D6E63");
+            b.Block(i * 9f, 1.2f, 15.4f, 3f, 0.45f, 0.5f, SurfaceKind.Wood, "#8D6E63", hp: 80);
+            b.Block(i * 9f, 1.2f, -15.4f, 3f, 0.45f, 0.5f, SurfaceKind.Wood, "#8D6E63", hp: 80);
         }
 
         // Buses you can climb onto via pads.
@@ -321,7 +321,7 @@ public static partial class BuiltInArenas
                 float sx = cx + side * 5.6f;
                 b.Stairs(sx, 0, cz + 4.6f, 0, -1, 1.2f, steps, 0.4f, 9.2f / steps, SurfaceKind.Tile, "#BDBDBD");
                 // Water tank (toren) on every other roof.
-                if (((ix + iz) & 1) == 0) b.Block(cx + 2.5f, h, cz + 2.5f, 1.3f, 1.6f, 1.3f, SurfaceKind.Metal, "#FF7043");
+                if (((ix + iz) & 1) == 0) b.Block(cx + 2.5f, h, cz + 2.5f, 1.3f, 1.6f, 1.3f, SurfaceKind.Metal, "#FF7043", hp: 150);
             }
         }
         // Bridges over the river.

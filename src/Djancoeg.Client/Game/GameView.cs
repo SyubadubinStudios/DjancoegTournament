@@ -127,6 +127,7 @@ public sealed partial class GameView : IDisposable
 
         UpdateProps(dt);
         UpdateCreepViews(dt);
+        UpdateCorpses(dt);
         _fx.World = client.Collision;
         _fx.Blood = _app.Settings.Blood;
         UpdateFootsteps(dt);
@@ -240,6 +241,11 @@ public sealed partial class GameView : IDisposable
                 break;
             case GameEventType.Kill:
                 OnKill(e, me);
+                CorpseForPlayer(e);
+                break;
+            case GameEventType.BoxDestroyed:
+            case GameEventType.BoxRestored:
+                OnBoxEvent(e);
                 break;
             case GameEventType.Explosion:
             {
@@ -557,7 +563,9 @@ public sealed partial class GameView : IDisposable
         DrawPickups(arena);
         DrawProps(arena);
         if (_app.Settings.BlobShadows) DrawBlobShadows();
+        DrawDestructibles(arena);
         DrawPlayers();
+        DrawCorpses();
         DrawCreeps();
         DrawProjectiles();
         shader.SetEmissive(0.7f);
@@ -673,6 +681,7 @@ public sealed partial class GameView : IDisposable
             bool alive = p.Has(NetPlayerFlags.Alive);
             bool invisible = p.Has(NetPlayerFlags.Invisible);
             if (alive && p.Has(NetPlayerFlags.Protected) && ((int)(_time * 12) & 1) == 0) continue;
+            if (!alive && HasCorpse(p.Id)) continue;
 
             float speed = VectorMath.Horizontal(p.Velocity).Length();
             _runPhase[p.Id] += dt * MathF.Max(0.6f, speed / 6.5f);

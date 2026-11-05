@@ -121,6 +121,7 @@ public enum GameEventType : byte
     MatchStart, MatchEnd, ZoneScore, PropHit, Land, Join, Leave, Streak, ProjectileBounce,
     FlagTaken, FlagDropped, FlagReturned, FlagCaptured, RaceGoal, Deflect,
     CreepSpawn, CreepAttack, CreepHurt, CreepKilled, CreepRoar, CreepLeave, WormRumble,
+    BoxDestroyed, BoxRestored,
 }
 
 /// <summary>Something that happened this tick, used for effects, sounds, HUD and the kill feed.</summary>

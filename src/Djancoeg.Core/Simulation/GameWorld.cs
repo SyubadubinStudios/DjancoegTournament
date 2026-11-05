@@ -88,6 +88,7 @@ public sealed partial class GameWorld
             var home = FlagHome(t);
             Flags[t] = new FlagState { Home = home, Position = home, Carrier = -1, AtHome = true };
         }
+        InitDestructibles();
     }
 
     // ------------------------------------------------------------------ players
@@ -291,6 +292,7 @@ public sealed partial class GameWorld
 
         UpdateProjectiles(dt);
         UpdateCreeps(dt);
+        UpdateDestructibles(dt);
         UpdateProps(dt);
         UpdatePickups(dt);
         UpdateRules(dt);

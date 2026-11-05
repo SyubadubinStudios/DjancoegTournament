@@ -18,7 +18,8 @@ public sealed unsafe class ArenaRenderer : IDisposable
     public ArenaRenderer(ArenaDef arena, WorldShader shader)
     {
         Arena = arena;
-        var boxes = arena.Boxes;
+        // Destructible boxes are drawn separately so they can disappear when broken.
+        var boxes = arena.Boxes.Where(b => !(b.Solid && b.Health > 0)).ToList();
         int i = 0;
         while (i < boxes.Count)
         {

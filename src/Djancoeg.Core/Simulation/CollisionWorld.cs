@@ -15,6 +15,9 @@ public sealed class CollisionWorld
     private const float CellSize = 6f;
     private readonly Aabb[] _solids;
     private readonly SurfaceKind[] _surfaces;
+    private readonly int[] _solidToBox;
+    private readonly Dictionary<int, int> _boxToSolid = [];
+    private readonly bool[] _disabled;
     private readonly Aabb[] _pads;
     private readonly Vector3[] _padLaunch;
 
@@ -33,14 +36,20 @@ public sealed class CollisionWorld
     {
         var solids = new List<Aabb>(arena.Boxes.Count);
         var surfaces = new List<SurfaceKind>(arena.Boxes.Count);
-        foreach (var b in arena.Boxes)
+        var map = new List<int>(arena.Boxes.Count);
+        for (int bi = 0; bi < arena.Boxes.Count; bi++)
         {
+            var b = arena.Boxes[bi];
             if (!b.Solid) continue;
+            _boxToSolid[bi] = solids.Count;
             solids.Add(new Aabb(b.MinV, b.MaxV));
             surfaces.Add(b.Surface);
+            map.Add(bi);
         }
         _solids = [.. solids];
         _surfaces = [.. surfaces];
+        _solidToBox = [.. map];
+        _disabled = new bool[_solids.Length];
         _pads = new Aabb[arena.JumpPads.Count];
         _padLaunch = new Vector3[arena.JumpPads.Count];
         for (int i = 0; i < _pads.Length; i++)
@@ -110,7 +119,7 @@ public sealed class CollisionWorld
                     int i = _cellItems[s + k];
                     if (_stamp[i] == q) continue;
                     _stamp[i] = q;
-                    if (_solids[i].Intersects(box)) return true;
+                    if (!_disabled[i] && _solids[i].Intersects(box)) return true;
                 }
             }
         }
@@ -142,6 +151,7 @@ public sealed class CollisionWorld
                     int i = _cellItems[s + k];
                     if (_stamp[i] == q) continue;
                     _stamp[i] = q;
+                    if (_disabled[i]) continue;
                     ref readonly var solid = ref _solids[i];
                     if (!solid.Intersects(swept) || solid.Intersects(box)) continue;
                     if (delta > 0)
@@ -164,22 +174,35 @@ public sealed class CollisionWorld
     private static float Component(Vector3 v, int axis) => axis == 0 ? v.X : axis == 1 ? v.Y : v.Z;
 
     /// <summary>Ray against all solids. <paramref name="dir"/> must be normalized.</summary>
-    public bool Raycast(Vector3 origin, Vector3 dir, float maxDist, out float hitDist, out Vector3 normal)
+    public bool Raycast(Vector3 origin, Vector3 dir, float maxDist, out float hitDist, out Vector3 normal) =>
+        Raycast(origin, dir, maxDist, out hitDist, out normal, out _);
+
+    /// <summary>Ray against all enabled solids; <paramref name="boxIndex"/> is the arena box index that was hit.</summary>
+    public bool Raycast(Vector3 origin, Vector3 dir, float maxDist, out float hitDist, out Vector3 normal, out int boxIndex)
     {
         var inv = VectorMath.SafeInverse(dir);
         hitDist = maxDist;
         normal = default;
-        bool hit = false;
+        boxIndex = -1;
         var solids = _solids;
         for (int i = 0; i < solids.Length; i++)
         {
+            if (_disabled[i]) continue;
             if (solids[i].Raycast(origin, inv, hitDist, out float t, out var n) && t < hitDist)
             {
-                hitDist = t; normal = n; hit = true;
+                hitDist = t; normal = n; boxIndex = _solidToBox[i];
             }
         }
-        return hit;
+        return boxIndex >= 0;
     }
+
+    /// <summary>Enables or disables an arena box (destructibles). Unknown or non-solid boxes are ignored.</summary>
+    public void SetBoxEnabled(int boxIndex, bool enabled)
+    {
+        if (_boxToSolid.TryGetValue(boxIndex, out int s)) _disabled[s] = !enabled;
+    }
+
+    public bool IsBoxEnabled(int boxIndex) => !_boxToSolid.TryGetValue(boxIndex, out int s) || !_disabled[s];
 
     /// <summary>Surface directly below <paramref name="feet"/> (within <paramref name="maxDrop"/>), used for footstep sounds.</summary>
     public bool SurfaceBelow(Vector3 feet, float maxDrop, out SurfaceKind surface)
@@ -189,7 +212,7 @@ public sealed class CollisionWorld
         float best = maxDrop + 0.1f;
         int hit = -1;
         for (int i = 0; i < _solids.Length; i++)
-            if (_solids[i].Raycast(origin, inv, best, out float t, out _) && t < best) { best = t; hit = i; }
+            if (!_disabled[i] && _solids[i].Raycast(origin, inv, best, out float t, out _) && t < best) { best = t; hit = i; }
         surface = hit >= 0 ? _surfaces[hit] : SurfaceKind.Ground;
         return hit >= 0;
     }

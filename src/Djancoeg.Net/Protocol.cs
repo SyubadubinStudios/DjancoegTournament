@@ -37,7 +37,7 @@ public enum RejectCode : byte { Generic = 0, Password = 1, Banned = 2, Full = 3,
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 5;
+    public const byte Version = 6;
     /// <summary>Chat sender id used for server/console messages.</summary>
     public const byte ServerSender = 254;
     public const byte SpectatorSlot = 255;
@@ -264,6 +264,7 @@ public sealed class Snapshot
     public readonly NetProp[] Props = new NetProp[SimConstants.MaxProps];
     public int PropCount;
     public ulong PickupMask;
+    public ulong DestroyedMask;
     public readonly NetCreep[] Creeps = new NetCreep[GameWorld.MaxCreeps];
     public int CreepCount;
     public readonly GameEvent[] Events = new GameEvent[64];
@@ -284,7 +285,7 @@ public sealed class Snapshot
         OwnedWeapons = o.OwnedWeapons; Array.Copy(o.Ammo, Ammo, Ammo.Length);
         ProjectileCount = o.ProjectileCount; Array.Copy(o.Projectiles, Projectiles, o.ProjectileCount);
         PropCount = o.PropCount; Array.Copy(o.Props, Props, o.PropCount);
-        PickupMask = o.PickupMask; EventCount = 0;
+        PickupMask = o.PickupMask; DestroyedMask = o.DestroyedMask; EventCount = 0;
         CreepCount = o.CreepCount; Array.Copy(o.Creeps, Creeps, o.CreepCount);
     }
 }
