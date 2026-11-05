@@ -51,6 +51,12 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Persistent career stats and leaderboards / *statistik dan papan peringkat*
 - ✅ Bonus: realistic procedural skybox with lit clouds, stars and optional HDRI panoramas / *langit realistis*
 
+## v1.4 — "Makhluk Aneh" (creeps & effects) ✅
+
+- ✅ 8 Arena Creeps with random spawn time/place, chase AI (walkers, flyer, burrowing worm), killable, rewards, toggle (default on)
+- ✅ Creature models built in Blender, voice lines from Rodin/ElevenLabs, synthesized creature sounds
+- ✅ Blood/gore with floor and wall splats (confetti option), bullet holes, impact dust, muzzle smoke, layered explosions
+
 ## v2.0 — "Nusantara Raya" ⬜
 
 - ⬜ Level editor inside the game / *editor arena di dalam game*

@@ -103,6 +103,9 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         bool tp = st.ThirdPerson;
         if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.thirdPerson"), ref tp)) st.ThirdPerson = tp;
         y += rh;
+        bool creeps = st.Creeps;
+        if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.creeps"), ref creeps)) st.Creeps = creeps;
+        y += rh;
         if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("settings.master"), ref _master, 64)) st.MasterServer = _master;
         y += rh;
         if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("workshop.url"), ref _workshop, 96)) st.WorkshopUrl = _workshop;
@@ -151,6 +154,9 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         y += rh;
         bool flashes = st.ReduceFlashes;
         if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.reduceFlashes"), ref flashes)) st.ReduceFlashes = flashes;
+        y += rh;
+        bool blood = st.Blood;
+        if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.blood"), ref blood)) st.Blood = blood;
         y += rh;
 
         // Preview swatches for the team palette currently selected.

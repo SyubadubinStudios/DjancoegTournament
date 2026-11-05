@@ -435,6 +435,9 @@ public sealed class GameClient : IDisposable
         int wc = Math.Min((int)r.U8(), SimConstants.MaxWeapons);
         for (int i = 0; i < wc; i++) s.Ammo[i] = r.U16();
         s.PickupMask = r.U64();
+        s.CreepCount = Math.Min((int)r.U8(), s.Creeps.Length);
+        for (int i = 0; i < s.CreepCount; i++)
+            s.Creeps[i] = new NetCreep { Index = r.U8(), Kind = r.U8(), State = (CreepState)r.U8(), Position = r.Pos(), Yaw = r.Angle(), HealthPct = r.U8() };
         s.EventCount = Math.Min((int)r.U8(), s.Events.Length);
         for (int i = 0; i < s.EventCount; i++) s.Events[i] = Protocol.ReadEvent(ref r);
         s.ProjectileCount = Math.Min((int)r.U8(), s.Projectiles.Length);

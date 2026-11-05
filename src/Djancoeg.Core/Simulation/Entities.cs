@@ -112,6 +112,7 @@ public enum KillFlags : byte
     Gibbed = 8,
     PropKill = 16,
     Ability = 32,
+    Creep = 64,
 }
 
 public enum GameEventType : byte
@@ -119,6 +120,7 @@ public enum GameEventType : byte
     Shot, Hit, Kill, Explosion, Pickup, Jump, JumpPad, Spawn, Ability, Taunt,
     MatchStart, MatchEnd, ZoneScore, PropHit, Land, Join, Leave, Streak, ProjectileBounce,
     FlagTaken, FlagDropped, FlagReturned, FlagCaptured, RaceGoal, Deflect,
+    CreepSpawn, CreepAttack, CreepHurt, CreepKilled, CreepRoar, CreepLeave, WormRumble,
 }
 
 /// <summary>Something that happened this tick, used for effects, sounds, HUD and the kill feed.</summary>

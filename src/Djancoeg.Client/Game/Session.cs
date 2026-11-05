@@ -158,6 +158,17 @@ public sealed class Session : IDisposable
                 best = d; target = p.Position; found = true;
             }
         }
+        // Arena creeps are juicier targets for the camera.
+        for (int i = 0; i < s.CreepCount; i++)
+        {
+            var c = s.Creeps[i];
+            if (c.State is CreepState.Burrowed or CreepState.Dying) continue;
+            float d = Vector3.DistanceSquared(c.Position, me.Position) * 0.5f;
+            if (d < best && Client.Collision is { } col2 && col2.LineOfSight(me.Position + new Vector3(0, 1.6f, 0), c.Position + new Vector3(0, 1.5f, 0)))
+            {
+                best = d; target = c.Position + new Vector3(0, 0.6f, 0); found = true;
+            }
+        }
         _autoTimer -= SimConstants.TickDelta;
         if (_autoTimer <= 0) { _autoStrafe = -_autoStrafe; _autoTimer = 1.2f; }
         if (found)

@@ -7,6 +7,7 @@ public enum Sfx
 {
     UiMove, UiClick, Slingshot, Shotgun, Gatling, Thump, Rocket, Zap, Spear, Explosion, Jump, Pad, Land, Pickup, Hit, Kill, Death, Ability, Taunt, Gong, Bounce, PropHit,
     Wind, Crunch, Whistle, Drum, Blink,
+    CreepMoan, CreepWail, CreepClick, CreepChirp, CreepChest, CreepRumble, CreepRoar, Siren, Splat,
     HitHead, StepGround, StepWood, StepMetal, StepGrass, StepTile, StepWater, StepFabric,
 }
 
@@ -131,6 +132,15 @@ public sealed unsafe class SoundBank : IDisposable
             Sfx.Whistle => Tone(0.6f, t => Sin(t, 2800 + 120 * MathF.Sin(t * 70)) * Env(t, 0.6f, 0.01f) * 0.35f),
             Sfx.Drum => Tone(0.5f, t => (Sin(t, 330) * Exp(t, 9) + Sin(t, 330) * Exp(MathF.Max(0, t - 0.18f), 9) * (t > 0.18f ? 1 : 0)) * 0.5f), // kentongan "tok tok"
             Sfx.Blink => Tone(0.25f, t => Sin(t, 600 + t * 3000) * Env(t, 0.25f, 0.005f) * 0.35f),
+            Sfx.CreepMoan => Tone(1.1f, t => (Sq(t, 95 + 12 * MathF.Sin(t * 9)) * 0.4f + Noise() * 0.15f) * Env(t, 1.1f, 0.15f)),
+            Sfx.CreepWail => Tone(1.2f, t => Sin(t, 300 + 180 * MathF.Sin(t * 5)) * 0.45f * Env(t, 1.2f, 0.2f) + Noise() * 0.08f * Env(t, 1.2f, 0.1f)),
+            Sfx.CreepClick => Tone(0.6f, t => (MathF.Sin(t * 90) > 0.6f ? Noise() * 0.7f : 0f) * Env(t, 0.6f, 0.01f)),
+            Sfx.CreepChirp => Tone(0.5f, t => Sq(t, 900 + 700 * MathF.Sin(t * 28)) * 0.25f * Env(t, 0.5f, 0.01f)),
+            Sfx.CreepChest => Tone(0.9f, t => Sin(t, 75) * (MathF.Sin(t * 50) > 0 ? 1 : 0.2f) * Exp(t, 3) * 0.8f),
+            Sfx.CreepRumble => Tone(1.4f, t => (Sin(t, 38) * 0.6f + Noise() * 0.35f) * Env(t, 1.4f, 0.2f)),
+            Sfx.CreepRoar => Tone(1.3f, t => (Noise() * 0.5f + Sq(t, 70 + 30 * MathF.Sin(t * 7)) * 0.4f) * Env(t, 1.3f, 0.08f)),
+            Sfx.Siren => Tone(1.2f, t => Sin(t, 650 + 350 * MathF.Sin(t * 6)) * 0.3f * Env(t, 1.2f, 0.05f)),
+            Sfx.Splat => Tone(0.35f, t => (Noise() * 0.7f + Sin(t, 110 - t * 120)) * Exp(t, 12) * 0.7f),
             Sfx.HitHead => Tone(0.16f, t => (Sin(t, 2400) * 0.5f + Sin(t, 3600) * 0.3f) * Exp(t, 22) * 0.45f),
             Sfx.StepGround => Tone(0.09f, t => (Noise() * 0.5f + Sin(t, 70)) * Exp(t, 45) * 0.5f),
             Sfx.StepWood => Tone(0.1f, t => (Sin(t, 210 - t * 400) + Noise() * 0.2f) * Exp(t, 38) * 0.55f),

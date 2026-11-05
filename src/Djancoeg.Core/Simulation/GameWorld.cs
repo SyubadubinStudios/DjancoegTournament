@@ -66,6 +66,7 @@ public sealed partial class GameWorld
         Pickups = new PickupState[Math.Min(Arena.Pickups.Count, SimConstants.MaxPickups)];
         ResetMap();
         for (int i = 0; i < _bots.Length; i++) _bots[i] = new BotBrain(seed + (ulong)i * 7919);
+        _creepTimer = _rng.Range(Settings.CreepIntervalMin * 0.6f, Settings.CreepIntervalMax * 0.7f);
     }
 
     private void ResetMap()
@@ -289,6 +290,7 @@ public sealed partial class GameWorld
         }
 
         UpdateProjectiles(dt);
+        UpdateCreeps(dt);
         UpdateProps(dt);
         UpdatePickups(dt);
         UpdateRules(dt);
@@ -465,6 +467,8 @@ public sealed partial class GameWorld
         MatchTime = 0; Phase = MatchPhase.Playing; Winner = -1; ZoneHolder = -1;
         TeamScores[0] = TeamScores[1] = 0;
         ResetMap();
+        Array.Clear(Creeps);
+        _creepTimer = _rng.Range(Settings.CreepIntervalMin * 0.5f, Settings.CreepIntervalMax * 0.6f);
         for (int i = 0; i < Players.Length; i++)
         {
             if (!Players[i].Active) continue;

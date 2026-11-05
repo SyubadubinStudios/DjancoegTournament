@@ -72,7 +72,9 @@ public sealed partial class GameWorld
         }
         var end = eye + fwd * w.Range;
         Push(new GameEvent { Type = GameEventType.Shot, A = (byte)id, Weapon = (byte)Players[id].Weapon, Position = eye, Vector = end });
-        if (best >= 0)
+        int creep = RaycastCreeps(eye, fwd, w.Range + 0.8f, out float ct);
+        if (creep >= 0 && (best < 0 || ct < bestDist)) DamageCreep(creep, id, w.Damage, fwd, w.Knockback);
+        else if (best >= 0)
             ApplyDamage(best, id, Players[id].Weapon, w.Damage, fwd, w.Knockback, KillFlags.None);
         else
             HitPropsAlongRay(eye, fwd, w.Range, w.Knockback * 3f, id);
@@ -93,6 +95,15 @@ public sealed partial class GameWorld
             var feet = lag > 0 ? HistoricalPosition(i, lag) : Players[i].Move.Position;
             var box = Aabb.FromFeet(feet, mp.HalfWidth, mp.Height(Players[i].Move.Crouched));
             if (box.Raycast(eye, inv, maxDist, out float t, out _)) _pierceHits[hitCount++] = (t, i);
+        }
+
+        // Arena creeps in the line of fire.
+        int creep = RaycastCreeps(eye, dir, maxDist, out float creepT);
+        if (creep >= 0 && (w.Piercing || hitCount == 0 || creepT < MinHit(hitCount)))
+        {
+            bool head = Creeps[creep].Kind < Content.Creeps.Count && eye.Y + dir.Y * creepT > CreepBox(Creeps[creep]).Max.Y - 0.35f * Content.Creeps[Creeps[creep].Kind].Scale;
+            DamageCreep(creep, id, w.Damage * (head ? HeadshotMultiplier : 1f), dir, w.Knockback);
+            if (!w.Piercing) { hitCount = 0; maxDist = creepT; }
         }
 
         float endDist = maxDist;
@@ -163,6 +174,13 @@ public sealed partial class GameWorld
         }
     }
 
+    private float MinHit(int count)
+    {
+        float m = float.MaxValue;
+        for (int k = 0; k < count; k++) m = MathF.Min(m, _pierceHits[k].t);
+        return m;
+    }
+
     private void HitPropsAlongRay(Vector3 origin, Vector3 dir, float maxDist, float impulse, int attacker)
     {
         var inv = VectorMath.SafeInverse(dir);
@@ -227,6 +245,20 @@ public sealed partial class GameWorld
                         tHit = tp; victim = k;
                     }
                 }
+                // Arena creeps.
+                int creepHit = -1;
+                for (int k = 0; k < Creeps.Length; k++)
+                {
+                    if (!CreepHittable(Creeps[k])) continue;
+                    if (CreepBox(Creeps[k]).Expand(0.1f).Raycast(pr.Position, inv, tHit, out float tc, out _) && tc < tHit) { tHit = tc; creepHit = k; victim = -1; }
+                }
+                if (creepHit >= 0)
+                {
+                    pr.Position += dir * tHit;
+                    DamageCreep(creepHit, pr.Owner, w.Damage, dir, w.Knockback);
+                    Detonate(ref pr, w, -1);
+                    continue;
+                }
                 // Props.
                 int propHit = -1;
                 for (int k = 0; k < Props.Length; k++)
@@ -290,6 +322,7 @@ public sealed partial class GameWorld
     public void Explode(Vector3 center, float radius, float damage, float knockback, int owner, int weapon, int skipVictim)
     {
         Push(new GameEvent { Type = GameEventType.Explosion, A = (byte)Math.Max(0, owner), Weapon = (byte)weapon, Position = center, Value = (short)(radius * 10) });
+        ExplodeOnCreeps(center, radius, damage, knockback, owner);
         for (int i = 0; i < Players.Length; i++)
         {
             if (!Players[i].Active || !Players[i].Alive || i == skipVictim) continue;
@@ -363,14 +396,16 @@ public sealed partial class GameWorld
         v.Deaths++;
         v.RespawnTimer = SimConstants.RespawnDelay;
         v.Streak = 0;
-        bool suicide = attacker < 0 || attacker == victim;
-        if (suicide)
+        bool byCreep = (flags & KillFlags.Creep) != 0;
+        bool suicide = !byCreep && (attacker < 0 || attacker == victim);
+        if (byCreep) attacker = victim;
+        else if (suicide)
         {
             flags |= KillFlags.Suicide;
             if (Settings.Mode is GameModeKind.FreeForAll or GameModeKind.TeamDeathmatch) v.Score--;
             attacker = victim;
         }
-        else
+        else if (!byCreep)
         {
             ref var a = ref Players[attacker];
             a.Kills++;
@@ -383,7 +418,7 @@ public sealed partial class GameWorld
         Push(new GameEvent
         {
             Type = GameEventType.Kill, A = (byte)victim, B = (byte)attacker, Weapon = (byte)Math.Clamp(weapon, 0, 255),
-            Flags = (byte)flags, Position = v.Move.Position, Vector = impulse,
+            Flags = (byte)flags, Position = v.Move.Position, Vector = impulse, Value = (short)(byCreep ? _lastCreepKind : 0),
         });
         if (ZoneHolder == victim) ZoneHolder = -1;
     }

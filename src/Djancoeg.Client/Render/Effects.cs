@@ -8,7 +8,7 @@ namespace Djancoeg.Client.Render;
 /// Pooled, allocation-free visual effects: confetti/kerupuk particles instead of gore, smoke,
 /// fire, tracers, dynamic explosion lights, floating damage numbers and screen shake.
 /// </summary>
-public sealed class Effects
+public sealed partial class Effects
 {
     private struct Particle
     {
@@ -106,6 +106,7 @@ public sealed class Effects
 
     public void Update(float dt)
     {
+        UpdateGore(dt);
         Shake = MathF.Max(0, Shake - dt * 2.5f);
         for (int i = 0; i < _particles.Length; i++)
         {
@@ -143,6 +144,7 @@ public sealed class Effects
 
     public void Draw(Vector3 camPos)
     {
+        DrawGore();
         for (int i = 0; i < _tracers.Length; i++)
         {
             ref var t = ref _tracers[i];
@@ -166,6 +168,7 @@ public sealed class Effects
     public void Clear()
     {
         Array.Clear(_particles); Array.Clear(_tracers); Array.Clear(_flashes); Array.Clear(_texts);
+        ClearGore();
         Shake = 0;
     }
 }

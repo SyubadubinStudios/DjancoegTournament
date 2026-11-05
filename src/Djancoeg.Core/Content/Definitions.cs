@@ -206,6 +206,10 @@ public sealed record MatchSettings
     public int MaxPlayers { get; set; } = 16;
     public bool FriendlyFire { get; set; }
     public string ServerName { get; set; } = "Warung Tawuran";
+    /// <summary>Arena Creeps: absurd creatures that show up at random to chase everyone.</summary>
+    public bool Creeps { get; set; } = true;
+    public float CreepIntervalMin { get; set; } = 25f;
+    public float CreepIntervalMax { get; set; } = 55f;
 }
 
 public static class ColorUtil

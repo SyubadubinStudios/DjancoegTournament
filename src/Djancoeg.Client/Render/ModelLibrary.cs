@@ -71,6 +71,39 @@ public sealed unsafe class ModelLibrary : IDisposable
         return Marshal.PtrToStringAnsi((nint)p) ?? "";
     }
 
+    private readonly Dictionary<string, CharacterModel?> _creeps = [];
+
+    /// <summary>Rigged Arena Creep model from assets/models/creeps (same clip names as fighters).</summary>
+    public CharacterModel? Creep(CreepDef def)
+    {
+        if (_creeps.TryGetValue(def.Id, out var cached)) return cached;
+        var result = LoadRigged(Path.Combine(_assets, "models", "creeps", def.Id + ".glb"));
+        _creeps[def.Id] = result;
+        return result;
+    }
+
+    private CharacterModel? LoadRigged(string path)
+    {
+        if (!File.Exists(path)) return null;
+        var model = Raylib.LoadModel(path);
+        if (!Raylib.IsModelValid(model)) return null;
+        for (int i = 0; i < model.MaterialCount; i++) model.Materials[i].Shader = _shader.Shader;
+        var result = new CharacterModel { Model = model };
+        int count = 0;
+        var anims = Raylib.LoadModelAnimations(path, ref count);
+        result.Animations = anims;
+        result.AnimationCount = count;
+        for (int i = 0; i < count; i++)
+        {
+            string name = AnimName(anims[i]).ToLowerInvariant();
+            if (name.Contains("idle")) result.Idle = i;
+            else if (name.Contains("run")) result.Run = i;
+            else if (name.Contains("shoot")) result.Shoot = i;
+            else if (name.Contains("die")) result.Die = i;
+        }
+        return result;
+    }
+
     public Model? Prop(string kind)
     {
         if (_props.TryGetValue(kind, out var cached)) return cached;
@@ -120,6 +153,13 @@ public sealed unsafe class ModelLibrary : IDisposable
             if (c.AnimationCount > 0) Raylib.UnloadModelAnimations(c.Animations, c.AnimationCount);
             Raylib.UnloadModel(c.Model);
         }
+        foreach (var c in _creeps.Values)
+        {
+            if (c is null) continue;
+            if (c.AnimationCount > 0) Raylib.UnloadModelAnimations(c.Animations, c.AnimationCount);
+            Raylib.UnloadModel(c.Model);
+        }
+        _creeps.Clear();
         foreach (var p in _props.Values) if (p is { } m) Raylib.UnloadModel(m);
         foreach (var t in _textures.Values) if (t is { } tex) Raylib.UnloadTexture(tex);
         _characters.Clear(); _props.Clear(); _textures.Clear();

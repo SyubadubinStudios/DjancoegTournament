@@ -17,6 +17,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     public bool ShowScoreboardForShot { get; init; }
     public override bool ReadyForScreenshot =>
         (session.Client.IsSpectator && _age > 8f) ||
+        (App.Options.Shot == "creeps" && _age > 14f && session.Client.Latest is { CreepCount: > 2 }) ||
         _age > 7f && session.Client.State == ClientState.Connected &&
         session.Client.Latest is { } s && s.TryGetPlayer(session.Client.LocalId, out var me) && me.Has(NetPlayerFlags.Alive) && !me.Has(NetPlayerFlags.Protected) && (_age > 30f || (me.Health >= 60 && (!session.Autopilot || session.AutopilotEngaged)));
 

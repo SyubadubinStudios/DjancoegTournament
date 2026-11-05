@@ -75,6 +75,9 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
         if (Gui.Slider(new Rectangle(x, y, w, rh), S.T("setup.time"), ref time, 0, 30, time < 0.5f ? "-" : ((int)time).ToString(Inv))) st.TimeLimitMinutes = (int)time;
         y += rh;
 
+        bool creeps = st.Creeps;
+        if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("setup.creeps"), ref creeps)) st.Creeps = creeps;
+        y += rh;
         if (!host)
         {
             bool spectate = st.SpectatePractice;
@@ -106,7 +109,7 @@ public sealed class SetupScreen(App app, bool host) : Screen(app)
         var match = new MatchSettings
         {
             ArenaId = st.ArenaId, Mode = (GameModeKind)st.Mode, BotCount = st.BotCount, BotSkill = st.BotSkill,
-            ScoreLimit = st.ScoreLimit, TimeLimitSeconds = st.TimeLimitMinutes * 60, ServerName = host ? st.ServerName : "Latihan",
+            ScoreLimit = st.ScoreLimit, TimeLimitSeconds = st.TimeLimitMinutes * 60, ServerName = host ? st.ServerName : "Latihan", Creeps = st.Creeps,
         };
         try
         {

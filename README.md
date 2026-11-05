@@ -25,7 +25,9 @@
 | **Fighters** | 17 built-in: legends, professions, ghosts, animals and memes, each with a signature ability |
 | **Arenas** | Night Market, Bus Terminal, Rice Fields & Watch Post, Kampung Rooftops, Harbour, Old Train Station, Village Office |
 | **Weapons** | 10, from a mosquito racket to a satay fan that blows rockets back at their owner |
-| **Chaos** | Knockback and rocket jumps, kickable carts and water jugs that hurt, jump pads, confetti instead of gore |
+| **Chaos** | Knockback and rocket jumps, kickable carts and water jugs that hurt, jump pads |
+| **Arena Creeps** | 8 absurd monsters crash matches at random — wedding zombies, a giant floating head, Buto Ijo, a burrowing giant worm and more (toggle in Settings) |
+| **Effects** | Blood splats or confetti (your choice), bullet holes, smoke, layered explosions with shockwaves and debris |
 | **Modding** | Data-driven fighters, weapons and arenas in JSON; `.djmod` packages; in-game Workshop |
 | **Controls** | Rebindable keys, full gamepad support, per-weapon crosshairs, surface footsteps |
 | **Spectating** | Kill cam, spectator follow and free cameras (*Watch* in the browser) |
@@ -96,7 +98,9 @@ tools/blender          Reproducible character sculpt + rig + animation script
 | **Jagoan** | 17 bawaan: legenda, profesi, hantu, hewan, dan meme, masing-masing punya jurus |
 | **Arena** | Pasar Malam Ceria, Terminal Antar Kota, Sawah & Pos Ronda, Atap Kampung, Pelabuhan, Stasiun Kereta Tua, Kantor Kelurahan |
 | **Senjata** | 10, dari raket nyamuk sampai kipas sate yang memantulkan roket ke pemiliknya |
-| **Kekacauan** | Knockback dan rocket jump, gerobak dan galon yang bisa ditendang (dan menyakitkan), kasur lompat, konfeti, bukan darah |
+| **Kekacauan** | Knockback dan rocket jump, gerobak dan galon yang bisa ditendang (dan menyakitkan), kasur lompat |
+| **Makhluk Arena** | 8 monster absurd menyerbu secara acak — zombie kondangan, kepala raksasa melayang, Buto Ijo, cacing raksasa dan lainnya (bisa dimatikan) |
+| **Efek** | Darah atau konfeti (pilih sendiri), lubang peluru, asap, ledakan berlapis dengan gelombang kejut dan puing |
 | **Modding** | Jagoan, senjata, dan arena berbasis JSON; paket `.djmod`; Workshop di dalam game |
 | **Kontrol** | Tombol bisa diatur ulang, dukungan gamepad penuh, crosshair per senjata, suara langkah sesuai permukaan |
 | **Menonton** | Kill cam, kamera penonton ikuti dan bebas (*Tonton* di pencari server) |

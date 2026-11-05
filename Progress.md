@@ -2,14 +2,14 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **1.3.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **1.4.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 93 passing / lulus |
+| Automated tests / Tes otomatis | 105 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
@@ -18,6 +18,15 @@ Current version / Versi sekarang: **1.3.0** · Roadmap / Peta jalan: [PLAN.md](P
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v1.4.0 "Makhluk Aneh"
+
+- [x] Arena Creeps: `CreepDef` content (mod-extensible), random spawner, per-shape AI (walkers via `PlayerMovement`, flying head, burrowing worm with rumble warnings and eruptions), attacks, damage from every weapon type, rewards, bots fight creeps, protocol v5 replication, `--no-creeps`, Settings/Setup toggle (default on)
+- [x] Original creature designs in place of copyrighted references (no E.T., Titans, Dune worm or Mommy Long Legs): Wedding-Party Zombies, Giant Floating Head, the Lanky One, Lost Aliens, Giant Albino Gorilla, Buto Ijo, Buff Cyclops, Giant Earthworm
+- [x] 7 rigged creature models via Blender MCP (worm drawn procedurally), 4 voice lines via Rodin/ElevenLabs, 9 synthesized creature/siren/splat sounds
+- [x] Effects: blood hits with floor/wall splats, gore and gibs, bullet-hole decals, impact dust, muzzle smoke, explosion smoke column + shockwave ring + debris + scorch; confetti mode toggle
+- [x] Tests: creeps appear/disable, every creep chases/hurts/dies, creep kills cost no points, slingshot hits creeps, zero-allocation tick with creeps (105 tests)
+
 
 ### 2026-11-06 — v1.3.0 "Kampung Online"
 

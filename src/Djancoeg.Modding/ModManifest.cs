@@ -19,6 +19,7 @@ public sealed record ModManifest
     public List<WeaponDef> Weapons { get; set; } = [];
     public List<CharacterDef> Characters { get; set; } = [];
     public List<ArenaDef> Arenas { get; set; } = [];
+    public List<CreepDef> Creeps { get; set; } = [];
     public List<string> ArenaFiles { get; set; } = [];
 }
 

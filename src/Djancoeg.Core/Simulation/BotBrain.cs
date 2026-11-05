@@ -53,7 +53,18 @@ public sealed class BotBrain(ulong seed)
         float desiredYaw = me.Yaw, desiredPitch = 0;
         Vector3 moveDir;
 
-        if (_target >= 0)
+        if (_target < 0 && TryCreepTarget(world, eye, out var creepAim, out float creepDist))
+        {
+            var cto = creepAim - eye;
+            desiredYaw = MathF.Atan2(cto.X, cto.Z);
+            desiredPitch = MathF.Atan2(cto.Y, MathF.Sqrt(cto.X * cto.X + cto.Z * cto.Z));
+            SelectWeapon(world, ref me, ref input, creepDist);
+            moveDir = new Vector3(MathF.Cos(desiredYaw), 0, -MathF.Sin(desiredYaw)) * _strafeDir;
+            if (creepDist < 6f) moveDir -= VectorMath.FlatForward(desiredYaw);
+            float yawErr = MathF.Abs(VectorMath.WrapAngle(desiredYaw - _aimYaw));
+            if (yawErr < 0.2f) input.Buttons |= InputButtons.Fire;
+        }
+        else if (_target >= 0)
         {
             ref readonly var t = ref world.Players[_target];
             var tBox = world.BodyBox(t);
@@ -165,6 +176,21 @@ public sealed class BotBrain(ulong seed)
         var ahead = me.Move.Position + dir * 1.6f + new Vector3(0, 0.5f, 0);
         if (!c.Raycast(ahead, -Vector3.UnitY, 8f, out _, out _) && ahead.Y - 8f < c.KillY + 2f) dir = -dir;
         return dir;
+    }
+
+    private static bool TryCreepTarget(GameWorld world, Vector3 eye, out Vector3 aim, out float dist)
+    {
+        aim = default; dist = 35f;
+        bool found = false;
+        for (int i = 0; i < world.Creeps.Length; i++)
+        {
+            if (!world.CreepHittable(world.Creeps[i])) continue;
+            var c = world.CreepBox(world.Creeps[i]).Center;
+            float d = Vector3.Distance(eye, c);
+            if (d >= dist || !world.Collision.LineOfSight(eye, c)) continue;
+            dist = d; aim = c; found = true;
+        }
+        return found;
     }
 
     private int FindTarget(GameWorld world, int id, Vector3 eye)

@@ -45,6 +45,7 @@ dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" -
 | `--rcon <text>` | — | Admin password for `!login` in chat |
 | `--data <dir>` | ./data | Where `stats.json` (career stats) and `bans.txt` are kept |
 | `--no-votes` | votes on | Disable `!vote` |
+| `--no-creeps` | creeps on | Disable Arena Creeps |
 | `--max` | 16 | Max players, **up to 32** |
 
 Example `--config` file:

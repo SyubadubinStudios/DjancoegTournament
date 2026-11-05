@@ -113,6 +113,15 @@ public static partial class ModLoader
             if (c.Scale is < 0.5f or > 1.6f) yield return $"{p} scale must be 0.5-1.6.";
             if (c.Ability.Cooldown < 1f && c.Ability.Kind != AbilityKind.None) yield return $"{p} ability cooldown must be at least 1 s.";
         }
+        foreach (var c in m.Creeps)
+        {
+            string p = $"Creep '{c.Id}':";
+            if (!IdPattern().IsMatch(c.Id)) yield return $"{p} invalid id.";
+            if (c.Health is < 1 or > 5000) yield return $"{p} health must be 1-5000.";
+            if (c.Scale is < 0.3f or > 5f) yield return $"{p} scale must be 0.3-5.";
+            if (c.Horde is < 1 or > 8) yield return $"{p} horde must be 1-8.";
+            if (c.Damage is < 0 or > 200) yield return $"{p} damage must be 0-200.";
+        }
         foreach (var a in m.Arenas)
         {
             string p = $"Arena '{a.Id}':";
@@ -151,6 +160,7 @@ public static partial class ModLoader
         foreach (var w in m.Weapons) registry.AddOrReplace(w);
         foreach (var c in m.Characters) registry.AddOrReplace(c);
         foreach (var a in m.Arenas) registry.AddOrReplace(a);
+        foreach (var c in m.Creeps) registry.AddOrReplace(c);
         registry.RegisterMod(m.Id);
     }
 

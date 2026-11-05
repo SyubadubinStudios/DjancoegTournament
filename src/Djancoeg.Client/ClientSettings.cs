@@ -40,6 +40,11 @@ public sealed class ClientSettings
 
     public bool SpectatePractice { get; set; }
 
+    /// <summary>Arena Creeps in practice and hosted games.</summary>
+    public bool Creeps { get; set; } = true;
+    /// <summary>Blood and gore effects (off = confetti).</summary>
+    public bool Blood { get; set; } = true;
+
     // Online.
     /// <summary>Random key that lets servers keep your career stats without an account.</summary>
     public string PlayerKey { get; set; } = "";

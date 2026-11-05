@@ -202,6 +202,11 @@ public static class S
         ["workshop.failed"] = ("Couldn't reach the Workshop: {0}", "Workshop tidak bisa dihubungi: {0}"),
         ["workshop.onlineEmpty"] = ("Run a Workshop with: djancoeg-server workshop serve", "Jalankan Workshop dengan: djancoeg-server workshop serve"),
 
+        // v1.4 creeps & effects
+        ["settings.creeps"] = ("Arena Creeps (random monsters)", "Makhluk Arena (monster acak)"),
+        ["settings.blood"] = ("Blood effects (off = confetti)", "Efek darah (mati = konfeti)"),
+        ["setup.creeps"] = ("Arena Creeps", "Makhluk Arena"),
+
         // Common
         ["common.back"] = ("Back", "Kembali"),
         ["common.on"] = ("On", "Nyala"),

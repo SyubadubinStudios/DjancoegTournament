@@ -45,6 +45,7 @@ dotnet run --project src/Djancoeg.Server -c Release -- --name "Warung Tawuran" -
 | `--rcon <teks>` | — | Password admin untuk `!login` di chat |
 | `--data <dir>` | ./data | Tempat `stats.json` (statistik karier) dan `bans.txt` disimpan |
 | `--no-votes` | voting aktif | Matikan `!vote` |
+| `--no-creeps` | makhluk aktif | Matikan Makhluk Arena |
 | `--max` | 16 | Pemain maksimal, **sampai 32** |
 
 Contoh file `--config`:

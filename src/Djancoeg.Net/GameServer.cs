@@ -584,6 +584,19 @@ public sealed partial class GameServer : IDisposable
         for (int k = 0; k < world.Pickups.Length; k++) if (world.Pickups[k].Available) mask |= 1UL << k;
         w.U64(mask);
 
+        // Arena creeps (always all of them; at most 16 x 12 bytes).
+        countPos = w.Position; w.U8(0); count = 0;
+        for (int k = 0; k < world.Creeps.Length; k++)
+        {
+            ref readonly var cr = ref world.Creeps[k];
+            if (!cr.Active) continue;
+            var def = world.CreepDefOf(cr);
+            w.U8((byte)k); w.U8(cr.Kind); w.U8((byte)cr.State); w.Pos(cr.Move.Position); w.Angle(cr.Yaw);
+            w.U8((byte)Math.Clamp(cr.Health / def.Health * 255f, 0, 255));
+            count++;
+        }
+        w.PatchU8(countPos, count);
+
         int evN = world.Events.ReadSince(c.EventAck, _eventScratch);
         countPos = w.Position; w.U8(0); count = 0;
         for (int k = 0; k < evN && w.Remaining > Protocol.EventSize + 200; k++)

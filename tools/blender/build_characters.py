@@ -63,6 +63,18 @@ CHARACTERS = {
 
 DARK = "#1B1B1B"
 
+# Arena Creeps (v1.4): built on the same rig, exported to assets/models/creeps.
+CREEPS = {
+    "zombie-kondangan": ("humanoid", "#7B3F99", "#3A3A3A", "#7FA36B"),
+    "kepala-melayang": ("leak", "#D7B899", "#5D2E1A", "#D7B899"),
+    "si-jangkung": ("humanoid", "#2A2A33", "#1C1C22", "#4A4A58"),
+    "alien-nyasar": ("kid", "#8FBF6A", "#5E7F45", "#8FBF6A"),
+    "gorila-albino": ("brute", "#F2F0EA", "#D9D6CC", "#BFB9AE"),
+    "buto-ijo": ("brute", "#3E8E41", "#B71C1C", "#3E8E41"),
+    "cyclops-kekar": ("brute", "#B07D56", "#6D4C41", "#B07D56"),
+}
+OUT_CREEPS = os.path.join(REPO, "assets", "models", "creeps")
+
 
 def hexc(h):
     h = h.lstrip('#')
@@ -173,9 +185,16 @@ def sculpt(cid, shape, prim, sec, skin):
         part(P, 'box', (0.12, 0.06, 0.3), (0, -0.3, 1.25), "#E74C3C", "head", rot=(-25, 0, 0))   # tongue
         part(P, 'cone', (0.7, 0.6, 0.22), (0, 0, 1.82), "#F5B041", "head", segs=8, r2=0.2)        # crown
         part(P, 'box', (0.66, 0.08, 0.1), (0, -0.25, 1.72), "#C0392B", "head")
-        for i, x in enumerate((-0.16, -0.05, 0.06, 0.17)):
-            bone = ("hips", "spine", "chest", "hips")[i]
-            part(P, 'cone', (0.1, 0.1, 0.9), (x, 0.02, 0.75), sec, bone, segs=6, r2=0.02)   # glowing ribbons
+        if cid == "kepala-melayang":
+            part(P, 'box', (0.5, 0.2, 0.12), (0, -0.2, 1.2), "#5D2E1A", "head")                       # open mouth
+            for k in range(6):
+                part(P, 'cone', (0.05, 0.05, 0.08), (-0.2 + k * 0.08, -0.3, 1.25), "#FFFFF0", "head", rot=(180, 0, 0), segs=4)  # teeth
+            for x in (-1, 1):
+                part(P, 'box', (0.5, 0.04, 0.3), (x * 0.5, 0.05, 1.55), "#4E342E", "head", rot=(0, x * 25, 0))  # bat wings
+        else:
+            for i, x in enumerate((-0.16, -0.05, 0.06, 0.17)):
+                bone = ("hips", "spine", "chest", "hips")[i]
+                part(P, 'cone', (0.1, 0.1, 0.9), (x, 0.02, 0.75), sec, bone, segs=6, r2=0.02)   # glowing ribbons
         return P
 
     if shape == "ghostly":  # kuntilanak: long dress, long hair, floats
@@ -263,6 +282,8 @@ def sculpt(cid, shape, prim, sec, skin):
         limbs(P, prim, prim, prim, shoes=sec, arm_r=0.06, leg_r=0.08)
     elif shape == "deer":
         limbs(P, prim, prim, prim, shoes="#3E2723", arm_r=0.05, leg_r=0.06)
+    elif cid == "si-jangkung":
+        limbs(P, prim, sec, skin, arm_r=0.03, leg_r=0.035, long_arms=1.45, sleeves=prim)
     else:
         sleeves = prim
         limbs(P, prim, sec, skin, sleeves=sleeves)
@@ -304,6 +325,37 @@ def sculpt(cid, shape, prim, sec, skin):
         part(P, 'box', (0.08, 0.04, 0.3), (-0.12, -0.15, 1.32), "#85C1E9", "chest")
     elif cid == "genderuwo":
         pass
+    elif cid == "zombie-kondangan":
+        for i in range(8):  # batik dots on the party shirt
+            part(P, 'sphere', (0.05, 0.02, 0.05), (-0.15 + (i % 4) * 0.1, -0.135, 1.2 + (i // 4) * 0.18), "#F4D03F", "spine", segs=5)
+        part(P, 'box', (0.12, 0.03, 0.22), (0.1, -0.13, 1.0), "#3A3A3A", "hips")         # torn trousers
+        part(P, 'cyl', (0.29, 0.29, 0.1), (0, 0, 1.83), "#111111", "head", segs=10)       # peci for the party
+        face(P, 1.69, skin, eye="#B71C1C", y=-0.155, spread=0.07, size=0.06)
+    elif cid == "si-jangkung":
+        part(P, 'box', (0.18, 0.04, 0.03), (0, -0.155, 1.6), "#F5F5F5", "head")          # creepy grin
+        part(P, 'sphere', (0.36, 0.36, 0.4), (0, 0, 1.68), prim, "head", segs=10)          # hood
+    elif cid == "alien-nyasar":
+        part(P, 'sphere', (0.62, 0.55, 0.62), (0, 0, 1.82), skin, "head", segs=12)       # huge bulbous head
+        for x in (-0.13, 0.13):
+            part(P, 'sphere', (0.2, 0.08, 0.14), (x, -0.27, 1.8), "#0D0D0D", "head", segs=8)  # big black eyes
+        for i in range(6):  # warts
+            part(P, 'sphere', (0.06, 0.06, 0.06), (-0.2 + (i % 3) * 0.2, -0.2 + (i // 3) * 0.3, 2.05), "#5E7F45", "head", segs=5)
+        part(P, 'cyl', (0.02, 0.02, 0.3), (0, 0, 2.2), "#5E7F45", "head", segs=4)
+        part(P, 'sphere', (0.08, 0.08, 0.08), (0, 0, 2.36), "#E74C3C", "head", segs=6)  # antenna bulb
+    elif cid == "gorila-albino":
+        part(P, 'box', (0.5, 0.06, 0.3), (0, -0.2, 1.3), "#BFB9AE", "chest")            # bare chest
+        part(P, 'box', (0.26, 0.16, 0.14), (0, -0.2, 1.62), "#8D8A80", "head")          # muzzle
+    elif cid == "buto-ijo":
+        part(P, 'cone', (0.55, 0.55, 0.25), (0, 0, 1.98), "#F5B041", "head", segs=8, r2=0.3)   # crown
+        part(P, 'sphere', (0.62, 0.45, 0.5), (0, -0.08, 1.12), "#2E7D32", "spine", segs=10)    # belly
+        for x in (-0.08, 0.08):
+            part(P, 'cone', (0.06, 0.06, 0.14), (x, -0.17, 1.55), "#FFFFF0", "head", rot=(180, 0, 0), segs=5)  # big fangs
+        part(P, 'box', (0.7, 0.32, 0.28), (0, 0, 0.9), "#B71C1C", "hips")               # red sarong
+    elif cid == "cyclops-kekar":
+        part(P, 'sphere', (0.24, 0.08, 0.24), (0, -0.2, 1.7), "#FFFFFF", "head", segs=10)   # single giant eye
+        part(P, 'sphere', (0.12, 0.05, 0.12), (0, -0.24, 1.7), "#1565C0", "head", segs=8)
+        part(P, 'cone', (0.12, 0.12, 0.25), (0, 0, 1.98), "#EFEBE9", "head", segs=6)        # horn
+        part(P, 'box', (0.7, 0.32, 0.32), (0, 0, 0.9), "#6D4C41", "hips")                   # loincloth
     elif cid == "tukang-parkir":
         part(P, 'cyl', (0.31, 0.31, 0.1), (0, 0, 1.83), "#455A64", "head", segs=12)          # cap
         part(P, 'box', (0.22, 0.14, 0.03), (0, -0.2, 1.8), "#455A64", "head")
@@ -322,7 +374,7 @@ def sculpt(cid, shape, prim, sec, skin):
 
 
 def assemble(cid):
-    shape, prim, sec, skin = CHARACTERS[cid]
+    shape, prim, sec, skin = CHARACTERS[cid] if cid in CHARACTERS else CREEPS[cid]
     clear_scene()
     ao = build_armature(cid)
     parts = sculpt(cid, shape, prim, sec, skin)
@@ -483,12 +535,13 @@ def animate(ao, shape):
     reset_pose(ao)
 
 
-def export(cid, ao, body):
-    os.makedirs(OUT, exist_ok=True)
+def export(cid, ao, body, out_dir=None):
+    out_dir = out_dir or OUT
+    os.makedirs(out_dir, exist_ok=True)
     deselect_all()
     ao.select_set(True)
     body.select_set(True)
-    path = os.path.join(OUT, cid + ".glb")
+    path = os.path.join(out_dir, cid + ".glb")
     bpy.ops.export_scene.gltf(
         filepath=path, use_selection=True, export_format='GLB', export_yup=True,
         export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True,
@@ -501,13 +554,13 @@ def export(cid, ao, body):
 def build(cid):
     ao, body, shape = assemble(cid)
     animate(ao, shape)
-    path = export(cid, ao, body)
+    path = export(cid, ao, body, OUT_CREEPS if cid in CREEPS else OUT)
     return f"{cid}: {len(body.data.polygons)} faces -> {os.path.getsize(path)} bytes"
 
 
 def build_all(ids=None):
     bpy.context.scene.render.fps = FPS
-    out = [build(cid) for cid in (ids or CHARACTERS.keys())]
+    out = [build(cid) for cid in (ids or list(CHARACTERS.keys()) + list(CREEPS.keys()))]
     for line in out:
         print(line)
     return out

@@ -69,6 +69,7 @@ public sealed partial class GameView
         bool haveMe = s.TryGetPlayer(_session.Client.LocalId, out var me);
 
         DrawNameTags();
+        DrawCreepHealthBars(u);
         DrawFloatingTexts();
 
         // Damage vignette.

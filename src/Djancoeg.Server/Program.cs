@@ -79,6 +79,7 @@ public static class Program
           --rcon <text>          Admin password for "!login" in chat
           --data <dir>           Folder for stats.json and bans.txt (default ./data)
           --no-votes             Disable player votes (!vote)
+          --no-creeps            Disable Arena Creeps (random monsters)
 
         While running, type admin commands into the console (help, status, kick, ban, map, mode, bots, say, top...).
         All traffic after the handshake is encrypted (ECDH P-256 + AES-256-GCM).
@@ -103,6 +104,7 @@ public static class Program
             BotSkill = opts.TryGetValue("skill", out var sk) ? float.Parse(sk, CultureInfo.InvariantCulture) : match.BotSkill,
             MaxPlayers = Math.Clamp(Int(opts, "max", match.MaxPlayers), 2, SimConstants.MaxPlayers),
             FriendlyFire = opts.ContainsKey("friendly-fire") || match.FriendlyFire,
+            Creeps = !opts.ContainsKey("no-creeps") && match.Creeps,
         };
 
         var content = ContentRegistry.CreateBuiltIn();

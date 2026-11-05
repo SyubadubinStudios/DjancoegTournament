@@ -37,7 +37,7 @@ public enum RejectCode : byte { Generic = 0, Password = 1, Banned = 2, Full = 3,
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 4;
+    public const byte Version = 5;
     /// <summary>Chat sender id used for server/console messages.</summary>
     public const byte ServerSender = 254;
     public const byte SpectatorSlot = 255;
@@ -212,6 +212,16 @@ public struct NetFlag
     public Vector3 Position;
 }
 
+/// <summary>Replicated Arena Creep.</summary>
+public struct NetCreep
+{
+    public byte Index, Kind;
+    public CreepState State;
+    public Vector3 Position;
+    public float Yaw;
+    public byte HealthPct;
+}
+
 public struct NetProjectile
 {
     public ushort Id;
@@ -254,6 +264,8 @@ public sealed class Snapshot
     public readonly NetProp[] Props = new NetProp[SimConstants.MaxProps];
     public int PropCount;
     public ulong PickupMask;
+    public readonly NetCreep[] Creeps = new NetCreep[GameWorld.MaxCreeps];
+    public int CreepCount;
     public readonly GameEvent[] Events = new GameEvent[64];
     public int EventCount;
 
@@ -273,6 +285,7 @@ public sealed class Snapshot
         ProjectileCount = o.ProjectileCount; Array.Copy(o.Projectiles, Projectiles, o.ProjectileCount);
         PropCount = o.PropCount; Array.Copy(o.Props, Props, o.PropCount);
         PickupMask = o.PickupMask; EventCount = 0;
+        CreepCount = o.CreepCount; Array.Copy(o.Creeps, Creeps, o.CreepCount);
     }
 }
 

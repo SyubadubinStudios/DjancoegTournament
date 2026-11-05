@@ -126,6 +126,9 @@ public sealed partial class GameView : IDisposable
         }
 
         UpdateProps(dt);
+        UpdateCreepViews(dt);
+        _fx.World = client.Collision;
+        _fx.Blood = _app.Settings.Blood;
         UpdateFootsteps(dt);
         _fx.Density = _app.Settings.Quality switch { 0 => 0.4f, 1 => 0.7f, _ => 1f };
         _fx.Update(dt);
@@ -220,14 +223,20 @@ public sealed partial class GameView : IDisposable
                     sounds.PlayAt(sfx, e.Position, ListenerPos, _session.Yaw, 0.9f);
                     if (e.Flags == 0 && w is { Kind: WeaponKind.Hitscan }) _fx.AddTracer(e.Position + new Vector3(0, -0.25f, 0), e.Vector, color, w.Piercing ? 0.05f : 0.02f, w.Piercing ? 0.35f : 0.12f);
                 }
-                if (w is { Kind: WeaponKind.Hitscan } && e.Flags == 0) for (int k = 0; k < 3; k++) _fx.Spark(e.Vector, color);
+                if (w is { Kind: WeaponKind.Hitscan } && e.Flags == 0) _fx.Impact(e.Position, e.Vector + Vector3.Normalize(e.Vector - e.Position + new Vector3(0.0001f)) * 0.1f, color);
+                if (w is not { Kind: WeaponKind.Melee }) _fx.MuzzleSmoke(e.A == me ? MuzzleWorld() : e.Position, Vector3.Normalize(e.Vector - e.Position + new Vector3(0, 0.0001f, 0)));
                 if (e.Flags == 2) WindGust(e.Position, e.Vector);
                 break;
             }
             case GameEventType.Hit:
                 if (e.B == me && e.A != me) { _hitMarker = 1; bool head = (e.Flags & (byte)KillFlags.Headshot) != 0; sounds.Play(head ? Sfx.HitHead : Sfx.Hit, head ? 0.8f : 0.7f, (head ? 1f : 0.85f + e.Weapon * 0.05f) + MathF.Min(0.4f, e.Value / 250f)); _fx.AddText(e.Position + new Vector3(0, 2.0f, 0), e.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), (e.Flags & (byte)KillFlags.Headshot) != 0 ? Theme.Cabe : Theme.Kuning); }
                 if (e.A == me) _fx.AddShake(MathF.Min(0.5f, e.Value / 80f));
-                _fx.Burst(e.Position + new Vector3(0, 1.1f, 0), 6, 3f, null, 0.5f, 0.04f);
+                {
+                    var from = TryView(e.B, out var shooter) ? shooter.Position : ListenerPos;
+                    var dirHit = e.Position - from;
+                    dirHit = dirHit.LengthSquared() > 0.01f ? Vector3.Normalize(dirHit) : Vector3.UnitY;
+                    _fx.BloodHit(e.Position + new Vector3(0, 1.1f, 0), dirHit, new Color(150, 10, 12, 255), MathF.Min(1.5f, e.Value / 30f));
+                }
                 break;
             case GameEventType.Kill:
                 OnKill(e, me);
@@ -237,7 +246,11 @@ public sealed partial class GameView : IDisposable
                 float radius = e.Value > 0 ? e.Value / 10f : 0.6f;
                 bool ability = e.Flags == 1;
                 if (ability) _fx.Burst(e.Position, 50, 9f, null, 0.7f, 0.07f);
-                else _fx.Explosion(e.Position, MathF.Max(0.8f, radius), e.Weapon < content.Weapons.Count && content.Weapons[e.Weapon].Id.Contains("sambal"));
+                else
+                {
+                    _fx.Explosion(e.Position, MathF.Max(0.8f, radius), e.Weapon < content.Weapons.Count && content.Weapons[e.Weapon].Id.Contains("sambal"));
+                    if (radius > 1) _fx.ExplosionExtras(e.Position, radius);
+                }
                 sounds.PlayAt(radius > 1 ? Sfx.Explosion : Sfx.Thump, e.Position, ListenerPos, _session.Yaw, 1f, ability ? 1.4f : 1f);
                 float d = Vector3.Distance(e.Position, ListenerPos);
                 _fx.AddShake(MathF.Max(0, 0.8f - d / 25f));
@@ -321,6 +334,15 @@ public sealed partial class GameView : IDisposable
             case GameEventType.ProjectileBounce:
                 sounds.PlayAt(Sfx.Bounce, e.Position, ListenerPos, _session.Yaw, 0.6f);
                 break;
+            case GameEventType.CreepSpawn:
+            case GameEventType.CreepAttack:
+            case GameEventType.CreepHurt:
+            case GameEventType.CreepKilled:
+            case GameEventType.CreepRoar:
+            case GameEventType.CreepLeave:
+            case GameEventType.WormRumble:
+                HandleCreepEvent(e, me);
+                break;
             case GameEventType.Join:
                 if (e.A != me) AddChat("", (S.Lang == Core.Localization.Language.Indonesian ? "{0} ikut tawuran" : "{0} joined the brawl").Replace("{0}", NameOf(e.A)), Theme.Fade(Theme.Kapur, 0.7f));
                 break;
@@ -336,7 +358,8 @@ public sealed partial class GameView : IDisposable
         var flags = (KillFlags)e.Flags;
         string killer = NameOf(e.B), victim = NameOf(e.A);
         string line;
-        if ((flags & KillFlags.Environment) != 0) line = e.A == e.B ? S.T("hud.envKill") : S.T("hud.envKillBy");
+        if ((flags & KillFlags.Creep) != 0 && CreepDef(e.Value) is { } cdef) line = S.T(cdef.KillVerb).Replace("{creep}", S.T(cdef.Name));
+        else if ((flags & KillFlags.Environment) != 0) line = e.A == e.B ? S.T("hud.envKill") : S.T("hud.envKillBy");
         else if ((flags & KillFlags.Suicide) != 0) line = S.T("hud.selfKill");
         else if ((flags & KillFlags.PropKill) != 0) line = S.T("hud.propKill");
         else if (e.Weapon < content.Weapons.Count) line = S.T(content.Weapons[e.Weapon].KillVerb);
@@ -345,7 +368,7 @@ public sealed partial class GameView : IDisposable
         if ((flags & KillFlags.Headshot) != 0) line += "  [" + S.T("hud.headshot") + "]";
         AddFeed(line, e.B == me ? Theme.Kuning : e.A == me ? Theme.Cabe : Theme.Kapur);
 
-        _fx.Burst(e.Position + new Vector3(0, 1, 0), (flags & KillFlags.Gibbed) != 0 ? 90 : 40, (flags & KillFlags.Gibbed) != 0 ? 9f : 6f, null, 1.4f, 0.07f);
+        _fx.Gore(e.Position + new Vector3(0, 1, 0), new Color(140, 8, 10, 255), (flags & KillFlags.Gibbed) != 0);
         if (e.B == me && e.A != me)
         {
             _app.Sounds.Play(Sfx.Kill, 0.9f);
@@ -535,6 +558,7 @@ public sealed partial class GameView : IDisposable
         DrawProps(arena);
         if (_app.Settings.BlobShadows) DrawBlobShadows();
         DrawPlayers();
+        DrawCreeps();
         DrawProjectiles();
         shader.SetEmissive(0.7f);
         _fx.Draw(_camera.Position);
