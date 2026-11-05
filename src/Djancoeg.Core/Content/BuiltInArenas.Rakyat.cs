@@ -98,8 +98,9 @@ public static partial class BuiltInArenas
             T("Container stacks, a pinisi schooner and a channel you really don't want to fall into.", "Tumpukan kontainer, kapal pinisi, dan kanal yang jangan sampai kecebur."),
             a => a with
             {
-                SkyTop = "#2C3E73", SkyBottom = "#F0A868", FogColor = "#9A8FA8", FogDensity = 0.010f, AmbientColor = "#7E7A8C",
-                SunColor = "#FFD3A1", SunDirection = [0.5f, -0.6f, 0.4f], KillY = -3f, ZoneCenter = [6, 1.2f, 0], ZoneRadius = 3.5f,
+                CloudCoverage = 0.35f, CloudColor = "#FAD9C6", Night = false,
+                SkyTop = "#34558D", SkyBottom = "#F4B183", FogColor = "#B9A0A5", FogDensity = 0.010f, AmbientColor = "#7E7A8C",
+                SunColor = "#FFD3A1", SunDirection = [0.5f, -0.4f, 0.45f], KillY = -3f, ZoneCenter = [6, 1.2f, 0], ZoneRadius = 3.5f,
                 FlagBases = [[-32, 0, -23], [32, 0, 23]], RaceGoal = [-3.4f, 9.3f, 0.7f],
             });
     }
@@ -185,7 +186,8 @@ public static partial class BuiltInArenas
             T("Carriage roofs, a footbridge and a clock tower that makes a great goal.", "Atap gerbong, jembatan penyeberangan, dan menara jam yang jadi tujuan panjat."),
             a => a with
             {
-                SkyTop = "#5B86C5", SkyBottom = "#F7D9A8", FogColor = "#D8C9B4", FogDensity = 0.008f, AmbientColor = "#8C8A86",
+                CloudCoverage = 0.50f, CloudColor = "#FFFBF2", Night = false,
+                SkyTop = "#3A77C2", SkyBottom = "#E9DEC6", FogColor = "#D8CDB8", FogDensity = 0.008f, AmbientColor = "#8C8A86",
                 SunColor = "#FFF1D6", SunDirection = [-0.6f, -0.7f, 0.3f], ZoneCenter = [0, 1, 0], ZoneRadius = 3f,
                 FlagBases = [[-32, 1, -19], [32, 1, 19]], RaceGoal = [-37.5f, 6, 0],
             });
@@ -260,7 +262,8 @@ public static partial class BuiltInArenas
             T("Queue tickets, service counters and a rooftop with the best view in the village.", "Nomor antrean, loket pelayanan, dan atap dengan pemandangan terbaik se-kelurahan."),
             a => a with
             {
-                SkyTop = "#3E8EDE", SkyBottom = "#CDE7F7", FogColor = "#CFE3F2", FogDensity = 0.007f, AmbientColor = "#9AA8B6",
+                CloudCoverage = 0.45f, CloudColor = "#FFFFFF", Night = false,
+                SkyTop = "#2A6FD1", SkyBottom = "#CFE6F7", FogColor = "#D3E6F3", FogDensity = 0.007f, AmbientColor = "#9AA8B6",
                 SunColor = "#FFF8E7", SunDirection = [0.3f, -0.9f, 0.25f], ZoneCenter = [0, 0, -12], ZoneRadius = 4f,
                 FlagBases = [[-30, 0, 0], [30, 0, 0]], RaceGoal = [0, 4.4f, 13],
             });

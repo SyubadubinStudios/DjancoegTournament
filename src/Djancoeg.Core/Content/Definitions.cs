@@ -162,6 +162,15 @@ public sealed record ArenaDef
     public string SkyBottom { get; set; } = "#E8743B";
     public string FogColor { get; set; } = "#2A1F4A";
     public float FogDensity { get; set; } = 0.012f;
+    /// <summary>Cloud coverage 0 (clear) .. 1 (overcast).</summary>
+    public float CloudCoverage { get; set; } = 0.4f;
+    public string CloudColor { get; set; } = "#FFFFFF";
+    /// <summary>Cloud drift speed (sky units per second).</summary>
+    public float CloudSpeed { get; set; } = 0.006f;
+    /// <summary>Night sky: stars and a moon disc instead of the sun.</summary>
+    public bool Night { get; set; }
+    /// <summary>Optional equirectangular panorama (path relative to assets/, e.g. a CC0 HDRI exported to JPG).</summary>
+    public string? SkyTexture { get; set; }
     public string AmbientColor { get; set; } = "#5A5080";
     public string SunColor { get; set; } = "#FFE0B0";
     public float[] SunDirection { get; set; } = [-0.4f, -1f, -0.3f];

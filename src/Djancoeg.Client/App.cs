@@ -36,6 +36,7 @@ public sealed class App : IDisposable
     public WorldShader Shader { get; private set; } = null!;
     public ModelLibrary Models { get; private set; } = null!;
     public SoundBank Sounds { get; private set; } = null!;
+    public SkyRenderer Sky { get; private set; } = null!;
     public Gui Gui { get; } = new();
     public AppOptions Options { get; }
     public Gui.Marquee Marquee { get; } = new();
@@ -86,6 +87,7 @@ public sealed class App : IDisposable
         Theme.Load(AssetsDir);
         Shader = new WorldShader();
         Models = new ModelLibrary(AssetsDir, Shader);
+        Sky = new SkyRenderer(Models);
         Sounds = new SoundBank(AssetsDir);
         ApplyVolume();
         KeyArt = Models.Texture("art/key-art.png");
@@ -219,6 +221,7 @@ public sealed class App : IDisposable
             ClearBackground(Theme.Rgba(ColorUtil.ParseRgba(arena.SkyBottom)));
             DrawRectangleGradientV(0, 0, 320, 180, Theme.Rgba(ColorUtil.ParseRgba(arena.SkyTop)), Theme.Rgba(ColorUtil.ParseRgba(arena.SkyBottom)));
             BeginMode3D(cam);
+            Sky.Draw(arena, cam, 0);
             BeginShaderMode(Shader.Shader);
             renderer.Draw(Shader);
             EndShaderMode();
@@ -296,6 +299,7 @@ public sealed class App : IDisposable
     public void Dispose()
     {
         if (IsWindowReady()) ClearThumbnails();
+        Sky?.Dispose();
         Models?.Dispose();
         Shader?.Dispose();
         Sounds?.Dispose();

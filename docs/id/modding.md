@@ -143,6 +143,10 @@ Arena adalah daftar kotak sejajar sumbu plus penanda gameplay. Satuan meter, **Y
 | `flagBases` | Opsional `[[x,y,z],[x,y,z]]` piring gorengan tim 0 dan 1 (Rebutan Gorengan); kalau kosong, pusat titik lahir tiap tim |
 | `raceGoal` | Opsional `[x,y,z]` hadiah Panjat Pinang; kalau kosong, `zoneCenter` (radius = `zoneRadius`) |
 | `killY` | Jatuh di bawah ketinggian ini = tewas |
+| `skyTop`, `skyBottom`, `sunColor`, `sunDirection` | Langit prosedural: warna zenit dan cakrawala, warna matahari, dan arah cahayanya |
+| `cloudCoverage`, `cloudColor`, `cloudSpeed` | Awan: 0 = cerah, 1 = mendung; warna; kecepatan geser (bawaan 0.4, putih, 0.006) |
+| `night` | `true` menampilkan bintang dan bulan, bukan matahari |
+| `skyTexture` | Opsional: panorama equirectangular (JPG/PNG 2:1, misalnya HDRI CC0 dari Poly Haven yang dikonversi ke 8-bit), path relatif ke `assets/` atau absolut; awan tetap digambar di atasnya |
 | `zoneCenter`, `zoneRadius` | Zona Raja Warung |
 
 Batas: 1–4096 kotak, 64 item, 64 properti, minimal 2 spawn. Uji dengan bot: `djancoeg-server --arena arena-saya --bots 8` lalu lihat log, atau mainkan dari **Latihan**.

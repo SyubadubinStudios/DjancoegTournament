@@ -8,8 +8,8 @@
   "en": "Climb the greased pole, win the prize - or just knock everyone off it.",
   "id": "Panjat pinang, rebut hadiahnya - atau jatuhkan semua yang manjat."
  },
- "skyTop": "#3A7BD5",
- "skyBottom": "#FFFFFF",
+ "skyTop": "#2F72C9",
+ "skyBottom": "#D2E9FA",
  "fogColor": "#D6E9FF",
  "fogDensity": 0.008,
  "ambientColor": "#9AA9BF",
@@ -922,5 +922,7 @@
    "color": "#FF8A80",
    "radius": 10
   }
- ]
+ ],
+ "cloudCoverage": 0.5,
+ "cloudColor": "#FFFFFF"
 }

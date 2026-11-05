@@ -521,6 +521,7 @@ public sealed partial class GameView : IDisposable
         shader.SetEmissive(0);
 
         BeginMode3D(_camera);
+        _app.Sky.Draw(arena, _camera, _time);
         BeginShaderMode(shader.Shader);
         _arena.Draw(shader);
         DrawPadsAndZone(arena);

@@ -98,8 +98,9 @@ public static partial class BuiltInArenas
             T("Fight between satay stalls and a dangdut stage under string lights.", "Tawuran di antara tenda sate dan panggung dangdut, di bawah lampu bohlam."),
             a => a with
             {
-                SkyTop = "#0E1236", SkyBottom = "#7A3B6E", FogColor = "#2B2140", FogDensity = 0.012f, AmbientColor = "#6A6478",
-                SunColor = "#FFD8A8", SunDirection = [-0.3f, -1f, 0.4f], ZoneCenter = [0, 1.4f, 0], ZoneRadius = 4f, KillY = -20,
+                CloudCoverage = 0.30f, CloudColor = "#3B3656", Night = true,
+                SkyTop = "#04071A", SkyBottom = "#2C2547", FogColor = "#1E1A33", FogDensity = 0.012f, AmbientColor = "#5E5873",
+                SunColor = "#C9D4FF", SunDirection = [-0.3f, -0.9f, 0.4f], ZoneCenter = [0, 1.4f, 0], ZoneRadius = 4f, KillY = -20,
             });
     }
 
@@ -181,8 +182,9 @@ public static partial class BuiltInArenas
             T("Buses, platforms and an overpass. Watch out for the touts.", "Bus, peron, dan jembatan penyeberangan. Awas calo."),
             a => a with
             {
-                SkyTop = "#2B5876", SkyBottom = "#F6A55B", FogColor = "#C98B6B", FogDensity = 0.010f, AmbientColor = "#8C7A70",
-                SunColor = "#FFD7A8", SunDirection = [0.6f, -0.7f, 0.3f], ZoneCenter = [0, 5f, 0], ZoneRadius = 3.5f,
+                CloudCoverage = 0.45f, CloudColor = "#FFD9B5", Night = false,
+                SkyTop = "#2D5B8E", SkyBottom = "#F3A35E", FogColor = "#C99474", FogDensity = 0.010f, AmbientColor = "#8C7A70",
+                SunColor = "#FFC98E", SunDirection = [0.75f, -0.38f, 0.3f], ZoneCenter = [0, 5f, 0], ZoneRadius = 3.5f,
             });
     }
 
@@ -269,7 +271,8 @@ public static partial class BuiltInArenas
             T("Open rice terraces, coconut trees and a night-watch hut. Snipers love it.", "Terasering terbuka, pohon kelapa, dan pos ronda. Surganya penembak jitu."),
             a => a with
             {
-                SkyTop = "#4FA3E0", SkyBottom = "#D6F0FF", FogColor = "#BFE3F5", FogDensity = 0.007f, AmbientColor = "#8FA8B8",
+                CloudCoverage = 0.55f, CloudColor = "#FFFFFF", Night = false,
+                SkyTop = "#2C6FC6", SkyBottom = "#BFE0F5", FogColor = "#C6E2F2", FogDensity = 0.007f, AmbientColor = "#8FA8B8",
                 SunColor = "#FFF6E0", SunDirection = [-0.5f, -0.8f, -0.35f], ZoneCenter = [0, 2.0f, 0], ZoneRadius = 3.2f,
             });
     }
@@ -355,8 +358,9 @@ public static partial class BuiltInArenas
             T("Rooftops, alleys, water tanks and a river you really don't want to fall in.", "Atap rumah, gang sempit, toren air, dan kali yang jangan sampai kecebur."),
             a => a with
             {
-                SkyTop = "#0F2027", SkyBottom = "#FF7E5F", FogColor = "#7A4A55", FogDensity = 0.011f, AmbientColor = "#7D6070",
-                SunColor = "#FFB38A", SunDirection = [0.7f, -0.45f, -0.4f], ZoneCenter = [0, 0f, 0], ZoneRadius = 3.0f, KillY = -4f,
+                CloudCoverage = 0.40f, CloudColor = "#FFB89A", Night = false,
+                SkyTop = "#1B2D55", SkyBottom = "#FF8A57", FogColor = "#7A4A55", FogDensity = 0.011f, AmbientColor = "#7D6070",
+                SunColor = "#FFB38A", SunDirection = [0.72f, -0.32f, -0.4f], ZoneCenter = [0, 0f, 0], ZoneRadius = 3.0f, KillY = -4f,
             });
     }
 

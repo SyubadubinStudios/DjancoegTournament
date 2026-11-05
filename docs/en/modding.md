@@ -143,6 +143,10 @@ Arenas are lists of axis-aligned boxes plus gameplay markers. Coordinates are me
 | `flagBases` | Optional `[[x,y,z],[x,y,z]]` gorengan plates for team 0 and 1 (Rebutan Gorengan); otherwise the centre of each team's spawns |
 | `raceGoal` | Optional `[x,y,z]` prize for Panjat Pinang; otherwise `zoneCenter` (radius = `zoneRadius`) |
 | `killY` | Falling below this height kills |
+| `skyTop`, `skyBottom`, `sunColor`, `sunDirection` | Procedural sky: zenith and horizon colours, sun colour and the direction its light travels |
+| `cloudCoverage`, `cloudColor`, `cloudSpeed` | Clouds: 0 = clear, 1 = overcast; tint; drift speed (default 0.4, white, 0.006) |
+| `night` | `true` shows stars and a moon disc instead of the sun |
+| `skyTexture` | Optional equirectangular panorama (2:1 JPG/PNG, e.g. a CC0 HDRI from Poly Haven tone-mapped to 8-bit), path relative to `assets/` or absolute; clouds are drawn on top |
 | `zoneCenter`, `zoneRadius` | King of the Warung zone |
 
 Limits: 1–4096 boxes, 64 pickups, 64 props, at least 2 spawns. Test with bots: `djancoeg-server --arena my-arena --bots 8` and watch the log, or play it from **Practice**.
