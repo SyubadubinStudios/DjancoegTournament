@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>djancoeg-server</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
     <IsAotCompatible>true</IsAotCompatible>
     <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>

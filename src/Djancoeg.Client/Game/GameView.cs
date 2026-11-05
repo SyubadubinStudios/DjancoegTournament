@@ -128,6 +128,7 @@ public sealed partial class GameView : IDisposable
         UpdateProps(dt);
         UpdateCreepViews(dt);
         UpdateCorpses(dt);
+        UpdateChunks(dt);
         _fx.World = client.Collision;
         _fx.Blood = _app.Settings.Blood;
         UpdateFootsteps(dt);
@@ -569,6 +570,7 @@ public sealed partial class GameView : IDisposable
         DrawDestructibles(arena);
         DrawPlayers();
         DrawCorpses();
+        DrawChunks();
         DrawCreeps();
         DrawProjectiles();
         shader.SetEmissive(0.7f);

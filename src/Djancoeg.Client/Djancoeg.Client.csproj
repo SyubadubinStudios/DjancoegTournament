@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <AssemblyName>DjancoegTournament</AssemblyName>
+    <!-- No ICU dependency: all formatting uses InvariantCulture and UI text comes from our own EN/ID tables. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
     <!-- Screens own disposables released in Leave(); Theme fonts are mutable by design (loaded after window init). -->
     <NoWarn>$(NoWarn);CA1001;CA2211;CA1863</NoWarn>
     <ApplicationIcon Condition="Exists('..\..\assets\icon\djancoeg.ico')">..\..\assets\icon\djancoeg.ico</ApplicationIcon>

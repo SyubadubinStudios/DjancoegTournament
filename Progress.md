@@ -2,23 +2,34 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **2.0.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **2.1.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 122 passing / lulus |
+| Automated tests / Tes otomatis | 127 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
-| Modes | 5 + campaign (16 stages, 4 bosses) |
+| Modes | 5 + campaign (20 stages, 6 bosses) |
+| Packages / Paket | Windows installer + zip, Linux AppImage + .deb + tar.gz, macOS .dmg (arm64, x64) |
 | Achievements / Pencapaian | 12 |
 | Languages / Bahasa | English, Bahasa Indonesia (UI, docs, content) |
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v2.1.0 "Timur Jauh"
+
+- [x] Installers: Inno Setup (Windows, per-user, shortcuts for game/server/mods, optional firewall rules), AppImage + .deb + tar.gz (Linux), ad-hoc-signed .app in .dmg for Apple Silicon and Intel (macOS); `release.yml` builds all of them and publishes a GitHub Release with `SHA256SUMS.txt`
+- [x] Installed (read-only) builds use `<AppData>/DjancoegTournament/mods`, seeded with the bundled mods; `DJANCOEG_MODS` override; `InvariantGlobalization` removes the ICU dependency
+- [x] Nusa Tenggara bonus island (4 stages, bosses Si Jangkung and Giant Earthworm); bosses keep their remaining health when they leave and return
+- [x] Breakage chunks for destroyed boxes (tumble, rest until respawn)
+- [x] Editor: rotate 90° (R), sky presets (F3), export `.djmod` (Ctrl+E)
+- [x] README download section (EN/ID) with stable latest-release links; installer docs in getting-started (EN/ID)
+- [x] Tests: rotate, environment presets, user mods folder seeding, boss health carry-over, island 5 (127 tests)
 
 ### 2026-11-06 — v2.0.0 "Nusantara Raya"
 

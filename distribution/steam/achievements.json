@@ -11,7 +11,7 @@
     { "id": "ISLAND_JAWA",  "steam": "ACH_ISLAND_JAWA",  "stat": null },
     { "id": "ISLAND_ALL",   "steam": "ACH_ISLAND_ALL",   "stat": null },
     { "id": "THREE_STARS",  "steam": "ACH_THREE_STARS",  "stat": null },
-    { "id": "ALL_STARS",    "steam": "ACH_ALL_STARS",    "stat": "STAT_STARS", "goal": 48 },
+    { "id": "ALL_STARS",    "steam": "ACH_ALL_STARS",    "stat": "STAT_STARS", "goal": 60 },
     { "id": "EDITOR",       "steam": "ACH_EDITOR",       "stat": null }
   ]
 }

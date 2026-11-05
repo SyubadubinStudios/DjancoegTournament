@@ -31,6 +31,19 @@ public sealed partial class GameView
     }
 
     private readonly Corpse[] _corpses = new Corpse[40];
+
+    private struct Chunk
+    {
+        public bool Active;
+        public int Destructible;
+        public Vector3 Pos, Vel, Size, Spin, Rot;
+        public Color Color;
+        public bool Resting;
+        public float Age;
+    }
+
+    private readonly Chunk[] _chunks = new Chunk[160];
+    private int _chunkNext;
     private int _corpseNext;
 
     private void SpawnCorpse(int playerId, CharacterModel? model, float scale, Vector3 pos, Vector3 impulse, float yaw, Color fallback, Color blood)
@@ -182,10 +195,87 @@ public sealed partial class GameView
                 _fx.Emit(p, v, color, rng.Range(1.0f, 2.2f), rng.Range(0.06f, 0.18f), 16f, 0.3f);
             }
             _fx.Dust(e.Position, 20, 3f);
+            SpawnChunks(e.Value, b.MinV, b.MaxV, color, e.Vector, rng);
             _app.Sounds.PlayAt(Sfx.PropHit, e.Position, ListenerPos, _session.Yaw, 1f, 0.7f);
             _app.Sounds.PlayAt(Sfx.Crunch, e.Position, ListenerPos, _session.Yaw, 1f, 0.6f);
         }
-        else _fx.Dust(e.Position, 12, 2f);
+        else
+        {
+            _fx.Dust(e.Position, 12, 2f);
+            for (int i = 0; i < _chunks.Length; i++) if (_chunks[i].Active && _chunks[i].Destructible == e.Value) _chunks[i].Active = false;
+        }
+    }
+
+    /// <summary>Breaks a box into a few big tumbling pieces that stay on the ground until the box comes back.</summary>
+    private void SpawnChunks(int destructible, Vector3 min, Vector3 max, Color color, Vector3 push, FastRandom rng)
+    {
+        var size = max - min;
+        int nx = size.X > 1.2f ? 3 : 2, ny = size.Y > 0.8f ? 2 : 1, nz = size.Z > 1.2f ? 3 : 2;
+        var cell = new Vector3(size.X / nx, size.Y / ny, size.Z / nz);
+        for (int x = 0; x < nx; x++)
+        for (int y = 0; y < ny; y++)
+        for (int z = 0; z < nz; z++)
+        {
+            ref var c = ref _chunks[_chunkNext];
+            _chunkNext = (_chunkNext + 1) % _chunks.Length;
+            var center = min + new Vector3((x + 0.5f) * cell.X, (y + 0.5f) * cell.Y, (z + 0.5f) * cell.Z);
+            var shade = rng.Range(0.75f, 1.05f);
+            c = new Chunk
+            {
+                Active = true, Destructible = destructible, Pos = center,
+                Size = cell * rng.Range(0.6f, 0.9f),
+                Vel = (center - (min + max) * 0.5f) * 3f + push * 3f + new Vector3(rng.Range(-1.5f, 1.5f), rng.Range(2f, 5f), rng.Range(-1.5f, 1.5f)),
+                Spin = new Vector3(rng.Range(-6, 6), rng.Range(-6, 6), rng.Range(-6, 6)),
+                Color = new Color((byte)Math.Min(255, color.R * shade), (byte)Math.Min(255, color.G * shade), (byte)Math.Min(255, color.B * shade), (byte)255),
+            };
+        }
+    }
+
+    private void UpdateChunks(float dt)
+    {
+        var col = _session.Client.Collision;
+        for (int i = 0; i < _chunks.Length; i++)
+        {
+            ref var c = ref _chunks[i];
+            if (!c.Active) continue;
+            c.Age += dt;
+            if (c.Age > 60f || col is null) { c.Active = false; continue; }
+            if (c.Resting) continue;
+            c.Vel.Y -= PlayerMovement.Gravity * dt;
+            var half = c.Size * 0.5f;
+            var box = Aabb.FromCenter(c.Pos, half);
+            float mx = col.SweepAxis(box, 0, c.Vel.X * dt); if (MathF.Abs(mx - c.Vel.X * dt) > 1e-5f) c.Vel.X *= -0.3f; c.Pos.X += mx;
+            box = Aabb.FromCenter(c.Pos, half);
+            float mz = col.SweepAxis(box, 2, c.Vel.Z * dt); if (MathF.Abs(mz - c.Vel.Z * dt) > 1e-5f) c.Vel.Z *= -0.3f; c.Pos.Z += mz;
+            box = Aabb.FromCenter(c.Pos, half);
+            float my = col.SweepAxis(box, 1, c.Vel.Y * dt);
+            bool floor = MathF.Abs(my - c.Vel.Y * dt) > 1e-5f && c.Vel.Y < 0;
+            c.Pos.Y += my;
+            c.Rot += c.Spin * dt;
+            if (floor)
+            {
+                if (c.Vel.Y < -3f) { c.Vel.Y *= -0.25f; c.Vel.X *= 0.5f; c.Vel.Z *= 0.5f; c.Spin *= 0.4f; }
+                else { c.Resting = true; c.Rot = new Vector3(0, c.Rot.Y, 0); }
+            }
+            if (c.Pos.Y < col.KillY) c.Active = false;
+        }
+    }
+
+    private void DrawChunks()
+    {
+        for (int i = 0; i < _chunks.Length; i++)
+        {
+            ref var c = ref _chunks[i];
+            if (!c.Active) continue;
+            Rlgl.PushMatrix();
+            Rlgl.Translatef(c.Pos.X, c.Pos.Y, c.Pos.Z);
+            Rlgl.Rotatef(c.Rot.Y * 57.2958f, 0, 1, 0);
+            Rlgl.Rotatef(c.Rot.X * 57.2958f, 1, 0, 0);
+            Rlgl.Rotatef(c.Rot.Z * 57.2958f, 0, 0, 1);
+            DrawCubeV(Vector3.Zero, c.Size, c.Color);
+            DrawCubeWiresV(Vector3.Zero, c.Size, new Color((byte)(c.Color.R * 0.55f), (byte)(c.Color.G * 0.55f), (byte)(c.Color.B * 0.55f), (byte)255));
+            Rlgl.PopMatrix();
+        }
     }
 
     private static int DestructibleBoxIndex(ArenaDef arena, int d)

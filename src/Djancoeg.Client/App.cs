@@ -60,8 +60,22 @@ public sealed class App : IDisposable
         Controls.Settings = Settings;
         if (Settings.PlayerKey.Length == 0) { Settings.PlayerKey = Guid.NewGuid().ToString("N"); Settings.Save(); }
         AssetsDir = Path.Combine(AppContext.BaseDirectory, "assets");
-        ModsDir = ModLoader.DefaultModsDirectory;
+        ModsDir = ResolveModsDir();
         ReloadContent();
+    }
+
+    /// <summary>
+    /// Portable zips keep mods next to the game. Installed builds (Program Files, AppImage, macOS .app) are read-only,
+    /// so mods live in the player's app-data folder instead. DJANCOEG_MODS overrides both.
+    /// </summary>
+    private static string ResolveModsDir()
+    {
+        if (Environment.GetEnvironmentVariable("DJANCOEG_MODS") is { Length: > 0 } custom) return custom;
+        string baseDir = AppContext.BaseDirectory;
+        bool packaged = Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 }
+            || baseDir.Contains(".app/Contents/", StringComparison.Ordinal)
+            || File.Exists(Path.Combine(baseDir, "installed.marker"));
+        return ModLoader.ResolveWritableModsDirectory(ModLoader.DefaultModsDirectory, Path.Combine(ClientSettings.Folder, "mods"), packaged);
     }
 
     /// <summary>Rebuilds the content registry from built-ins plus enabled mods (only safe outside a match).</summary>

@@ -1,0 +1,106 @@
+name: Release
+
+# Tag vX.Y.Z to build installers for every platform and publish a GitHub Release.
+# Run manually (workflow_dispatch) to build the installers as workflow artifacts without releasing.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - run: dotnet test -c Release
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Installer + portable zip
+        shell: pwsh
+        run: ./installer/build-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-windows
+          path: artifacts/installers/*
+      - name: itch.io (optional)
+        if: env.BUTLER_API_KEY != '' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env: { ITCH_TARGET: "${{ vars.ITCH_TARGET }}" }
+        run: ./distribution/itch/push.ps1 -Channel windows -Folder artifacts/DjancoegTournament-win-x64 -Version "${{ github.ref_name }}"
+
+  linux:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - name: AppImage + .deb + tar.gz
+        run: ./installer/linux/build.sh
+      - name: Check the .deb
+        run: dpkg-deb --info artifacts/installers/djancoeg-tournament_amd64.deb && dpkg-deb --contents artifacts/installers/djancoeg-tournament_amd64.deb | grep -E "usr/bin/djancoeg-tournament|opt/djancoeg-tournament/DjancoegTournament$"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-linux
+          path: artifacts/installers/*
+      - name: itch.io (optional)
+        if: env.BUTLER_API_KEY != '' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env: { ITCH_TARGET: "${{ vars.ITCH_TARGET }}" }
+        run: ./distribution/itch/push.ps1 -Channel linux -Folder artifacts/DjancoegTournament-linux-x64 -Version "${{ github.ref_name }}"
+
+  macos:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - name: .app + .dmg (arm64, x64)
+        run: ./installer/macos/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-macos
+          path: artifacts/installers/*
+
+  release:
+    needs: [windows, linux, macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: installers-*
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Djancoeg Tournament ${{ github.ref_name }}
+          body_path: installer/RELEASE_NOTES.md
+          files: dist/*

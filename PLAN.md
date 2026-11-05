@@ -64,11 +64,20 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Tur Nusantara: 4 islands × 4 stages, stars, unlocks, boss fights, island map art / *tur pemain tunggal antar pulau*
 - ✅ Distribution: GitHub Actions CI + tagged releases, itch.io butler, Steam ContentBuilder templates; 12 local achievements with Steam mapping / *distribusi dan pencapaian*
 
-## Ideas after 2.0 / Ide setelah 2.0
+## v2.1 — "Timur Jauh" (installers & bonus island) ✅
+
+- ✅ Installers for every platform: Windows (Inno Setup), Linux (AppImage, .deb, tar.gz), macOS (.app in .dmg, Apple Silicon + Intel); release workflow with checksums / *installer untuk semua platform*
+- ✅ Installed builds keep mods/editor arenas in the user folder (read-only install dirs) / *mod di folder pengguna*
+- ✅ Nusa Tenggara bonus island with two bosses (Si Jangkung, Giant Earthworm); bosses keep their damage when they come back / *pulau bonus Nusa Tenggara*
+- ✅ Breakage chunks that tumble and rest until the stall respawns / *bongkahan puing*
+- ✅ Editor: rotate 90°, sky presets, export `.djmod` / *editor: putar, suasana langit, ekspor*
+
+## Ideas after 2.1 / Ide setelah 2.1
 
 - Multi-bone ragdolls (per-limb) and partial destruction (chunks instead of whole boxes)
-- Editor: rotate/scale gizmos, copy between arenas, sky/fog panel, Workshop upload from the editor
-- Campaign: cutscene stills, co-op campaign over LAN, more bosses (Si Jangkung, Cacing Raksasa)
+- Editor: drag gizmos, copy between arenas, Workshop upload (needs an authenticated upload endpoint)
+- Campaign: cutscene stills, co-op campaign over LAN
+- Code signing (Authenticode) and Apple notarization for the installers; Flatpak; winget/Homebrew manifests
 - Steamworks SDK integration (achievements/stats/rich presence) behind a build flag
 
 ## Technical principles / Prinsip teknis

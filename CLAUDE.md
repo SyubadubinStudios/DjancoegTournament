@@ -18,7 +18,8 @@ dotnet run --project src/Djancoeg.Server -- mod validate mods/warung-bakso     #
 src/Djancoeg.Client/bin/Release/net10.0/DjancoegTournament.exe --shot game-tps --arena atap-kampung --out x.png   # render a screenshot
 pwsh scripts/screenshots.ps1                            # regenerate docs/screenshots
 pwsh scripts/publish.ps1                                # self-contained packages -> artifacts/ (+ .itch.toml)
-# CI: .github/workflows/ci.yml (test on push/PR; tags v* package + release + optional itch push). Steam/itch templates in distribution/.
+pwsh installer/build-windows.ps1 · installer/linux/build.sh · installer/macos/build.sh   # installers -> artifacts/installers/
+# CI: .github/workflows/ci.yml (test on push/PR); release.yml (tag v* or manual: installers for all platforms + GitHub Release). Steam/itch templates in distribution/.
 ```
 
 The GUI exe is `WinExe`: from PowerShell use `Start-Process -Wait` or it returns immediately. The dev monitor is 1366×768; the window auto-fits.
@@ -31,6 +32,7 @@ The GUI exe is `WinExe`: from PowerShell use `Start-Process -Wait` or it returns
 - Network v6 (`Protocol.Version`; bump it whenever the snapshot layout changes): every packet after `Accept` is sealed by `SecureChannel` (`NetCrypto.cs`); new inner packet types go through `SendSecure`/`HandleSecure` (server) and `HandleInner` (client). Snapshots are field deltas (`NetPlayer.WriteDelta/ReadDelta`) — add new player fields to both and to `Quantized()`. After the pickup mask come `DestroyedMask` (bit i = i-th box with `Health > 0` in arena order, max 64) and the creeps section; the client mirrors `DestroyedMask` into its own `CollisionWorld` (`SetBoxEnabled`) so prediction matches. Admin/vote/stats code lives in `GameServer.Admin.cs`.
 - `Djancoeg.Net` — `GameServer` (input queue, 30 Hz snapshots within 1200 bytes, acked events, lag compensation via `GameWorld.HistoricalPosition`), `GameClient` (prediction/reconciliation, interpolation via `Bracket`/`RenderTick`), `ServerBrowser` (LAN + master), `MasterServer`. Practice/host run a `GameServer` thread inside the client (`Client/Game/Session.cs`), so every mode uses the same path.
 - Single player: `Core/Content/Campaign.cs` (stages → `MatchSettings`, star rules), `Client/Screens/CampaignScreen.cs` (map, `CampaignRun`, result), `Client/CampaignProgress.cs` + `Client/Achievements.cs` (AppData JSON, own STJ contexts). Level editor: window-free `Modding/ArenaEditor.cs` (tested) + `Client/Screens/EditorScreen.cs`; saves to `mods/arena-buatanku`.
+- Mods dir: `App.ResolveModsDir` → `ModLoader.ResolveWritableModsDirectory`. Installed builds (marker file `installed.marker`, AppImage, .app) use `<AppData>/DjancoegTournament/mods`, seeded from the bundled mods; never write next to the exe. Client/server use `InvariantGlobalization` (no ICU dependency in packages).
 - Destructible boxes are skipped in the baked arena mesh and drawn per-box by `ArenaRenderer.DrawDestructibles`. Physics corpses are client-only (`Game/GameView.Physics.cs`).
 - Input goes through `Client/Controls.cs` (`Controls.Down/Pressed(GameAction)`), never raw keys, so rebinding and gamepad keep working.
 - `Djancoeg.Client` — `App` (window, shared `WorldShader`/`ModelLibrary`/`SoundBank`/`Gui`, screen switching via `App.Go`), `Screens/*`, `Game/GameView(.Hud).cs` (3D + HUD), `Render/*` (single world shader with procedural surface patterns keyed by texcoord.x = `SurfaceKind`), `Audio/SoundBank.cs` (synthesized SFX), `Ui/Theme.cs` + `Ui/Gui.cs` (immediate-mode widgets; widgets are called from `Draw()`).

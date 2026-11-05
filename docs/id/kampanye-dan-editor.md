@@ -10,7 +10,7 @@ Versi 2.0 "Nusantara Raya" menambahkan kampanye pemain tunggal, editor arena di 
 
 Pilih **Tur Nusantara (kampanye)** di urutan teratas menu utama.
 
-- **Empat pulau, masing-masing empat tahap.** Jawa → Sumatera → Kalimantan → Sulawesi. Setiap tahap adalah pertandingan sungguhan melawan bot di salah satu arena, dengan salah satu dari lima mode.
+- **Lima pulau, masing-masing empat tahap.** Jawa → Sumatera → Kalimantan → Sulawesi → Nusa Tenggara (tur bonus, 34 bintang, dua bos: Si Jangkung dan Cacing Tanah Raksasa). Setiap tahap adalah pertandingan sungguhan melawan bot di salah satu arena, dengan salah satu dari lima mode.
 - **Bintang.**
   - ★ Menangkan tahap.
   - ★★ Menang tanpa mati melebihi batas tahap.
@@ -30,7 +30,7 @@ Pilih **Tur Nusantara (kampanye)** di urutan teratas menu utama.
   | Sulawesi | Buto Ijo |
 
   - Bos adalah Makhluk Arena dengan nyawa 5–6× lipat dan bar nyawa di atas layar.
-  - Ia muncul lagi kalau kabur atau jatuh.
+  - Ia muncul lagi kalau kabur, masuk ke tanah, atau jatuh, dengan luka yang sudah kamu berikan tetap terbawa.
   - Pukulan terakhir bernilai **+10 poin**. Pertandingan selesai saat bos tumbang, dan pemimpin skor menang.
 - **Progres** disimpan di `campaign.json` dalam folder app-data (`%APPDATA%/DjancoegTournament` di Windows, `~/.config/DjancoegTournament` di Linux/macOS).
 
@@ -54,8 +54,8 @@ Pilih **Editor arena** di menu utama. Editor membuka arena yang terakhir kamu si
 | Gaya | `[` `]` permukaan / jenis barang / tim titik muncul / jenis properti / kekuatan pelontar · `C` warna |
 | Jenis kotak | `H` berganti padat → **bisa hancur** (120 HP) → hiasan |
 | Sunting | Del hapus · Ctrl+D gandakan · Ctrl+Z / Ctrl+Y batal / ulang |
-| Lainnya | `Z` zona Raja Warung di sini · `G` grid 0,25/0,5/1 · `F2` ganti nama |
-| Berkas | Ctrl+S simpan · **F5 uji main** melawan 3 bot · Ctrl+N baru · Esc keluar |
+| Lainnya | `R` putar 90° · `Z` zona Raja Warung di sini · `G` grid 0,25/0,5/1 · `F2` ganti nama · `F3` suasana langit (siang, senja, malam, mendung) |
+| Berkas | Ctrl+S simpan · **F5 uji main** melawan 3 bot · Ctrl+E ekspor `.djmod` untuk dibagikan · Ctrl+N baru · Esc keluar |
 
 - **Menyimpan.** Arena disimpan sebagai mod biasa di `mods/arena-buatanku/` (`mod.json` dan `arenas/<id>.json`). Arena muncul di Latihan, Buka server, dan Workshop, bisa dipak menjadi `.djmod`, dan dibagikan seperti mod lain.
 - **Validasi.** Editor menolak menyimpan arena yang akan ditolak validator mod (misalnya titik muncul kurang dari 2) dan menampilkan alasannya.
@@ -68,7 +68,7 @@ Logika penyuntingan (`ArenaEditor` di `src/Djancoeg.Modding`) tidak memakai kode
 - **Kotak yang bisa hancur.** Kotak arena dengan `"health": <hp>` bisa dihancurkan. Peluru, serangan jarak dekat, proyektil, dan ledakan semuanya merusaknya.
   - Kotak hancur bawaan: meja dan tenda lapak pasar malam, bangku terminal, toren air di atap, serta loket dan meja kantor kelurahan.
   - Kotak yang hancur menghilang, tidak lagi menghalangi gerakan dan tembakan, dan pecah jadi serpihan dan debu.
-  - Kotak kembali setelah 45 detik, kecuali ada yang berdiri di tempatnya.
+  - Kotak pecah jadi bongkahan besar yang terguling dan tergeletak di tanah sampai kotak kembali setelah 45 detik (kecuali ada yang berdiri di tempatnya).
 - **Mayat berfisika.** Jagoan dan makhluk meninggalkan mayat berfisika yang terlempar oleh pukulan, memantul di dunia, mencipratkan darah (atau konfeti), lalu rebah sebelum memudar.
 
 ## Pencapaian

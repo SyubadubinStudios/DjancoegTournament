@@ -64,6 +64,18 @@ scripts/publish.sh linux-x64                   # -> artifacts/*.tar.gz
 
 Setiap paket mandiri (tidak butuh instalasi .NET) dan berisi game (`DjancoegTournament`) serta server (`djancoeg-server`).
 
+## Installer
+
+Installer rilis dibuat oleh `.github/workflows/release.yml` saat tag `v*` di-push (atau kapan saja dari tab Actions). Bisa juga dibuat secara lokal:
+
+| Platform | Perintah | Hasil (`artifacts/installers/`) |
+|---|---|---|
+| Windows | `pwsh installer/build-windows.ps1` (butuh [Inno Setup 6](https://jrsoftware.org/isinfo.php)) | `DjancoegTournament-Setup-win-x64.exe`, `DjancoegTournament-win-x64-portable.zip` |
+| Linux | `installer/linux/build.sh` (butuh `dpkg-deb`; mengunduh `appimagetool`) | `DjancoegTournament-x86_64.AppImage`, `djancoeg-tournament_amd64.deb`, `DjancoegTournament-linux-x64.tar.gz` |
+| macOS | `installer/macos/build.sh` (di Mac) | `DjancoegTournament-macOS-arm64.dmg`, `DjancoegTournament-macOS-x64.dmg` |
+
+Versi terpasang bersifat hanya-baca, jadi mod, unduhan Workshop, dan arena editor disimpan di folder pengguna (`%APPDATA%/DjancoegTournament/mods`, `~/.config/DjancoegTournament/mods`). Mod contoh bawaan disalin ke sana saat pertama dijalankan. Atur `DJANCOEG_MODS` untuk memakai folder lain.
+
 ## Solusi masalah
 
 | Masalah | Solusi |

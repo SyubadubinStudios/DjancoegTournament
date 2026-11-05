@@ -64,6 +64,18 @@ scripts/publish.sh linux-x64                   # -> artifacts/*.tar.gz
 
 Each package is self-contained (no .NET install needed) and contains both the game (`DjancoegTournament`) and the server (`djancoeg-server`).
 
+## Installers
+
+Release installers are built by `.github/workflows/release.yml` when a `v*` tag is pushed (or on demand from the Actions tab). You can also build them locally:
+
+| Platform | Command | Output (`artifacts/installers/`) |
+|---|---|---|
+| Windows | `pwsh installer/build-windows.ps1` (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)) | `DjancoegTournament-Setup-win-x64.exe`, `DjancoegTournament-win-x64-portable.zip` |
+| Linux | `installer/linux/build.sh` (needs `dpkg-deb`; downloads `appimagetool`) | `DjancoegTournament-x86_64.AppImage`, `djancoeg-tournament_amd64.deb`, `DjancoegTournament-linux-x64.tar.gz` |
+| macOS | `installer/macos/build.sh` (on a Mac) | `DjancoegTournament-macOS-arm64.dmg`, `DjancoegTournament-macOS-x64.dmg` |
+
+Installed builds are read-only, so mods, Workshop downloads and editor arenas go to the user folder (`%APPDATA%/DjancoegTournament/mods`, `~/.config/DjancoegTournament/mods`). The bundled example mods are copied there on first start. Set `DJANCOEG_MODS` to use another folder.
+
 ## Troubleshooting
 
 | Problem | Fix |

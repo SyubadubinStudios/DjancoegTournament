@@ -32,6 +32,49 @@ public static partial class ModLoader
 
     public static string DefaultModsDirectory => Path.Combine(AppContext.BaseDirectory, "mods");
 
+    /// <summary>
+    /// Returns a mods folder the player can write to. Portable builds use the folder next to the game; installed builds
+    /// (Program Files, AppImage, macOS .app, or any read-only location) use <paramref name="userDir"/>, seeded with the
+    /// bundled mods that aren't there yet so the examples keep working.
+    /// </summary>
+    public static string ResolveWritableModsDirectory(string bundledDir, string userDir, bool forceUser = false)
+    {
+        if (!forceUser && IsWritable(bundledDir)) return bundledDir;
+        System.IO.Directory.CreateDirectory(userDir);
+        if (System.IO.Directory.Exists(bundledDir))
+        {
+            foreach (var src in System.IO.Directory.EnumerateDirectories(bundledDir))
+            {
+                var dest = Path.Combine(userDir, Path.GetFileName(src));
+                if (System.IO.Directory.Exists(dest) || !File.Exists(Path.Combine(src, ManifestFile))) continue;
+                CopyTree(src, dest);
+            }
+        }
+        return userDir;
+    }
+
+    /// <summary>True when the folder exists (or can be created) and a file can be written into it.</summary>
+    public static bool IsWritable(string dir)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            var probe = Path.Combine(dir, ".write-test-" + Environment.ProcessId);
+            File.WriteAllText(probe, "");
+            File.Delete(probe);
+            return true;
+        }
+        catch (UnauthorizedAccessException) { return false; }
+        catch (IOException) { return false; }
+    }
+
+    private static void CopyTree(string src, string dest)
+    {
+        System.IO.Directory.CreateDirectory(dest);
+        foreach (var f in System.IO.Directory.EnumerateFiles(src)) File.Copy(f, Path.Combine(dest, Path.GetFileName(f)), overwrite: false);
+        foreach (var d in System.IO.Directory.EnumerateDirectories(src)) CopyTree(d, Path.Combine(dest, Path.GetFileName(d)));
+    }
+
     public static List<ModInfo> Discover(string modsDir)
     {
         var result = new List<ModInfo>();

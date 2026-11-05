@@ -153,6 +153,14 @@ public sealed class EditorScreen : Screen
         if (IsKeyPressed(KeyboardKey.LeftBracket)) _ed.CycleStyle(-1);
         if (IsKeyPressed(KeyboardKey.C) && !ctrl) _ed.CycleStyle(1, colorOnly: true);
         if (IsKeyPressed(KeyboardKey.H)) _ed.CycleBoxKind();
+        if (IsKeyPressed(KeyboardKey.R) && !ctrl) _ed.RotateY();
+        if (IsKeyPressed(KeyboardKey.F3))
+        {
+            _ed.CycleEnvironment(shift ? -1 : 1);
+            var env = ArenaEditor.Environments[Math.Max(0, _ed.EnvironmentIndex)].Name;
+            Status(S.T("ed.env") + ": " + (S.Lang == Core.Localization.Language.Indonesian ? env.Id : env.En));
+        }
+        if (ctrl && IsKeyPressed(KeyboardKey.E)) Export();
         if (IsKeyPressed(KeyboardKey.Delete) || IsKeyPressed(KeyboardKey.Backspace)) _ed.Delete();
         if (ctrl && IsKeyPressed(KeyboardKey.D)) _ed.Duplicate();
         if (ctrl && IsKeyPressed(KeyboardKey.Z)) _ed.Undo();
@@ -211,6 +219,24 @@ public sealed class EditorScreen : Screen
         App.Achievements.OnEditorSaved();
         Status(S.T("ed.saved") + " " + Path.GetFileName(path));
         return true;
+    }
+
+    /// <summary>Saves, then packs the editor mod into a shareable .djmod and opens the folder.</summary>
+    private void Export()
+    {
+        if (!Save()) return;
+        try
+        {
+            var outDir = Path.Combine(ClientSettings.Folder, "exports");
+            var pkg = ModLoader.Pack(Path.Combine(App.ModsDir, ArenaEditor.ModId), outDir);
+            Status(S.T("ed.exported") + " " + Path.GetFileName(pkg));
+            if (App.Options.Shot is null)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = outDir, UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            Status(ex.Message);
+        }
     }
 
     private void NewArena()

@@ -12,12 +12,14 @@ public sealed partial class GameWorld
     public int BossKiller { get; private set; } = -1;
     private float _bossTimer = 5f;
     private int _bossKind = -1;
+    /// <summary>Health the boss had when it last left the arena (-1 = fresh).</summary>
+    private float _bossHealthLeft = -1;
 
     public bool HasBoss => _bossKind >= 0;
 
     private void ResetBoss()
     {
-        BossSlot = -1; BossDefeated = false; BossKiller = -1; _bossTimer = 5f;
+        BossSlot = -1; BossDefeated = false; BossKiller = -1; _bossTimer = 5f; _bossHealthLeft = -1;
         // Resolved once: the tick must not allocate (CreepIndexOf uses a lambda).
         _bossKind = Settings.BossCreepId.Length > 0 ? Content.CreepIndexOf(Settings.BossCreepId) : -1;
     }
@@ -26,7 +28,7 @@ public sealed partial class GameWorld
     {
         if (!HasBoss || BossDefeated || Phase != MatchPhase.Playing) return;
         if (BossSlot >= 0 && Creeps[BossSlot].Active) return;
-        BossSlot = -1;
+        if (BossSlot >= 0) { _bossHealthLeft = Creeps[BossSlot].Health; BossSlot = -1; }
         _bossTimer -= dt;
         if (_bossTimer > 0) return;
         _bossTimer = 4f;
@@ -34,7 +36,8 @@ public sealed partial class GameWorld
         int slot = SpawnCreep(kind);
         if (slot < 0) return;
         ref var c = ref Creeps[slot];
-        c.MaxHealth = c.Health = Content.Creeps[kind].Health * MathF.Max(1f, Settings.BossHealthScale);
+        c.MaxHealth = Content.Creeps[kind].Health * MathF.Max(1f, Settings.BossHealthScale);
+        c.Health = _bossHealthLeft > 0 ? MathF.Min(_bossHealthLeft, c.MaxHealth) : c.MaxHealth;
         c.Life = float.MaxValue;
         BossSlot = slot;
         Push(new GameEvent { Type = GameEventType.CreepRoar, A = (byte)slot, Value = (short)kind, Position = c.Move.Position });

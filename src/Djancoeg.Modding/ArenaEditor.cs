@@ -18,6 +18,9 @@ public readonly record struct EditorSelection(EditorItem Kind, int Index)
 /// Window-free model behind the in-game level editor: placing, moving, resizing and deleting arena
 /// items with grid snapping, undo/redo, ray picking, validation and saving into a local mod.
 /// </summary>
+/// <summary>English/Indonesian label pair for editor presets.</summary>
+public readonly record struct LocalizedTextPair(string En, string Id);
+
 public sealed class ArenaEditor
 {
     public const string ModId = "arena-buatanku";
@@ -279,6 +282,66 @@ public sealed class ArenaEditor
                 break;
             }
         }
+    }
+
+    /// <summary>Rotates the selection 90 degrees around the vertical axis (boxes and pads swap their X/Z size around the centre).</summary>
+    public void RotateY()
+    {
+        if (!IsValid(Selection)) return;
+        Checkpoint();
+        int i = Selection.Index;
+        switch (Selection.Kind)
+        {
+            case EditorItem.Box:
+            {
+                var b = Arena.Boxes[i];
+                var (mn, mx) = Swap(b.Min, b.Max);
+                Arena.Boxes[i] = b with { Min = mn, Max = mx };
+                break;
+            }
+            case EditorItem.JumpPad:
+            {
+                var p = Arena.JumpPads[i];
+                var (mn, mx) = Swap(p.Min, p.Max);
+                Arena.JumpPads[i] = p with { Min = mn, Max = mx, Launch = [-p.Launch[2], p.Launch[1], p.Launch[0]] };
+                break;
+            }
+            case EditorItem.Spawn: Arena.Spawns[i] = Arena.Spawns[i] with { Yaw = (Arena.Spawns[i].Yaw + MathF.PI / 2) % (MathF.PI * 2) }; break;
+            case EditorItem.Prop:
+            {
+                var h = Arena.Props[i].HalfExtents;
+                Arena.Props[i] = Arena.Props[i] with { HalfExtents = [h[2], h[1], h[0]] };
+                break;
+            }
+        }
+
+        static (float[] Min, float[] Max) Swap(float[] min, float[] max)
+        {
+            float cx = (min[0] + max[0]) / 2, cz = (min[2] + max[2]) / 2;
+            float hx = (max[0] - min[0]) / 2, hz = (max[2] - min[2]) / 2;
+            return ([cx - hz, min[1], cz - hx], [cx + hz, max[1], cz + hx]);
+        }
+    }
+
+    /// <summary>Sky/fog/light presets for the arena environment.</summary>
+    public static readonly (LocalizedTextPair Name, string SkyTop, string SkyBottom, string Fog, float FogDensity, string Ambient, string Sun, float[] SunDir, bool Night, float Clouds)[] Environments =
+    [
+        (new("Midday", "Siang bolong"), "#2F72C9", "#D2E9FA", "#D6E9FF", 0.008f, "#9AA9BF", "#FFF8E1", [-0.3f, -0.9f, 0.2f], false, 0.35f),
+        (new("Sunset", "Senja"), "#3B2A6B", "#F2994A", "#B5655A", 0.012f, "#7A5A80", "#FFC07A", [-0.8f, -0.35f, 0.3f], false, 0.5f),
+        (new("Night", "Malam"), "#070B1F", "#1E2A55", "#141B38", 0.014f, "#3A4470", "#9FB3FF", [-0.2f, -1f, 0.4f], true, 0.25f),
+        (new("Overcast", "Mendung"), "#6B7686", "#B8C0C8", "#A9B1BA", 0.016f, "#8B939E", "#E6E9EC", [-0.3f, -1f, 0.1f], false, 0.85f),
+    ];
+
+    /// <summary>Index of the environment preset that matches the arena, or -1.</summary>
+    public int EnvironmentIndex => Array.FindIndex(Environments, e => e.SkyTop == Arena.SkyTop && e.SkyBottom == Arena.SkyBottom);
+
+    public void CycleEnvironment(int dir = 1)
+    {
+        Checkpoint();
+        int k = EnvironmentIndex;
+        var e = Environments[Wrap(k + dir, Environments.Length)];
+        Arena.SkyTop = e.SkyTop; Arena.SkyBottom = e.SkyBottom; Arena.FogColor = e.Fog; Arena.FogDensity = e.FogDensity;
+        Arena.AmbientColor = e.Ambient; Arena.SunColor = e.Sun; Arena.SunDirection = [.. e.SunDir]; Arena.Night = e.Night; Arena.CloudCoverage = e.Clouds;
     }
 
     /// <summary>Toggles a box between solid, destructible (hp 120) and decorative.</summary>

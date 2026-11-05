@@ -10,7 +10,7 @@ Version 2.0 "Nusantara Raya" adds a single-player campaign, an in-game level edi
 
 Choose **Tur Nusantara (campaign)** at the top of the main menu.
 
-- **Four islands, four stages each.** Java → Sumatra → Borneo → Sulawesi. Every stage is a real match against bots on one of the arenas, in any of the five modes.
+- **Five islands, four stages each.** Java → Sumatra → Borneo → Sulawesi → Nusa Tenggara (bonus tour, 34 stars, two bosses: the Lanky One and the Giant Earthworm). Every stage is a real match against bots on one of the arenas, in any of the five modes.
 - **Stars.**
   - ★ Win the stage.
   - ★★ Win with no more deaths than the stage allows.
@@ -30,7 +30,7 @@ Choose **Tur Nusantara (campaign)** at the top of the main menu.
   | Sulawesi | Buto Ijo |
 
   - The boss is an Arena Creep with 5–6× health and a health bar at the top of the screen.
-  - It comes back if it wanders off or falls.
+  - It comes back if it wanders off, burrows away or falls, keeping the damage you already did.
   - The killing blow is worth **+10 points**. The match ends when the boss falls, and the leader wins.
 - **Progress** is saved to `campaign.json` in your app-data folder (`%APPDATA%/DjancoegTournament` on Windows, `~/.config/DjancoegTournament` on Linux/macOS).
 
@@ -54,8 +54,8 @@ Choose **Level editor** in the main menu. It opens the arena you last saved, or 
 | Style | `[` `]` surface / pickup kind / spawn team / prop kind / pad strength · `C` colour |
 | Box type | `H` cycles solid → **breakable** (120 HP) → decoration |
 | Edit | Del delete · Ctrl+D duplicate · Ctrl+Z / Ctrl+Y undo / redo |
-| Other | `Z` King-of-the-Warung zone here · `G` grid 0.25/0.5/1 · `F2` rename |
-| File | Ctrl+S save · **F5 test play** against 3 bots · Ctrl+N new · Esc exit |
+| Other | `R` rotate 90° · `Z` King-of-the-Warung zone here · `G` grid 0.25/0.5/1 · `F2` rename · `F3` sky preset (midday, sunset, night, overcast) |
+| File | Ctrl+S save · **F5 test play** against 3 bots · Ctrl+E export a shareable `.djmod` · Ctrl+N new · Esc exit |
 
 - **Saving.** Arenas are saved as a normal mod in `mods/arena-buatanku/` (`mod.json` plus `arenas/<id>.json`). They show up in Practice, Host and the Workshop, can be packed into `.djmod` and shared like any other mod.
 - **Validation.** The editor won't save an arena that the mod validator would reject (for example, fewer than 2 spawns). It shows the reason instead.
@@ -68,7 +68,7 @@ The editing logic (`ArenaEditor` in `src/Djancoeg.Modding`) has no window code, 
 - **Breakable boxes.** Arena boxes with `"health": <hp>` can be destroyed. Bullets, melee, projectiles and explosions all damage them.
   - Built-in breakables: night-market stall tables and canopies, terminal benches, rooftop water tanks, and the village-office counters and desks.
   - A broken box disappears, stops blocking movement and shots, and bursts into splinters and dust.
-  - It comes back after 45 seconds, unless someone is standing in it.
+  - It breaks into big chunks that tumble and lie on the ground until the box comes back after 45 seconds (unless someone is standing in it).
 - **Physics corpses.** Fighters and creeps leave a physics corpse that is thrown by the hit, bounces off the world, splats blood (or confetti) and settles before fading.
 
 ## Achievements

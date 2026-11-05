@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Djancoeg Tournament
+GenericName=Arena shooter
+Comment=Ultimate Indonesian Chaos Battle Arena
+Comment[id]=Arena tawuran paling rusuh se-Nusantara
+Exec=djancoeg-tournament
+Icon=djancoeg-tournament
+Terminal=false
+Categories=Game;ActionGame;
+Keywords=fps;arena;shooter;indonesia;multiplayer;
+StartupWMClass=DjancoegTournament

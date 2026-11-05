@@ -125,7 +125,23 @@ public static class Campaign
                 new() { Id = "sulawesi-3", ArenaId = "pasar-malam", Mode = GameModeKind.Race, Bots = 6, BotSkill = 0.65f, ScoreLimit = 4, ParSeconds = 200,
                     Name = T("Ferris Wheel Sprint", "Sprint Bianglala"), Briefing = T("Four laps to the goal. Creeps everywhere.", "Empat kali ke garis. Makhluk di mana-mana.") },
                 new() { Id = "sulawesi-boss", ArenaId = "pelabuhan", Bots = 4, BotSkill = 0.6f, Boss = "buto-ijo", BossHealthScale = 6f, TimeLimitSeconds = 420, ParSeconds = 200,
-                    Name = T("FINAL BOSS: Buto Ijo", "BOS TERAKHIR: Buto Ijo"), Briefing = T("He walked out of the sea. Win the tournament.", "Dia keluar dari laut. Menangkan turnamen.") },
+                    Name = T("BOSS: Buto Ijo", "BOS: Buto Ijo"), Briefing = T("He walked out of the sea. Send him back.", "Dia keluar dari laut. Kembalikan ke laut.") },
+            ],
+        },
+        new()
+        {
+            Id = "nusa-tenggara", Name = T("Nusa Tenggara", "Nusa Tenggara"), MapX = 0.70f, MapY = 0.83f, Color = "#BA68C8", StarsToUnlock = 34,
+            Blurb = T("The bonus tour east: dry savanna winds, a lanky stalker and something huge under the ground.", "Tur bonus ke timur: angin sabana, si jangkung penguntit, dan sesuatu yang besar di bawah tanah."),
+            Stages =
+            [
+                new() { Id = "nusa-1", ArenaId = "sawah-ronda", Mode = GameModeKind.KingOfTheHill, Bots = 7, BotSkill = 0.65f, ScoreLimit = 90, ParSeconds = 260,
+                    Name = T("Savanna Watch Post", "Pos Ronda Sabana"), Briefing = T("Hold the watch post against seven hungry rivals.", "Kuasai pos ronda melawan tujuh rival yang lapar.") },
+                new() { Id = "nusa-2", ArenaId = "kantor-kelurahan", Bots = 7, BotSkill = 0.7f, ScoreLimit = 18, ParSeconds = 240,
+                    Name = T("Office Hours Brawl", "Ribut Jam Kantor"), Briefing = T("18 knockouts. Smash the counters if they get in the way.", "18 KO. Hancurkan loket kalau menghalangi.") },
+                new() { Id = "nusa-boss-1", ArenaId = "terminal-bus", Bots = 4, BotSkill = 0.65f, Boss = "si-jangkung", BossHealthScale = 8f, TimeLimitSeconds = 420, ParSeconds = 180,
+                    Name = T("BOSS: The Lanky One", "BOS: Si Jangkung"), Briefing = T("It waits at the last bus stop. Too tall, too fast.", "Ia menunggu di halte terakhir. Terlalu tinggi, terlalu cepat.") },
+                new() { Id = "nusa-boss-2", ArenaId = "pasar-malam", Bots = 5, BotSkill = 0.7f, Boss = "cacing-raksasa", BossHealthScale = 5f, TimeLimitSeconds = 480, ParSeconds = 240,
+                    Name = T("FINAL BOSS: Giant Earthworm", "BOS TERAKHIR: Cacing Tanah Raksasa"), Briefing = T("Feel the rumble, jump away, shoot when it rises. Win the tournament.", "Rasakan getarannya, lompat menjauh, tembak saat ia muncul. Menangkan turnamen.") },
             ],
         },
     ];
