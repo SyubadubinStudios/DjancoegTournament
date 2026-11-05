@@ -37,7 +37,7 @@ public enum RejectCode : byte { Generic = 0, Password = 1, Banned = 2, Full = 3,
 public static class Protocol
 {
     public const byte Magic0 = (byte)'D', Magic1 = (byte)'J';
-    public const byte Version = 7;
+    public const byte Version = 8;
     /// <summary>Chat sender id used for server/console messages.</summary>
     public const byte ServerSender = 254;
     public const byte SpectatorSlot = 255;

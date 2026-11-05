@@ -186,7 +186,14 @@ public sealed partial class GameView
         ref var v = ref _creeps[e.B];
         var model = _app.Models.Creep(def);
         float lift = def.Shape == CreepShape.FloatingHead ? 0 : 0.9f * def.Scale;
-        SpawnCorpse(-1, model, def.Scale, v.Pos + new Vector3(0, lift, 0), e.Vector, v.Yaw, Col(def.Color), Col(def.BloodColor));
+        int slot = SpawnCorpse(-1, model, def.Scale, v.Pos + new Vector3(0, lift, 0), e.Vector, v.Yaw, Col(def.Color), Col(def.BloodColor));
+        // Creeps share the fighter rig, so walkers fall as per-limb ragdolls too (the floating head stays rigid).
+        if (def.Shape != CreepShape.FloatingHead)
+        {
+            var kick = e.Vector * 0.4f / MathF.Max(1f, def.Scale * 0.7f);
+            if (kick.LengthSquared() > 196) kick = Vector3.Normalize(kick) * 14;
+            _corpses[slot].Rag = TryStartRagdoll(slot, model, v.Pos, v.Yaw, def.Scale, new Vector3(0, 1f, 0), kick);
+        }
         v.Seen = false; // the corpse replaces the live creep visual
     }
 

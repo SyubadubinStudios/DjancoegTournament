@@ -26,8 +26,13 @@ public sealed unsafe class SoundBank : IDisposable
     private bool _ready;
     public float Volume { get; set; } = 0.9f;
 
+    private readonly string _storyDir;
+    private Sound _story;
+    private bool _hasStory;
+
     public SoundBank(string assetsDir)
     {
+        _storyDir = Path.Combine(assetsDir, "audio", "story");
         int n = Enum.GetValues<Sfx>().Length;
         _pool = new Sound[n][];
         _next = new int[n];
@@ -85,6 +90,32 @@ public sealed unsafe class SoundBank : IDisposable
         Raylib.SetSoundVolume(s, volume * Volume);
         Raylib.PlaySound(s);
         return true;
+    }
+
+    /// <summary>Plays one narration line from assets/audio/story (loaded on demand, replacing the previous one).</summary>
+    public bool PlayStory(string fileName, float volume = 1f)
+    {
+        StopStory();
+        if (!_ready) return false;
+        var path = Path.Combine(_storyDir, fileName);
+        if (!File.Exists(path)) return false;
+        var s = Raylib.LoadSound(path);
+        if (!Raylib.IsSoundValid(s)) return false;
+        _story = s;
+        _hasStory = true;
+        Raylib.SetSoundVolume(s, Math.Clamp(volume * Volume, 0, 1));
+        Raylib.PlaySound(s);
+        return true;
+    }
+
+    public bool StoryPlaying => _hasStory && Raylib.IsSoundPlaying(_story);
+
+    public void StopStory()
+    {
+        if (!_hasStory) return;
+        Raylib.StopSound(_story);
+        Raylib.UnloadSound(_story);
+        _hasStory = false;
     }
 
     private static Sound FromSamples(short[] samples)
@@ -173,6 +204,7 @@ public sealed unsafe class SoundBank : IDisposable
     public void Dispose()
     {
         if (!_ready) return;
+        StopStory();
         for (int i = 0; i < _pool.Length; i++)
         {
             if (_pool[i] is null) continue;

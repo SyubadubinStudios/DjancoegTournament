@@ -11,6 +11,15 @@
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
   </ItemGroup>
+  <!-- Steam build (Windows x64): dotnet publish -r win-x64 -p:Steam=true. Off by default; no Steam code or DLLs otherwise. -->
+  <PropertyGroup Condition="'$(Steam)' == 'true'">
+    <DefineConstants>$(DefineConstants);STEAM</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Steam)' == 'true'">
+    <PackageReference Include="Facepunch.Steamworks" Version="2.3.3" GeneratePathProperty="true" />
+    <!-- The package keeps the native Steam API under content/, which PackageReference doesn't copy. -->
+    <None Include="$(PkgFacepunch_Steamworks)\content\steam_api64.dll" Link="steam_api64.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Djancoeg.Net\Djancoeg.Net.csproj" />
   </ItemGroup>

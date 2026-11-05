@@ -12,7 +12,7 @@ $jobs = @(
   @("game-tps", "id", "sawah-ronda"), @("scoreboard", "id", "terminal-bus"), @("game-tps", "en", "lapangan-17an"),
   @("controls", "id", ""), @("controls", "en", ""), @("settings-graphics", "id", ""), @("settings-access", "en", ""),
   @("spectate", "id", "pasar-malam"), @("setup", "en", ""),
-  @("campaign", "id", ""), @("campaign", "en", ""), @("boss", "id", ""), @("editor", "id", ""), @("editor", "en", ""), @("achievements", "id", ""), @("cutscene", "id", ""), @("finale", "en", ""), @("ragdoll", "id", "pasar-malam"), @("menu", "en", ""),
+  @("campaign", "id", ""), @("campaign", "en", ""), @("boss", "id", ""), @("editor", "id", ""), @("editor", "en", ""), @("achievements", "id", ""), @("cutscene", "id", ""), @("finale", "en", ""), @("ragdoll", "id", "pasar-malam"), @("settings-online", "en", ""), @("menu", "en", ""),
   @("game-tps", "id", "pelabuhan", "ctf"), @("game-tps", "en", "stasiun-kereta", "race"), @("game", "en", "stasiun-kereta"), @("game-tps", "en", "kantor-kelurahan")
 )
 foreach ($j in $jobs) {

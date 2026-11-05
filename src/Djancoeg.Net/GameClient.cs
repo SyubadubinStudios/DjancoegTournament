@@ -69,6 +69,8 @@ public sealed class GameClient : IDisposable
     public bool IsAdmin { get; private set; }
     public bool IsEncrypted => _channel is not null;
     public string ServerName { get; private set; } = "";
+    /// <summary>Campaign stage the server is playing ("" for normal matches).</summary>
+    public string CampaignStage { get; private set; } = "";
     public ArenaDef? Arena { get; private set; }
     public CollisionWorld? Collision { get; private set; }
     public GameModeKind Mode { get; private set; }
@@ -336,7 +338,9 @@ public sealed class GameClient : IDisposable
         int keyLen = r.U16();
         var serverKey = new byte[Math.Min(keyLen, 256)];
         for (int i = 0; i < serverKey.Length; i++) serverKey[i] = r.U8();
+        string campaignStage = r.Str();
         if (r.Error) return;
+        CampaignStage = campaignStage;
         if (sig != _content.Signature) { State = ClientState.Rejected; RejectCode = RejectCode.Content; RejectReason = "Content mismatch with server."; return; }
 
         if (_channel is null)

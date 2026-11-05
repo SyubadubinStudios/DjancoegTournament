@@ -365,6 +365,7 @@ public sealed partial class GameServer : IDisposable
         w.Bool(c.IsAdmin);
         w.U16((ushort)c.Keys.PublicKey.Length);
         foreach (byte b in c.Keys.PublicKey) w.U8(b);
+        w.Str(World.Settings.CampaignStage);
         _transport.Send(w.Written, c.Address);
     }
 

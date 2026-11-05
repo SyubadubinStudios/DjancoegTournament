@@ -108,6 +108,20 @@ Nyalakan **Main bareng** di bagian bawah peta kampanye, lalu pilih tahap.
 
 ![Ragdoll](../screenshots/ragdoll-id.png)
 
+## Tambahan v2.3
+
+- **Main bareng online:** nyalakan *Main bareng*, lalu *Online (master)*. Tahap akan terdaftar di master server, dan teman dari mana saja masuk lewat *Cari server > Online* (NAT punch-through). Server memberi tahu pemain yang masuk tahap mana yang dimainkan, jadi **tamu ikut dapat bintang**; layar hasilnya menyebutkan itu.
+- **Cerita bernarasi:** setiap baris cerita dibacakan dalam Bahasa Indonesia; teksnya mengikuti bahasa antarmuka. Matikan lewat *Pengaturan > Umum > Narasi cerita*.
+- **Pilih banyak:** Shift+klik menambah atau melepas item dari pilihan. Geser (panah atau gizmo), putar, gandakan, salin/tempel, dan hapus berlaku untuk seluruh kelompok; tempel menjaga susunannya. Ubah ukuran dan gaya berlaku pada item yang terakhir diklik.
+- **Unggah ke Workshop (Ctrl+U):**
+  1. Pemilik Workshop membuat token: `djancoeg-server workshop token <nama> --dir <workshop>`.
+  2. Kamu menempelkannya di *Pengaturan > Online*.
+  3. Di editor, **Ctrl+U** menyimpan, mengepak, dan mengunggah arenamu ke alamat Workshop.
+
+  Server memeriksa token (perbandingan waktu-konstan), ukuran (32 MB), dan validitas, dan hanya pengunggah pertama yang boleh memperbarui paketnya.
+- **Lapisan:** benda tinggi yang bisa hancur seperti toren dipotong jadi lapisan 0,9 m. Lapisan bawah hancur maka yang di atasnya ikut jatuh, dan lapisan kembali dari bawah dulu.
+- **Ragdoll makhluk:** makhluk yang berjalan memakai rangka yang sama dengan jagoan, jadi ikut jatuh per anggota tubuh (kepala melayang dan cacing tetap punya cara mati sendiri).
+
 ## Pencapaian
 
 ![Pencapaian](../screenshots/achievements-id.png)

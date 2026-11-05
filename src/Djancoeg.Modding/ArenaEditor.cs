@@ -27,7 +27,26 @@ public sealed class ArenaEditor
     public const int MaxUndo = 64;
 
     public ArenaDef Arena { get; private set; }
-    public EditorSelection Selection { get; set; } = EditorSelection.None;
+    private readonly List<EditorSelection> _selected = [];
+
+    /// <summary>Primary selection (the last one clicked). Setting it replaces the whole selection.</summary>
+    public EditorSelection Selection
+    {
+        get => _selected.Count == 0 ? EditorSelection.None : _selected[^1];
+        set { _selected.Clear(); if (!value.IsNone) _selected.Add(value); }
+    }
+
+    /// <summary>Everything selected; the primary selection is last.</summary>
+    public IReadOnlyList<EditorSelection> SelectedItems => _selected;
+
+    /// <summary>Shift+click: adds the item to the selection, or removes it if it was already selected.</summary>
+    public void ToggleSelect(EditorSelection s)
+    {
+        if (s.IsNone) return;
+        if (!_selected.Remove(s)) _selected.Add(s);
+    }
+
+    private List<EditorSelection> ValidSelection() => _selected.Where(IsValid).Distinct().ToList();
     public float Grid { get; set; } = 0.5f;
     /// <summary>Incremented on every change; the renderer rebuilds when it differs.</summary>
     public int Version { get; private set; }
@@ -46,69 +65,100 @@ public sealed class ArenaEditor
 
     public static readonly string[] Palette = ["#8D6E63", "#ECEFF1", "#FFC21A", "#E3242B", "#1FA64A", "#1D3FBB", "#455A64", "#FF7043", "#7CB342", "#4FC3F7"];
 
-    /// <summary>Copied item, shared by every editor instance so it can be pasted into another arena.</summary>
+    /// <summary>Copied items (deep copies) in an arena-shaped holder, shared by every editor so they paste into another arena.</summary>
     public static ArenaDef? Clipboard { get; private set; }
-    public static EditorItem ClipboardKind { get; private set; }
+    private static List<EditorSelection> _clipboardItems = [];
+    public static int ClipboardCount => _clipboardItems.Count;
 
-    /// <summary>Copies the selection (deep copy) to <see cref="Clipboard"/>.</summary>
+    /// <summary>Copies every selected item to <see cref="Clipboard"/>.</summary>
     public bool Copy()
     {
-        if (!IsValid(Selection)) return false;
-        int i = Selection.Index;
+        var sel = ValidSelection();
+        if (sel.Count == 0) return false;
         var holder = new ArenaDef { Id = "clipboard" };
-        switch (Selection.Kind)
-        {
-            case EditorItem.Box: holder.Boxes.Add(Arena.Boxes[i]); break;
-            case EditorItem.Spawn: holder.Spawns.Add(Arena.Spawns[i]); break;
-            case EditorItem.Pickup: holder.Pickups.Add(Arena.Pickups[i]); break;
-            case EditorItem.JumpPad: holder.JumpPads.Add(Arena.JumpPads[i]); break;
-            case EditorItem.Prop: holder.Props.Add(Arena.Props[i]); break;
-            default: holder.Lights.Add(Arena.Lights[i]); break;
-        }
+        var items = new List<EditorSelection>();
+        foreach (var it in sel) items.Add(AddItem(holder, Arena, it));
         Clipboard = Clone(holder);
-        ClipboardKind = Selection.Kind;
+        _clipboardItems = items;
         return true;
     }
 
-    /// <summary>Pastes the clipboard item so its bottom centre lands on <paramref name="at"/> (snapped). Selects it.</summary>
+    /// <summary>
+    /// Pastes the clipboard so the bottom centre of the copied group lands on <paramref name="at"/> (snapped),
+    /// keeping the items' relative layout. Selects the pasted items and returns the primary one.
+    /// </summary>
     public EditorSelection Paste(Vector3 at)
     {
-        if (Clipboard is null) return EditorSelection.None;
-        var c = Clone(Clipboard);
+        if (Clipboard is null || _clipboardItems.Count == 0) return EditorSelection.None;
+        var holder = Clone(Clipboard);
+        var bounds = BoundsOf(holder, _clipboardItems[0]);
+        foreach (var it in _clipboardItems) bounds = Union(bounds, BoundsOf(holder, it));
+        var anchor = new Vector3((bounds.Min.X + bounds.Max.X) / 2, bounds.Min.Y, (bounds.Min.Z + bounds.Max.Z) / 2);
+        var offset = Snap(at) - anchor;
         Checkpoint();
-        var p = Snap(at);
-        switch (ClipboardKind)
+        _selected.Clear();
+        foreach (var it in _clipboardItems)
         {
-            case EditorItem.Box:
-            {
-                var b = c.Boxes[0];
-                var size = b.MaxV - b.MinV;
-                Arena.Boxes.Add(b with { Min = [p.X - size.X / 2, p.Y, p.Z - size.Z / 2], Max = [p.X + size.X / 2, p.Y + size.Y, p.Z + size.Z / 2] });
-                return Selection = new(EditorItem.Box, Arena.Boxes.Count - 1);
-            }
-            case EditorItem.Spawn:
-                Arena.Spawns.Add(c.Spawns[0] with { Position = [p.X, p.Y, p.Z] });
-                return Selection = new(EditorItem.Spawn, Arena.Spawns.Count - 1);
-            case EditorItem.Pickup:
-                Arena.Pickups.Add(c.Pickups[0] with { Position = [p.X, p.Y + 0.5f, p.Z] });
-                return Selection = new(EditorItem.Pickup, Arena.Pickups.Count - 1);
-            case EditorItem.JumpPad:
-            {
-                var j = c.JumpPads[0];
-                var size = j.MaxV - j.MinV;
-                Arena.JumpPads.Add(j with { Min = [p.X - size.X / 2, p.Y, p.Z - size.Z / 2], Max = [p.X + size.X / 2, p.Y + size.Y, p.Z + size.Z / 2] });
-                return Selection = new(EditorItem.JumpPad, Arena.JumpPads.Count - 1);
-            }
-            case EditorItem.Prop:
-            {
-                var pr = c.Props[0];
-                Arena.Props.Add(pr with { Position = [p.X, p.Y + pr.HalfExtents[1], p.Z] });
-                return Selection = new(EditorItem.Prop, Arena.Props.Count - 1);
-            }
-            default:
-                Arena.Lights.Add(c.Lights[0] with { Position = [p.X, p.Y + 3, p.Z] });
-                return Selection = new(EditorItem.Light, Arena.Lights.Count - 1);
+            Translate(holder, it, offset);
+            _selected.Add(AddItem(Arena, holder, it));
         }
+        return Selection;
+    }
+
+    // ---- per-item helpers (work on any ArenaDef so the clipboard can use them too)
+
+    private static EditorSelection AddItem(ArenaDef target, ArenaDef source, EditorSelection s)
+    {
+        int i = s.Index;
+        switch (s.Kind)
+        {
+            case EditorItem.Box: target.Boxes.Add(source.Boxes[i] with { }); return new(s.Kind, target.Boxes.Count - 1);
+            case EditorItem.Spawn: target.Spawns.Add(source.Spawns[i] with { }); return new(s.Kind, target.Spawns.Count - 1);
+            case EditorItem.Pickup: target.Pickups.Add(source.Pickups[i] with { }); return new(s.Kind, target.Pickups.Count - 1);
+            case EditorItem.JumpPad: target.JumpPads.Add(source.JumpPads[i] with { }); return new(s.Kind, target.JumpPads.Count - 1);
+            case EditorItem.Prop: target.Props.Add(source.Props[i] with { }); return new(s.Kind, target.Props.Count - 1);
+            default: target.Lights.Add(source.Lights[i] with { }); return new(s.Kind, target.Lights.Count - 1);
+        }
+    }
+
+    private static void Translate(ArenaDef a, EditorSelection s, Vector3 d)
+    {
+        int i = s.Index;
+        switch (s.Kind)
+        {
+            case EditorItem.Box: a.Boxes[i] = a.Boxes[i] with { Min = Add(a.Boxes[i].Min, d), Max = Add(a.Boxes[i].Max, d) }; break;
+            case EditorItem.Spawn: a.Spawns[i] = a.Spawns[i] with { Position = Add(a.Spawns[i].Position, d) }; break;
+            case EditorItem.Pickup: a.Pickups[i] = a.Pickups[i] with { Position = Add(a.Pickups[i].Position, d) }; break;
+            case EditorItem.JumpPad: a.JumpPads[i] = a.JumpPads[i] with { Min = Add(a.JumpPads[i].Min, d), Max = Add(a.JumpPads[i].Max, d) }; break;
+            case EditorItem.Prop: a.Props[i] = a.Props[i] with { Position = Add(a.Props[i].Position, d) }; break;
+            default: a.Lights[i] = a.Lights[i] with { Position = Add(a.Lights[i].Position, d) }; break;
+        }
+    }
+
+    private static void RemoveItem(ArenaDef a, EditorSelection s)
+    {
+        int i = s.Index;
+        switch (s.Kind)
+        {
+            case EditorItem.Box: a.Boxes.RemoveAt(i); break;
+            case EditorItem.Spawn: a.Spawns.RemoveAt(i); break;
+            case EditorItem.Pickup: a.Pickups.RemoveAt(i); break;
+            case EditorItem.JumpPad: a.JumpPads.RemoveAt(i); break;
+            case EditorItem.Prop: a.Props.RemoveAt(i); break;
+            default: a.Lights.RemoveAt(i); break;
+        }
+    }
+
+    private static Aabb Union(Aabb a, Aabb b) => new(Vector3.Min(a.Min, b.Min), Vector3.Max(a.Max, b.Max));
+
+    /// <summary>Bounds of the whole selection (for the gizmo and group paste).</summary>
+    public Aabb SelectionBounds()
+    {
+        var sel = ValidSelection();
+        if (sel.Count == 0) return default;
+        var b = Bounds(sel[0]);
+        foreach (var it in sel) b = Union(b, Bounds(it));
+        return b;
     }
 
     /// <summary>An editable copy of any arena (for example a built-in one) under a new id.</summary>
@@ -228,65 +278,45 @@ public sealed class ArenaEditor
         return Selection = new EditorSelection(kind, index);
     }
 
+    /// <summary>Deletes every selected item.</summary>
     public bool Delete()
     {
-        if (!IsValid(Selection)) return false;
+        var sel = ValidSelection();
+        if (sel.Count == 0) return false;
         Checkpoint();
-        int i = Selection.Index;
-        switch (Selection.Kind)
-        {
-            case EditorItem.Box: Arena.Boxes.RemoveAt(i); break;
-            case EditorItem.Spawn: Arena.Spawns.RemoveAt(i); break;
-            case EditorItem.Pickup: Arena.Pickups.RemoveAt(i); break;
-            case EditorItem.JumpPad: Arena.JumpPads.RemoveAt(i); break;
-            case EditorItem.Prop: Arena.Props.RemoveAt(i); break;
-            default: Arena.Lights.RemoveAt(i); break;
-        }
-        Selection = EditorSelection.None;
+        // Highest index first so earlier removals don't shift later ones.
+        foreach (var it in sel.OrderByDescending(x => x.Index)) RemoveItem(Arena, it);
+        _selected.Clear();
         return true;
     }
 
-    /// <summary>Copies the selected item one grid step (or 1 unit) along +X and selects the copy.</summary>
+    /// <summary>Copies the selected items next to the originals (shifted along +X by the group's width) and selects the copies.</summary>
     public bool Duplicate()
     {
-        if (!IsValid(Selection)) return false;
+        var sel = ValidSelection();
+        if (sel.Count == 0) return false;
         Checkpoint();
-        var off = new Vector3(MathF.Max(1f, Grid * 2), 0, 0);
-        int i = Selection.Index;
-        switch (Selection.Kind)
+        var bounds = SelectionBounds();
+        float w = sel.Count == 1 && sel[0].Kind == EditorItem.Box ? bounds.Max.X - bounds.Min.X : MathF.Max(1f, Grid * 2);
+        if (sel.Count > 1) w = MathF.Max(w, bounds.Max.X - bounds.Min.X);
+        var off = new Vector3(w, 0, 0);
+        _selected.Clear();
+        foreach (var it in sel)
         {
-            case EditorItem.Box:
-            {
-                var b = Arena.Boxes[i];
-                float w = b.Max[0] - b.Min[0];
-                Arena.Boxes.Add(b with { Min = [b.Min[0] + w, b.Min[1], b.Min[2]], Max = [b.Max[0] + w, b.Max[1], b.Max[2]] });
-                Selection = new(EditorItem.Box, Arena.Boxes.Count - 1);
-                break;
-            }
-            case EditorItem.Spawn: Arena.Spawns.Add(Arena.Spawns[i] with { Position = Add(Arena.Spawns[i].Position, off) }); Selection = new(EditorItem.Spawn, Arena.Spawns.Count - 1); break;
-            case EditorItem.Pickup: Arena.Pickups.Add(Arena.Pickups[i] with { Position = Add(Arena.Pickups[i].Position, off) }); Selection = new(EditorItem.Pickup, Arena.Pickups.Count - 1); break;
-            case EditorItem.JumpPad: Arena.JumpPads.Add(Arena.JumpPads[i] with { Min = Add(Arena.JumpPads[i].Min, off), Max = Add(Arena.JumpPads[i].Max, off) }); Selection = new(EditorItem.JumpPad, Arena.JumpPads.Count - 1); break;
-            case EditorItem.Prop: Arena.Props.Add(Arena.Props[i] with { Position = Add(Arena.Props[i].Position, off) }); Selection = new(EditorItem.Prop, Arena.Props.Count - 1); break;
-            default: Arena.Lights.Add(Arena.Lights[i] with { Position = Add(Arena.Lights[i].Position, off) }); Selection = new(EditorItem.Light, Arena.Lights.Count - 1); break;
+            var copy = AddItem(Arena, Arena, it);
+            Translate(Arena, copy, off);
+            _selected.Add(copy);
         }
         return true;
     }
 
-    /// <summary>Moves the selection by <paramref name="delta"/>.</summary>
+    /// <summary>Moves every selected item by <paramref name="delta"/>.</summary>
     public void Move(Vector3 delta)
     {
-        if (!IsValid(Selection) || delta == Vector3.Zero) return;
+        var sel = ValidSelection();
+        if (sel.Count == 0 || delta == Vector3.Zero) return;
         Checkpoint();
-        int i = Selection.Index;
-        switch (Selection.Kind)
-        {
-            case EditorItem.Box: Arena.Boxes[i] = Arena.Boxes[i] with { Min = Add(Arena.Boxes[i].Min, delta), Max = Add(Arena.Boxes[i].Max, delta) }; break;
-            case EditorItem.Spawn: Arena.Spawns[i] = Arena.Spawns[i] with { Position = Add(Arena.Spawns[i].Position, delta) }; break;
-            case EditorItem.Pickup: Arena.Pickups[i] = Arena.Pickups[i] with { Position = Add(Arena.Pickups[i].Position, delta) }; break;
-            case EditorItem.JumpPad: Arena.JumpPads[i] = Arena.JumpPads[i] with { Min = Add(Arena.JumpPads[i].Min, delta), Max = Add(Arena.JumpPads[i].Max, delta) }; break;
-            case EditorItem.Prop: Arena.Props[i] = Arena.Props[i] with { Position = Add(Arena.Props[i].Position, delta) }; break;
-            default: Arena.Lights[i] = Arena.Lights[i] with { Position = Add(Arena.Lights[i].Position, delta) }; break;
-        }
+        foreach (var it in sel) Translate(Arena, it, delta);
     }
 
     /// <summary>Grows (or shrinks) the selected box or jump pad on its max corner; sizes never drop below one grid step.</summary>
@@ -369,10 +399,16 @@ public sealed class ArenaEditor
     /// <summary>Rotates the selection 90 degrees around the vertical axis (boxes and pads swap their X/Z size around the centre).</summary>
     public void RotateY()
     {
-        if (!IsValid(Selection)) return;
+        var sel = ValidSelection();
+        if (sel.Count == 0) return;
         Checkpoint();
-        int i = Selection.Index;
-        switch (Selection.Kind)
+        foreach (var it in sel) RotateOne(it);
+    }
+
+    private void RotateOne(EditorSelection it)
+    {
+        int i = it.Index;
+        switch (it.Kind)
         {
             case EditorItem.Box:
             {
@@ -467,17 +503,19 @@ public sealed class ArenaEditor
     };
 
     /// <summary>World-space bounds of an item (markers for points).</summary>
-    public Aabb Bounds(EditorSelection s)
+    public Aabb Bounds(EditorSelection s) => BoundsOf(Arena, s);
+
+    private static Aabb BoundsOf(ArenaDef a, EditorSelection s)
     {
         int i = s.Index;
         return s.Kind switch
         {
-            EditorItem.Box => new Aabb(Arena.Boxes[i].MinV, Arena.Boxes[i].MaxV),
-            EditorItem.Spawn => Aabb.FromFeet(Arena.Spawns[i].PositionV, 0.4f, 1.8f),
-            EditorItem.Pickup => Aabb.FromCenter(Arena.Pickups[i].PositionV, new Vector3(0.4f)),
-            EditorItem.JumpPad => new Aabb(Arena.JumpPads[i].MinV, Arena.JumpPads[i].MaxV + new Vector3(0, 0.1f, 0)),
-            EditorItem.Prop => Aabb.FromCenter(Arena.Props[i].PositionV, Arena.Props[i].HalfExtentsV),
-            _ => Aabb.FromCenter(Arena.Lights[i].PositionV, new Vector3(0.3f)),
+            EditorItem.Box => new Aabb(a.Boxes[i].MinV, a.Boxes[i].MaxV),
+            EditorItem.Spawn => Aabb.FromFeet(a.Spawns[i].PositionV, 0.4f, 1.8f),
+            EditorItem.Pickup => Aabb.FromCenter(a.Pickups[i].PositionV, new Vector3(0.4f)),
+            EditorItem.JumpPad => new Aabb(a.JumpPads[i].MinV, a.JumpPads[i].MaxV + new Vector3(0, 0.1f, 0)),
+            EditorItem.Prop => Aabb.FromCenter(a.Props[i].PositionV, a.Props[i].HalfExtentsV),
+            _ => Aabb.FromCenter(a.Lights[i].PositionV, new Vector3(0.3f)),
         };
     }
 

@@ -49,6 +49,10 @@ public sealed class ClientSettings
     /// <summary>Random key that lets servers keep your career stats without an account.</summary>
     public string PlayerKey { get; set; } = "";
     public string WorkshopUrl { get; set; } = "http://127.0.0.1:27951";
+    /// <summary>Upload token for the Workshop server (from <c>djancoeg-server workshop token</c>).</summary>
+    public string WorkshopToken { get; set; } = "";
+    /// <summary>Narrated story stills (Indonesian voice).</summary>
+    public bool StoryVoice { get; set; } = true;
     public string HostPassword { get; set; } = "";
 
     [JsonIgnore] public static string ServerDataFolder => Path.Combine(Folder, "server-data");

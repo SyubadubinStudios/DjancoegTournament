@@ -1,0 +1,27 @@
+# Flatpak manifest. Built by installer/linux/build-flatpak.sh from the published linux-x64 folder.
+app-id: com.syubadubin.DjancoegTournament
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: djancoeg-tournament
+finish-args:
+  - --share=network        # LAN discovery, online play, Workshop
+  - --share=ipc
+  - --socket=x11
+  - --socket=pulseaudio
+  - --device=dri
+modules:
+  - name: djancoeg-tournament
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/lib/djancoeg-tournament /app/bin
+      - cp -a game/. /app/lib/djancoeg-tournament/
+      - install -m 644 installed.marker /app/lib/djancoeg-tournament/
+      - install -m 755 djancoeg-tournament.sh /app/bin/djancoeg-tournament
+      - install -m 755 djancoeg-server.sh /app/bin/djancoeg-server
+      - install -Dm 644 com.syubadubin.DjancoegTournament.desktop /app/share/applications/com.syubadubin.DjancoegTournament.desktop
+      - install -Dm 644 icon.png /app/share/icons/hicolor/256x256/apps/com.syubadubin.DjancoegTournament.png
+      - install -Dm 644 com.syubadubin.DjancoegTournament.metainfo.xml /app/share/metainfo/com.syubadubin.DjancoegTournament.metainfo.xml
+    sources:
+      - type: dir
+        path: ../../../artifacts/flatpak-src

@@ -58,6 +58,7 @@ public static class Program
           djancoeg-server mod list                  List installed mods
           djancoeg-server workshop serve [--dir d] [--port 27951]   Serve an online Workshop over HTTP
           djancoeg-server workshop publish <file.djmod> [--dir d]   Add a package to a Workshop folder
+          djancoeg-server workshop token <name> [--dir d]           Create an upload token (players paste it in Settings)
 
         Game server options:
           --config <file.json>   Load MatchSettings from JSON (see docs/en/server.md)
@@ -206,7 +207,7 @@ public static class Program
     private static int RunWorkshop(string[] args)
     {
         if (args.Length == 0) { PrintHelp(); return 1; }
-        var opts = ParseOptions(args.Skip(args[0] == "publish" ? 2 : 1).ToArray());
+        var opts = ParseOptions(args.Skip(args[0] is "publish" or "token" ? 2 : 1).ToArray());
         string dir = opts.GetValueOrDefault("dir", Path.Combine(Environment.CurrentDirectory, "workshop"));
         switch (args[0])
         {
@@ -214,6 +215,13 @@ public static class Program
             {
                 var e = WorkshopServer.Publish(args[1], dir);
                 Console.WriteLine($"Published {e.Id} v{e.Version} ({e.Size / 1024} KB, sha256 {e.Sha256[..12]}...) to {dir}");
+                return 0;
+            }
+            case "token" when args.Length > 1:
+            {
+                var secret = WorkshopServer.AddToken(dir, args[1]);
+                Console.WriteLine($"Upload token for '{args[1]}': {secret}");
+                Console.WriteLine($"Stored in {Path.Combine(dir, WorkshopServer.TokensFile)}. Give it only to that person; remove the line to revoke.");
                 return 0;
             }
             case "serve":

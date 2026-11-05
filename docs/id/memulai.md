@@ -76,6 +76,21 @@ Installer rilis dibuat oleh `.github/workflows/release.yml` saat tag `v*` di-pus
 
 Versi terpasang bersifat hanya-baca, jadi mod, unduhan Workshop, dan arena editor disimpan di folder pengguna (`%APPDATA%/DjancoegTournament/mods`, `~/.config/DjancoegTournament/mods`). Mod contoh bawaan disalin ke sana saat pertama dijalankan. Atur `DJANCOEG_MODS` untuk memakai folder lain.
 
+### Tanda tangan, Flatpak, pengelola paket, dan Steam
+
+- **Tanda tangan Windows:** tambahkan secret repositori `WINDOWS_CERT_PFX_BASE64` (base64 dari `.pfx` code-signing) dan `WINDOWS_CERT_PASSWORD`. Rilis lalu menandatangani kedua exe, isi zip portabel, dan setup dengan Authenticode, beserta timestamp RFC 3161. Secara lokal, atur variabel lingkungan yang sama sebelum `installer/build-windows.ps1`.
+- **Tanda tangan dan notarisasi macOS:**
+  - Tambahkan `MACOS_CERT_P12_BASE64` dan `MACOS_CERT_PASSWORD` (sertifikat *Developer ID Application*). Aplikasi lalu ditandatangani dengan hardened runtime (`installer/macos/entitlements.plist`).
+  - Tambahkan juga `APPLE_ID`, `APPLE_TEAM_ID`, dan `APPLE_APP_PASSWORD` (app-specific password) untuk notarisasi dan staple pada .dmg.
+  - Tanpa secret ini build tetap bertanda tangan ad-hoc.
+- **Flatpak:** `installer/linux/build-flatpak.sh` (setelah `installer/linux/build.sh`) membuat `DjancoegTournament-x86_64.flatpak` dengan runtime Freedesktop 24.08, memakai app id `com.syubadubin.DjancoegTournament` serta manifest dan metainfo di `installer/linux/flatpak/`.
+- **winget / Homebrew:** setiap rilis menyertakan `package-manifests.zip`. Isinya manifest winget (`SyubadubinStudios.DjancoegTournament`) dan cask Homebrew (`djancoeg-tournament`) lengkap dengan URL dan SHA-256 rilis itu. Pengirimannya manual: buka PR ke `microsoft/winget-pkgs`, dan tambahkan cask ke tap milikmu.
+- **Build Steam (Windows x64):** `dotnet publish src/Djancoeg.Client -c Release -r win-x64 --self-contained -p:Steam=true`.
+  - Build ini menambahkan Facepunch.Steamworks dan `steam_api64.dll`.
+  - Pencapaian dicerminkan sebagai `ACH_<id>` (lihat `distribution/steam/achievements.json`), dan daftar teman menampilkan rich presence (menu, pertandingan, tahap kampanye, editor).
+  - App id diambil dari `steam_appid.txt` atau `DJANCOEG_STEAM_APPID`. Tanpa Steam yang berjalan, game tetap jalan seperti biasa.
+  - Build biasa tidak berisi kode Steam.
+
 ## Solusi masalah
 
 | Masalah | Solusi |

@@ -108,6 +108,20 @@ Switch on **Co-op LAN** at the bottom of the campaign map, then pick a stage.
 
 ![Ragdolls](../screenshots/ragdoll-id.png)
 
+## v2.3 additions
+
+- **Online co-op:** with *Co-op LAN* on, also switch on *Online (master)*. The stage is then listed on the master server, and friends anywhere join from *Find a game > Online* (NAT punch-through). The server tells joining players which stage it is, so **guests earn stars for that stage too**; their result screen says so.
+- **Narrated story:** every story line is voiced in Indonesian; the captions follow your UI language. Turn it off with *Settings > General > Story narration*.
+- **Multi-select:** Shift+click adds or removes items from the selection. Move (arrows or gizmo), rotate, duplicate, copy/paste and delete work on the whole group; paste keeps the group's layout. Resize and style changes act on the last item clicked.
+- **Workshop upload (Ctrl+U):**
+  1. The Workshop owner creates a token: `djancoeg-server workshop token <name> --dir <workshop>`.
+  2. You paste it into *Settings > Online*.
+  3. In the editor, **Ctrl+U** saves, packs and uploads your arenas to the Workshop address.
+
+  The server checks the token (constant-time), size (32 MB) and validity, and only the first uploader of a package can update it.
+- **Layers:** tall breakables such as water tanks are cut into 0.9 m layers. Breaking a lower layer drops everything above it, and layers come back bottom first.
+- **Creep ragdolls:** walking creeps share the fighter rig, so they also fall per limb (the floating head and the worm keep their own deaths).
+
 ## Achievements
 
 ![Achievements](../screenshots/achievements-id.png)

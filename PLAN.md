@@ -79,13 +79,19 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Editor: drag gizmos (move/resize, one undo per drag), copy/paste between arenas, open saved/built-in arenas (F6) / *editor: gizmo, salin antar arena*
 - ✅ Campaign: illustrated story stills per island + finale (Rodin), LAN co-op (humans vs bots) / *gambar cerita, main bareng LAN*
 
-## Ideas after 2.2 / Ide setelah 2.2
+## v2.3 — "Gotong Royong" (play together, ship everywhere) ✅
 
-- Ragdolls for creeps with their own rigs; vertical splitting of tall breakables
-- Editor: multi-select, Workshop upload (needs an authenticated upload endpoint)
-- Campaign: online (master server) co-op, campaign progress for co-op guests, voiced story lines
-- Code signing (Authenticode) and Apple notarization for the installers; Flatpak; winget/Homebrew manifests
-- Steamworks SDK integration (achievements/stats/rich presence) behind a build flag
+- ✅ Creep ragdolls (shared rig); tall breakables split into layers that collapse and come back bottom-first / *ragdoll makhluk, lapisan runtuh*
+- ✅ Editor multi-select; Workshop upload with per-uploader tokens (`POST /upload`, ownership, validation) / *pilih banyak, unggah Workshop*
+- ✅ Online co-op through the master server; co-op guests earn stars (protocol v8 sends the stage); narrated story lines (ElevenLabs) / *main bareng online, tamu dapat bintang, narasi*
+- ✅ Signing hooks (Authenticode, Developer ID + notarization), Flatpak bundle, winget + Homebrew manifests per release, Steamworks behind `-p:Steam=true` / *tanda tangan, Flatpak, winget/Homebrew, Steam*
+
+## Ideas after 2.3 / Ide setelah 2.3
+
+- Real code-signing certificates and a Steam app id (owner accounts needed), then submit winget/Homebrew/Flathub
+- English narration track; voiced barks for bosses
+- Workshop web page (browse/rate) and moderation tools
+- Linux/macOS Steam build (Steamworks native libraries for those platforms)
 
 ## Technical principles / Prinsip teknis
 

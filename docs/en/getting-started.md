@@ -76,6 +76,21 @@ Release installers are built by `.github/workflows/release.yml` when a `v*` tag 
 
 Installed builds are read-only, so mods, Workshop downloads and editor arenas go to the user folder (`%APPDATA%/DjancoegTournament/mods`, `~/.config/DjancoegTournament/mods`). The bundled example mods are copied there on first start. Set `DJANCOEG_MODS` to use another folder.
 
+### Signing, Flatpak, package managers and Steam
+
+- **Windows signing:** add the repository secrets `WINDOWS_CERT_PFX_BASE64` (base64 of a code-signing `.pfx`) and `WINDOWS_CERT_PASSWORD`. The release then Authenticode-signs both executables, the portable zip contents and the setup, with an RFC 3161 timestamp. Locally, set the same environment variables before `installer/build-windows.ps1`.
+- **macOS signing and notarization:**
+  - Add `MACOS_CERT_P12_BASE64` and `MACOS_CERT_PASSWORD` (a *Developer ID Application* certificate). The app is then signed with the hardened runtime (`installer/macos/entitlements.plist`).
+  - Also add `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD` (an app-specific password) to notarize and staple the .dmg.
+  - Without these secrets builds stay ad-hoc signed.
+- **Flatpak:** `installer/linux/build-flatpak.sh` (after `installer/linux/build.sh`) builds `DjancoegTournament-x86_64.flatpak` with the Freedesktop 24.08 runtime, using app id `com.syubadubin.DjancoegTournament` and the manifest and metainfo in `installer/linux/flatpak/`.
+- **winget / Homebrew:** each release attaches `package-manifests.zip`. It contains winget manifests (`SyubadubinStudios.DjancoegTournament`) and a Homebrew cask (`djancoeg-tournament`) with the release's URLs and SHA-256 hashes. Submitting them is manual: open a PR to `microsoft/winget-pkgs`, and add the cask to your own tap.
+- **Steam build (Windows x64):** `dotnet publish src/Djancoeg.Client -c Release -r win-x64 --self-contained -p:Steam=true`.
+  - This adds Facepunch.Steamworks and `steam_api64.dll`.
+  - Achievements are mirrored as `ACH_<id>` (see `distribution/steam/achievements.json`), and the friends list shows rich presence (menu, match, campaign stage, editor).
+  - The app id comes from `steam_appid.txt` or `DJANCOEG_STEAM_APPID`. Without Steam running, the game simply runs without it.
+  - The default build contains no Steam code.
+
 ## Troubleshooting
 
 | Problem | Fix |

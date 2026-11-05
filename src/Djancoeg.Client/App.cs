@@ -43,6 +43,7 @@ public sealed class App : IDisposable
     public float Time { get; private set; }
     public Texture2D? KeyArt { get; private set; }
     public Achievements Achievements { get; }
+    public Platform.IPlatformServices Platform { get; private set; } = new Platform.NullPlatform();
 
     private Screen _screen = null!;
     private Screen? _pending;
@@ -116,8 +117,12 @@ public sealed class App : IDisposable
         _screen.Enter();
 
         float shotTimer = 0;
+        Platform = Djancoeg.Client.Platform.PlatformServices.Create(Options.Shot is not null);
+        Achievements.Unlocked += id => Platform.UnlockAchievement(id);
+        Platform.SetPresence(S.T("presence.menu"));
         while (!WindowShouldClose() && !_quit)
         {
+            Platform.Update();
             float dt = MathF.Min(GetFrameTime(), 0.1f);
             Time += dt;
             if (_pending is not null)
@@ -125,6 +130,7 @@ public sealed class App : IDisposable
                 _screen.Leave();
                 Achievements.Save();
                 _screen = _pending;
+                Platform.SetPresence(PresenceFor(_screen));
                 _pending = null;
                 Gui.Reset();
                 _screen.Enter();
@@ -187,6 +193,7 @@ public sealed class App : IDisposable
             "settings" => new SettingsScreen(this),
             "settings-graphics" => new SettingsScreen(this, null, 1),
             "settings-access" => new SettingsScreen(this, null, 2),
+            "settings-online" => new SettingsScreen(this, null, 3),
             "controls" => new ControlsScreen(this),
             "credits" => new CreditsScreen(this),
             "campaign" => new CampaignScreen(this),
@@ -334,8 +341,19 @@ public sealed class App : IDisposable
         Theme.Text(Theme.Mono, $"{GameInfo.Name} v{GameInfo.Version}  ·  {S.T("credits.made")}", new Vector2(24 * u, GetScreenHeight() - 30 * u), 15 * u, Theme.Fade(Theme.Kapur, 0.7f));
     }
 
+    /// <summary>Friends-list status for the current screen.</summary>
+    private static string PresenceFor(Screen s) => s switch
+    {
+        PlayScreen p when p.Campaign is { } run => S.T("presence.campaign").Replace("{0}", S.T(run.Stage.Name)),
+        PlayScreen => S.T("presence.match"),
+        CampaignScreen or CampaignResultScreen or CutsceneScreen => S.T("presence.map"),
+        EditorScreen => S.T("presence.editor"),
+        _ => S.T("presence.menu"),
+    };
+
     public void Dispose()
     {
+        Platform.Dispose();
         if (IsWindowReady()) ClearThumbnails();
         Sky?.Dispose();
         Models?.Dispose();

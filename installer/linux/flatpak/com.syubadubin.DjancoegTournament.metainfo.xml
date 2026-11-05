@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.syubadubin.DjancoegTournament</id>
+  <name>Djancoeg Tournament</name>
+  <summary>Ultimate Indonesian Chaos Battle Arena</summary>
+  <summary xml:lang="id">Arena tawuran paling rusuh se-Nusantara</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+  <developer id="com.syubadubin"><name>Syubadubin Studios</name></developer>
+  <description>
+    <p>A first- and third-person multiplayer arena shooter with Indonesian folk legends, professions, ghosts and memes:
+       island campaign with bosses, level editor, LAN and online play, mods and a Workshop.</p>
+    <p>Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.</p>
+  </description>
+  <launchable type="desktop-id">com.syubadubin.DjancoegTournament.desktop</launchable>
+  <url type="homepage">https://github.com/SyubadubinStudios/DjancoegTournament</url>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-cartoon">moderate</content_attribute>
+    <content_attribute id="violence-bloodshed">mild</content_attribute>
+    <content_attribute id="social-chat">intense</content_attribute>
+  </content_rating>
+  <releases>
+    <release version="__VERSION__" date="__DATE__"/>
+  </releases>
+</component>

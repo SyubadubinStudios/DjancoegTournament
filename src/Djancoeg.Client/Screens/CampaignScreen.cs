@@ -11,10 +11,12 @@ using static Raylib_cs.Raylib;
 namespace Djancoeg.Client.Screens;
 
 /// <summary>Tracks one campaign attempt while the match runs.</summary>
-public sealed class CampaignRun(CampaignStage stage, bool coop = false)
+public sealed class CampaignRun(CampaignStage stage, bool coop = false, bool guest = false)
 {
     public CampaignStage Stage { get; } = stage;
     public bool Coop { get; } = coop;
+    /// <summary>Joined someone else's co-op stage.</summary>
+    public bool Guest { get; } = guest;
     public float Seconds { get; private set; }
     public float EndedFor { get; private set; }
     public bool BossDown { get; private set; }
@@ -46,7 +48,7 @@ public sealed class CampaignRun(CampaignStage stage, bool coop = false)
     }
 
     /// <summary>Starts a stage, showing the island's intro cutscene first the first time.</summary>
-    public static void Play(App app, CampaignStage stage, bool coop = false)
+    public static void Play(App app, CampaignStage stage, bool coop = false, bool online = false)
     {
         var island = Campaign.Islands.First(i => i.Stages.Contains(stage));
         var progress = CampaignProgress.Load();
@@ -54,19 +56,22 @@ public sealed class CampaignRun(CampaignStage stage, bool coop = false)
         {
             progress.SeenCutscenes.Add(island.Id);
             progress.Save();
-            app.Go(new CutsceneScreen(app, Campaign.IntroOf(island), () => new StageLauncher(app, stage, coop)));
+            app.Go(new CutsceneScreen(app, Campaign.IntroOf(island), () => new StageLauncher(app, stage, coop, online)));
             return;
         }
-        Start(app, stage, coop);
+        Start(app, stage, coop, online);
     }
 
-    public static void Start(App app, CampaignStage stage, bool coop = false)
+    public static void Start(App app, CampaignStage stage, bool coop = false, bool online = false)
     {
         var st = app.Settings;
         try
         {
             // Co-op hosts a LAN server (visible in Find a game) on the usual host port; friends simply join it.
-            var session = Session.StartLocal(app.Content, st, stage.ToMatch(coop), host: coop, master: null, persistStats: false, rotate: false);
+            // Online co-op also lists the stage on the master server (NAT punch-through lets friends join from anywhere).
+            var match = stage.ToMatch(coop);
+            if (coop) match = match with { ServerName = $"Tur Nusantara co-op: {stage.Name.Get(S.Lang)}" };
+            var session = Session.StartLocal(app.Content, st, match, host: coop, master: coop && online ? st.MasterServer : null, persistStats: false, rotate: false);
             var run = new CampaignRun(stage, coop);
             app.Go(new PlayScreen(app, session) { Campaign = run });
         }
@@ -81,7 +86,7 @@ public sealed class CampaignRun(CampaignStage stage, bool coop = false)
 public sealed class CampaignScreen(App app) : Screen(app)
 {
     private readonly CampaignProgress _progress = CampaignProgress.Load();
-    private bool _coop;
+    private bool _coop, _online;
     private int _island = -1;
     private float _time;
 
@@ -179,7 +184,7 @@ public sealed class CampaignScreen(App app) : Screen(app)
             if (clicked)
             {
                 _progress.Save();
-                CampaignRun.Play(App, st, _coop);
+                CampaignRun.Play(App, st, _coop, _coop && _online);
                 return;
             }
             y += 106 * u;
@@ -187,8 +192,9 @@ public sealed class CampaignScreen(App app) : Screen(app)
 
         var coopRect = new Rectangle(mapArea.X, sh - 116 * u, 380 * u, 46 * u);
         Gui.Toggle(coopRect, S.T("camp.coop"), ref _coop);
+        if (_coop) Gui.Toggle(new Rectangle(coopRect.X, coopRect.Y - 50 * u, coopRect.Width, coopRect.Height), S.T("camp.online"), ref _online);
         float textX = coopRect.X + coopRect.Width + 20 * u, textW = sw - 760 * u - textX;
-        Theme.Paragraph(Theme.Body, S.T(_coop ? "camp.coopHint" : "camp.rules"), new Vector2(textX, sh - 116 * u), 15 * u, textW, _coop ? Theme.Kuning : Theme.Kapur);
+        Theme.Paragraph(Theme.Body, S.T(!_coop ? "camp.rules" : _online ? "camp.onlineHint" : "camp.coopHint"), new Vector2(textX, sh - 116 * u), 15 * u, textW, _coop ? Theme.Kuning : Theme.Kapur);
         if (islandOpen && island.Intro.Count > 0 && Gui.Button(new Rectangle(sw - 740 * u, sh - 112 * u, 220 * u, 52 * u), S.T("camp.story"), false, 22 * u))
         {
             _progress.Save();
@@ -225,7 +231,7 @@ public sealed class CampaignScreen(App app) : Screen(app)
 }
 
 /// <summary>Stars, time and what next after a campaign stage.</summary>
-public sealed class CampaignResultScreen(App app, CampaignStage stage, bool won, int deaths, float seconds, bool coop = false) : Screen(app)
+public sealed class CampaignResultScreen(App app, CampaignStage stage, bool won, int deaths, float seconds, bool coop = false, bool guest = false) : Screen(app)
 {
     private readonly int _stars = stage.Stars(won, deaths, seconds);
     private bool _recorded;
@@ -261,7 +267,7 @@ public sealed class CampaignResultScreen(App app, CampaignStage stage, bool won,
             App.Go(new CutsceneScreen(App, Campaign.Finale, () => this));
             return;
         }
-        if (Gui.Back) App.Go(new CampaignScreen(App));
+        if (Gui.Back) App.Go(guest ? new BrowserScreen(App) : new CampaignScreen(App));
     }
 
     public override void Draw()
@@ -292,6 +298,13 @@ public sealed class CampaignResultScreen(App app, CampaignStage stage, bool won,
         if (_improved && _stars > 0) Theme.TextCentered(Theme.BodyBold, S.T("camp.newBest"), new Vector2(sw / 2f, y + 6 * u), 22 * u, Theme.Kuning);
 
         float bx = sw / 2f - 330 * u, by = sh - 210 * u;
+        if (guest)
+        {
+            Theme.TextCentered(Theme.BodyBold, S.T("camp.guestSaved"), new Vector2(sw / 2f, by - 40 * u), 20 * u, Theme.Kuning);
+            if (Gui.Button(new Rectangle(sw / 2f - 110 * u, by, 220 * u, 60 * u), S.T("camp.map"), true, 22 * u)) App.Go(new CampaignScreen(App));
+            App.DrawFooter();
+            return;
+        }
         if (Gui.Button(new Rectangle(bx, by, 200 * u, 60 * u), S.T("camp.retry"), !won, 22 * u)) { CampaignRun.Play(App, stage, coop); return; }
         var next = NextStage();
         if (Gui.Button(new Rectangle(bx + 230 * u, by, 200 * u, 60 * u), S.T("camp.next"), won, 22 * u, enabled: next is not null && won)) { CampaignRun.Play(App, next!, coop); return; }
@@ -315,14 +328,14 @@ public sealed class CampaignResultScreen(App app, CampaignStage stage, bool won,
 }
 
 /// <summary>Starts a stage after a cutscene (screen transitions must go through <see cref="App.Go"/>).</summary>
-public sealed class StageLauncher(App app, CampaignStage stage, bool coop) : Screen(app)
+public sealed class StageLauncher(App app, CampaignStage stage, bool coop, bool online = false) : Screen(app)
 {
     private bool _started;
     public override void Update(float dt)
     {
         if (_started) return;
         _started = true;
-        CampaignRun.Start(App, stage, coop);
+        CampaignRun.Start(App, stage, coop, online);
     }
     public override void Draw() => App.DrawBackdrop();
 }

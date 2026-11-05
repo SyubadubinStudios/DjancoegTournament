@@ -10,6 +10,9 @@ namespace Djancoeg.Core.Content;
 public static class ArenaPieces
 {
     public const int MaxPieces = 4;
+    /// <summary>Tall breakables (water tanks, stacked crates) are also cut into layers; a layer falls when the one under it breaks.</summary>
+    public const int MaxLayers = 3;
+    public const float LayerHeight = 0.9f;
     /// <summary>Target piece length in metres.</summary>
     public const float PieceLength = 1.1f;
 
@@ -27,6 +30,25 @@ public static class ArenaPieces
 
     /// <summary>The pieces one breakable box becomes (the box itself when it is short).</summary>
     public static IEnumerable<ArenaBox> Pieces(ArenaBox b)
+    {
+        foreach (var column in Columns(b))
+            foreach (var layer in Layers(column)) yield return layer;
+    }
+
+    private static IEnumerable<ArenaBox> Layers(ArenaBox b)
+    {
+        float h = b.Max[1] - b.Min[1];
+        int n = h >= 1.4f ? Math.Clamp((int)MathF.Round(h / LayerHeight), 2, MaxLayers) : 1;
+        if (n == 1) { yield return b; yield break; }
+        float step = h / n;
+        for (int i = 0; i < n; i++)
+        {
+            float y0 = b.Min[1] + step * i, y1 = i == n - 1 ? b.Max[1] : b.Min[1] + step * (i + 1);
+            yield return b with { Min = [b.Min[0], y0, b.Min[2]], Max = [b.Max[0], y1, b.Max[2]], Health = MathF.Max(25f, MathF.Round(b.Health / n * 1.25f)) };
+        }
+    }
+
+    private static IEnumerable<ArenaBox> Columns(ArenaBox b)
     {
         var min = b.MinV; var max = b.MaxV;
         var size = max - min;

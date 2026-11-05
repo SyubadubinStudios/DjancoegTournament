@@ -28,6 +28,9 @@ jobs:
     runs-on: windows-latest
     env:
       BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      # Optional Authenticode signing: base64 .pfx + password as repository secrets.
+      WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+      WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -39,6 +42,8 @@ jobs:
       - name: Installer + portable zip
         shell: pwsh
         run: ./installer/build-windows.ps1
+      - name: Steam build compiles (Steamworks behind -p:Steam=true)
+        run: dotnet build src/Djancoeg.Client -c Release -p:Steam=true -o artifacts/steam-check
       - uses: actions/upload-artifact@v4
         with:
           name: installers-windows
@@ -62,6 +67,10 @@ jobs:
         run: ./installer/linux/build.sh
       - name: Check the .deb
         run: dpkg-deb --info artifacts/installers/djancoeg-tournament_amd64.deb && dpkg-deb --contents artifacts/installers/djancoeg-tournament_amd64.deb | grep -E "usr/bin/djancoeg-tournament|opt/djancoeg-tournament/DjancoegTournament$"
+      - name: Flatpak
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq flatpak flatpak-builder
+          ./installer/linux/build-flatpak.sh
       - uses: actions/upload-artifact@v4
         with:
           name: installers-linux
@@ -75,10 +84,27 @@ jobs:
   macos:
     needs: test
     runs-on: macos-latest
+    env:
+      # Optional Developer ID signing + notarization (repository secrets).
+      MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: 10.0.x }
+      - name: Import Developer ID certificate
+        if: env.MACOS_CERT_P12_BASE64 != ''
+        run: |
+          kc="$RUNNER_TEMP/signing.keychain-db"
+          echo "$MACOS_CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p ci "$kc" && security set-keychain-settings -lut 3600 "$kc" && security unlock-keychain -p ci "$kc"
+          security import "$RUNNER_TEMP/cert.p12" -k "$kc" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$kc"
+          security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
+          echo "MACOS_SIGN_IDENTITY=$(security find-identity -v -p codesigning "$kc" | grep -o '"Developer ID Application[^"]*"' | head -1 | tr -d '"')" >> "$GITHUB_ENV"
       - name: .app + .dmg (arm64, x64)
         run: ./installer/macos/build.sh
       - uses: actions/upload-artifact@v4
@@ -97,6 +123,8 @@ jobs:
           path: dist
           pattern: installers-*
           merge-multiple: true
+      - name: winget + Homebrew manifests
+        run: ./installer/make-manifests.sh "${GITHUB_REF_NAME#v}" dist
       - name: Checksums
         run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2

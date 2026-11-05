@@ -9,7 +9,8 @@
 | `itch/.itch.toml` | itch app launch manifest (Play, Dedicated server, Mods folder). `scripts/publish.ps1` fills in the executable names per platform. |
 | `itch/push.ps1` | `pwsh distribution/itch/push.ps1 -Channel windows -Folder artifacts/DjancoegTournament-win-x64 -Version v2.0.0` — downloads butler if missing. |
 | `steam/app_build.vdf`, `steam/depot_build_*.vdf` | Steamworks ContentBuilder templates. Replace `STEAM_APP_ID` / `STEAM_DEPOT_*`, run `scripts/publish.ps1`, then `steamcmd +login <builder> +run_app_build <path>/app_build.vdf +quit`. |
-| `steam/achievements.json` | Local achievement id → Steam API name / stat mapping. |
+| `steam/achievements.json` | Local achievement id → Steam API name / stat mapping. Used by the Steam build (`-p:Steam=true`, `src/Djancoeg.Client/Platform/SteamPlatform.cs`). |
+| `../installer/` | Installer builds, signing hooks (Authenticode, Developer ID + notarization), Flatpak, winget/Homebrew manifest generator — see docs/en/getting-started.md. |
 
 Player data (settings, campaign, achievements, stats) is stored in the OS app-data folder (`%APPDATA%/DjancoegTournament`, `~/.config/DjancoegTournament`), so depots never overwrite saves.
 

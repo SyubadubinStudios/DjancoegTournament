@@ -135,7 +135,7 @@ public sealed class EditorScreen : Screen
         UpdateGizmo(ctrl);
         if (IsMouseButtonPressed(MouseButton.Left) && !overPanel && _dragAxis < 0 && _hoverAxis < 0)
         {
-            if (_tool == Tool.Select) _ed.Selection = hit;
+            if (_tool == Tool.Select) { if (shift) _ed.ToggleSelect(hit); else _ed.Selection = hit; }
             else if (_hoverValid)
             {
                 var kind = (EditorItem)((int)_tool - 1);
@@ -175,6 +175,13 @@ public sealed class EditorScreen : Screen
             Status(S.T("ed.env") + ": " + (S.Lang == Core.Localization.Language.Indonesian ? env.Id : env.En));
         }
         if (ctrl && IsKeyPressed(KeyboardKey.E)) Export();
+        if (ctrl && IsKeyPressed(KeyboardKey.U)) Upload();
+        if (_upload is { IsCompleted: true } done)
+        {
+            Status(done.IsCompletedSuccessfully ? S.T("ed.uploaded") + " " + done.Result.Id + " v" + done.Result.Version
+                : S.T("ed.uploadFailed") + " " + (done.Exception?.InnerException?.Message ?? ""));
+            _upload = null;
+        }
         if (ctrl && IsKeyPressed(KeyboardKey.C) && _ed.Copy()) Status(S.T("ed.copied"));
         if (ctrl && IsKeyPressed(KeyboardKey.V) && _hoverValid && !_ed.Paste(_hoverPoint).IsNone) _dirty = true;
         if (IsKeyPressed(KeyboardKey.F6)) OpenNext(shift ? -1 : 1);
@@ -286,7 +293,8 @@ public sealed class EditorScreen : Screen
 
     private Vector3 GizmoOrigin()
     {
-        var b = _ed.Bounds(_ed.Selection);
+        // Moving drags the whole group; resizing works on the primary item's max corner.
+        var b = _dragResize && _dragAxis >= 0 ? _ed.Bounds(_ed.Selection) : _ed.SelectionBounds();
         return _dragResize && _dragAxis >= 0 ? b.Max : (b.Min + b.Max) * 0.5f;
     }
 
@@ -374,6 +382,24 @@ public sealed class EditorScreen : Screen
         }
     }
 
+    private Task<WorkshopEntry>? _upload;
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
+
+    /// <summary>Saves, packs and uploads the editor mod to the Workshop server in Settings (needs an upload token).</summary>
+    private void Upload()
+    {
+        if (_upload is not null) return;
+        if (App.Settings.WorkshopToken.Length == 0) { Status(S.T("ed.needToken")); return; }
+        if (!Save()) return;
+        try
+        {
+            var pkg = ModLoader.Pack(Path.Combine(App.ModsDir, ArenaEditor.ModId), Path.Combine(ClientSettings.Folder, "exports"));
+            _upload = new WorkshopClient(Http).UploadAsync(App.Settings.WorkshopUrl, pkg, App.Settings.WorkshopToken);
+            Status(S.T("ed.uploading"));
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or UriFormatException) { Status(ex.Message); }
+    }
+
     private void NewArena()
     {
         _ed = new ArenaEditor(ArenaEditor.NewArena(FreeId(ArenaEditor.LoadSaved(App.ModsDir))));
@@ -446,6 +472,12 @@ public sealed class EditorScreen : Screen
         DrawCircle3D(arena.ZoneCenterV + new Vector3(0, 0.05f, 0), arena.ZoneRadius, Vector3.UnitX, 90, Theme.Kuning);
         DrawGridAround();
 
+        foreach (var extra in _ed.SelectedItems)
+        {
+            if (extra == _ed.Selection || !_ed.IsValid(extra)) continue;
+            var eb = _ed.Bounds(extra);
+            DrawCubeWiresV((eb.Min + eb.Max) * 0.5f, eb.Max - eb.Min + new Vector3(0.06f), Theme.Kuning);
+        }
         if (!_ed.Selection.IsNone && _ed.IsValid(_ed.Selection))
         {
             var b = _ed.Bounds(_ed.Selection);
@@ -540,6 +572,12 @@ public sealed class EditorScreen : Screen
     {
         var s = _ed.Selection;
         if (s.IsNone || !_ed.IsValid(s)) return S.T("ed.nothing");
+        if (_ed.SelectedItems.Count > 1) return S.T("ed.multi").Replace("{0}", _ed.SelectedItems.Count.ToString(CultureInfo.InvariantCulture)) + "\n" + DescribeOne(s);
+        return DescribeOne(s);
+    }
+
+    private string DescribeOne(EditorSelection s)
+    {
         var a = _ed.Arena;
         var inv = CultureInfo.InvariantCulture;
         switch (s.Kind)

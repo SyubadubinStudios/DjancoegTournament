@@ -219,6 +219,8 @@ public sealed record MatchSettings
     public float BossHealthScale { get; set; } = 1f;
     /// <summary>Co-op campaign: in team modes every human plays on team 0 against bots on team 1.</summary>
     public bool CoopHumans { get; set; }
+    /// <summary>Campaign stage id this match plays (sent to joining players so co-op guests can earn stars too).</summary>
+    public string CampaignStage { get; set; } = "";
 }
 
 public static class ColorUtil

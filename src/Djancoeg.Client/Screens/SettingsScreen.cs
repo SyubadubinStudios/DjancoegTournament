@@ -14,6 +14,7 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
     private static readonly string[] Languages = ["English", "Bahasa Indonesia"];
     private string _master = app.Settings.MasterServer;
     private string _workshop = app.Settings.WorkshopUrl;
+    private string _workshopToken = app.Settings.WorkshopToken;
     private int _tab = tab;
 
     public override void Update(float dt)
@@ -36,14 +37,14 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         App.DrawHeader(S.T("settings.title"));
 
         // Tabs.
-        string[] tabs = [S.T("settings.tabGeneral"), S.T("settings.tabGraphics"), S.T("settings.tabAccess"), S.T("settings.tabControls")];
+        string[] tabs = [S.T("settings.tabGeneral"), S.T("settings.tabGraphics"), S.T("settings.tabAccess"), S.T("settings.tabOnline"), S.T("settings.tabControls")];
         float tx = 84 * u;
         for (int i = 0; i < tabs.Length; i++)
         {
             float w = Theme.Measure(Theme.BodyBold, tabs[i], 20 * u).X + 40 * u;
             if (Gui.Button(new Rectangle(tx, 186 * u, w, 46 * u), tabs[i], i == _tab, 20 * u))
             {
-                if (i == 3) { App.Settings.Save(); App.Go(new ControlsScreen(App, returnTo)); return; }
+                if (i == 4) { App.Settings.Save(); App.Go(new ControlsScreen(App, returnTo)); return; }
                 _tab = i;
             }
             tx += w + 14 * u;
@@ -54,6 +55,7 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         {
             case 0: General(ref y, x, rw, rh); break;
             case 1: Graphics(ref y, x, rw, rh, u); break;
+            case 3: Online(ref y, x, rw, rh); break;
             default: Accessibility(ref y, x, rw, rh); break;
         }
 
@@ -106,10 +108,22 @@ public sealed class SettingsScreen(App app, Screen? returnTo = null, int tab = 0
         bool creeps = st.Creeps;
         if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.creeps"), ref creeps)) st.Creeps = creeps;
         y += rh;
+        bool voice = st.StoryVoice;
+        if (Gui.Toggle(new Rectangle(x, y, w, rh), S.T("settings.storyVoice"), ref voice)) st.StoryVoice = voice;
+        y += rh;
+    }
+
+    /// <summary>Master server, Workshop address and upload token.</summary>
+    private void Online(ref float y, float x, float w, float rh)
+    {
+        var st = App.Settings;
         if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("settings.master"), ref _master, 64)) st.MasterServer = _master;
         y += rh;
         if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("workshop.url"), ref _workshop, 96)) st.WorkshopUrl = _workshop;
         y += rh;
+        if (Gui.TextField(new Rectangle(x, y, w, rh), S.T("workshop.token"), ref _workshopToken, 96)) st.WorkshopToken = _workshopToken.Trim();
+        y += rh + 10 * U;
+        Theme.Paragraph(Theme.Body, S.T("settings.onlineHint"), new System.Numerics.Vector2(x, y), 17 * U, w, Theme.Kapur);
     }
 
     private void Graphics(ref float y, float x, float w, float rh, float u)

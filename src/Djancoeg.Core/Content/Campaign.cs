@@ -40,7 +40,7 @@ public sealed record CampaignStage
             ArenaId = ArenaId, Mode = mode, BotCount = coop ? Bots + 1 : Bots, BotSkill = BotSkill,
             ScoreLimit = score, TimeLimitSeconds = TimeLimitSeconds,
             ServerName = coop ? "Tur Nusantara co-op" : "Tur Nusantara", Creeps = Creeps && !IsBoss, CreepIntervalMin = 20, CreepIntervalMax = 40,
-            BossCreepId = Boss, BossHealthScale = coop ? BossHealthScale * 1.5f : BossHealthScale, CoopHumans = coop,
+            BossCreepId = Boss, BossHealthScale = coop ? BossHealthScale * 1.5f : BossHealthScale, CoopHumans = coop, CampaignStage = Id,
         };
     }
 

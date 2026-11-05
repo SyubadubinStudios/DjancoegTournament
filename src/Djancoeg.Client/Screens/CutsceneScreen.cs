@@ -18,12 +18,24 @@ public sealed class CutsceneScreen(App app, Cutscene scene, Func<Screen> next) :
     private const float CharsPerSecond = 42f;
 
     public override bool ReadyForScreenshot => _t > 4.5f;
+    private int _voicedLine = -1;
+
+    /// <summary>Narration: assets/audio/story/&lt;scene&gt;-&lt;line&gt;.mp3 (Indonesian voice; captions follow the UI language).</summary>
+    private void Narrate()
+    {
+        if (_voicedLine == _line || App.Options.Shot is not null) return;
+        _voicedLine = _line;
+        App.Sounds.PlayStory($"{scene.Id}-{_line + 1}.mp3", App.Settings.StoryVoice ? 1f : 0f);
+    }
+
+    public override void Leave() => App.Sounds.StopStory();
 
     public override void Update(float dt)
     {
         _t += dt;
         _lineT += dt;
         if (_done) return;
+        if (_t > 0.4f && App.Settings.StoryVoice) Narrate();
         if (Gui.Back) { Finish(); return; }
         bool advance = Gui.Confirm || IsMouseButtonPressed(MouseButton.Left) || IsKeyPressed(KeyboardKey.Space);
         if (!advance) return;

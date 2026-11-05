@@ -2,24 +2,35 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **2.2.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **2.3.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 138 passing / lulus |
+| Automated tests / Tes otomatis | 145 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
 | Modes | 5 + campaign (20 stages, 6 bosses) |
-| Packages / Paket | Windows installer + zip, Linux AppImage + .deb + tar.gz, macOS .dmg (arm64, x64) |
+| Packages / Paket | Windows installer + zip, Linux AppImage + .deb + Flatpak + tar.gz, macOS .dmg (arm64, x64), winget/Homebrew manifests |
 | Achievements / Pencapaian | 12 |
 | Languages / Bahasa | English, Bahasa Indonesia (UI, docs, content) |
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v2.3.0 "Gotong Royong"
+
+- [x] Creep ragdolls: walking creeps reuse the fighter rig through the same Verlet ragdoll
+- [x] Layered destruction: `ArenaPieces` also cuts tall breakables into 0.9 m layers; `GameWorld` tracks which piece rests on which, cascades collapses and restores bottom-first
+- [x] Editor multi-select (Shift+click): group move/rotate/duplicate/delete, group copy/paste keeps layout, group gizmo
+- [x] Workshop upload: `POST /upload` with per-uploader tokens (`tokens.txt`, constant-time check, 32 MB cap, validation, ownership), `djancoeg-server workshop token`, `WorkshopClient.UploadAsync`, editor Ctrl+U, Settings > Online tab
+- [x] Online co-op via the master server; protocol v8 sends `MatchSettings.CampaignStage` in Accept so guests track and save stars
+- [x] 18 narrated story lines (Rodin/ElevenLabs, Indonesian), streamed on demand; Settings toggle
+- [x] Distribution: Authenticode + Developer ID/notarization steps driven by secrets, Flatpak bundle, winget/Homebrew manifests per release, Steamworks (Facepunch) behind `-p:Steam=true` with achievements + rich presence, compile-checked in CI
+- [x] Tests: layers/collapse/restore order, multi-select group ops, Workshop upload auth/ownership/validation, co-op guest stage over loopback (145 tests)
 
 ### 2026-11-06 — v2.2.0 "Bhinneka"
 

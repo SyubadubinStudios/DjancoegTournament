@@ -17,9 +17,9 @@
 
 | | |
 |---|---|
-| **Campaign** | *Tur Nusantara*: 20 stages across Java, Sumatra, Borneo, Sulawesi and Nusa Tenggara, 3 stars each, 6 boss fights, illustrated story stills, **co-op over LAN** |
-| **Level editor** | Build arenas in the game with drag gizmos, copy/paste between arenas, open built-in arenas as templates, pick the sky, test-play with F5, export `.djmod` |
-| **Destruction** | Stalls, benches, counters and water tanks break piece by piece; per-limb ragdolls |
+| **Campaign** | *Tur Nusantara*: 20 stages across Java, Sumatra, Borneo, Sulawesi and Nusa Tenggara, 3 stars each, 6 boss fights, illustrated and narrated story stills, **co-op over LAN or online** (guests earn stars too) |
+| **Level editor** | Build arenas in the game with drag gizmos, multi-select, copy/paste between arenas, upload to the Workshop, open built-in arenas as templates, pick the sky, test-play with F5, export `.djmod` |
+| **Destruction** | Stalls, benches, counters and water tanks break piece by piece and layer by layer; per-limb ragdolls for fighters and creeps |
 | **Achievements** | 12 local achievements with toasts (Steam mapping included) |
 | **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*), Snack Snatch capture-the-flag (*Rebutan Gorengan*), Greased Pole Race (*Panjat Pinang*) |
 | **Views** | First person and third person — press **V** at any time |
@@ -58,13 +58,14 @@ Get the latest release from **[GitHub Releases](https://github.com/SyubadubinStu
 | Platform | Installer | Portable |
 |---|---|---|
 | **Windows 10/11 (x64)** | [DjancoegTournament-Setup-win-x64.exe](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-Setup-win-x64.exe) | [zip](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-win-x64-portable.zip) |
-| **Linux (x64)** | [AppImage](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.AppImage) · [.deb (Debian/Ubuntu)](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/djancoeg-tournament_amd64.deb) | [tar.gz](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-linux-x64.tar.gz) |
+| **Linux (x64)** | [AppImage](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.AppImage) · [.deb (Debian/Ubuntu)](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/djancoeg-tournament_amd64.deb) · [Flatpak](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.flatpak) | [tar.gz](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-linux-x64.tar.gz) |
 | **macOS 12+ Apple Silicon** | [DjancoegTournament-macOS-arm64.dmg](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-macOS-arm64.dmg) | — |
 | **macOS 12+ Intel** | [DjancoegTournament-macOS-x64.dmg](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-macOS-x64.dmg) | — |
 
 - **Windows:** run the setup. It installs per-user (no admin needed), adds Start-menu shortcuts for the game, the dedicated server and the mods folder, and can open the firewall for LAN/online play. SmartScreen may warn because the installer isn't code-signed: choose *More info → Run anyway*.
 - **Linux AppImage:** `chmod +x DjancoegTournament-x86_64.AppImage && ./DjancoegTournament-x86_64.AppImage` (add `--server` to start the dedicated server).
 - **Linux .deb:** `sudo apt install ./djancoeg-tournament_amd64.deb`, then start *Djancoeg Tournament* from the app menu, or run `djancoeg-tournament` / `djancoeg-server`.
+- **Linux Flatpak:** `flatpak install --user DjancoegTournament-x86_64.flatpak`, then `flatpak run com.syubadubin.DjancoegTournament`.
 - **macOS:** open the .dmg and drag the game to *Applications*. The build is not notarized, so the first time, right-click the app → *Open*. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine "/Applications/Djancoeg Tournament.app"`.
 - **Saves:** settings, campaign progress, achievements, mods and your editor arenas live in `%APPDATA%\DjancoegTournament` on Windows and `~/.config/DjancoegTournament` on Linux/macOS, so updating or uninstalling keeps them. Portable builds keep mods next to the game.
 - **Checking downloads:** `SHA256SUMS.txt` in each release lets you verify them.
@@ -121,9 +122,9 @@ distribution/          itch.io (butler) and Steam (ContentBuilder) templates, ac
 
 | | |
 |---|---|
-| **Kampanye** | *Tur Nusantara*: 20 tahap di Jawa, Sumatera, Kalimantan, Sulawesi, dan Nusa Tenggara, 3 bintang per tahap, 6 pertarungan bos, gambar cerita, **main bareng lewat LAN** |
-| **Editor arena** | Bikin arena dengan gizmo seret, salin/tempel antar arena, buka arena bawaan sebagai templat, pilih suasana langit, uji main dengan F5, ekspor `.djmod` |
-| **Kehancuran** | Lapak, bangku, loket, dan toren hancur sepotong demi sepotong; ragdoll per anggota tubuh |
+| **Kampanye** | *Tur Nusantara*: 20 tahap di Jawa, Sumatera, Kalimantan, Sulawesi, dan Nusa Tenggara, 3 bintang per tahap, 6 pertarungan bos, gambar cerita bernarasi, **main bareng lewat LAN atau online** (tamu ikut dapat bintang) |
+| **Editor arena** | Bikin arena dengan gizmo seret, pilih banyak, salin/tempel antar arena, unggah ke Workshop, buka arena bawaan sebagai templat, pilih suasana langit, uji main dengan F5, ekspor `.djmod` |
+| **Kehancuran** | Lapak, bangku, loket, dan toren hancur sepotong dan selapis demi selapis; ragdoll per anggota tubuh untuk jagoan dan makhluk |
 | **Pencapaian** | 12 pencapaian lokal dengan notifikasi (sudah ada pemetaan Steam) |
 | **Mode** | Tawuran Bebas, Perang Kampung (tim), Raja Warung (kuasai zona), Rebutan Gorengan (capture the flag), Panjat Pinang (balapan ke puncak) |
 | **Kamera** | Orang pertama dan orang ketiga — tekan **V** kapan saja |
@@ -157,13 +158,14 @@ Ambil rilis terbaru di **[GitHub Releases](https://github.com/SyubadubinStudios/
 | Platform | Installer | Portabel |
 |---|---|---|
 | **Windows 10/11 (x64)** | [DjancoegTournament-Setup-win-x64.exe](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-Setup-win-x64.exe) | [zip](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-win-x64-portable.zip) |
-| **Linux (x64)** | [AppImage](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.AppImage) · [.deb (Debian/Ubuntu)](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/djancoeg-tournament_amd64.deb) | [tar.gz](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-linux-x64.tar.gz) |
+| **Linux (x64)** | [AppImage](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.AppImage) · [.deb (Debian/Ubuntu)](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/djancoeg-tournament_amd64.deb) · [Flatpak](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-x86_64.flatpak) | [tar.gz](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-linux-x64.tar.gz) |
 | **macOS 12+ Apple Silicon** | [DjancoegTournament-macOS-arm64.dmg](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-macOS-arm64.dmg) | — |
 | **macOS 12+ Intel** | [DjancoegTournament-macOS-x64.dmg](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest/download/DjancoegTournament-macOS-x64.dmg) | — |
 
 - **Windows:** jalankan setup-nya. Pemasangan per pengguna (tanpa admin), membuat pintasan Start menu untuk game, dedicated server, dan folder mod, dan bisa membuka firewall untuk main LAN/online. SmartScreen mungkin memberi peringatan karena installer belum ditandatangani: pilih *More info → Run anyway*.
 - **Linux AppImage:** `chmod +x DjancoegTournament-x86_64.AppImage && ./DjancoegTournament-x86_64.AppImage` (tambahkan `--server` untuk menjalankan dedicated server).
 - **Linux .deb:** `sudo apt install ./djancoeg-tournament_amd64.deb`, lalu buka *Djancoeg Tournament* dari menu aplikasi, atau jalankan `djancoeg-tournament` / `djancoeg-server`.
+- **Linux Flatpak:** `flatpak install --user DjancoegTournament-x86_64.flatpak`, lalu `flatpak run com.syubadubin.DjancoegTournament`.
 - **macOS:** buka .dmg lalu seret game ke *Applications*. Build ini belum dinotarisasi, jadi saat pertama kali klik kanan aplikasinya → *Open*. Kalau macOS bilang aplikasinya rusak, jalankan `xattr -dr com.apple.quarantine "/Applications/Djancoeg Tournament.app"`.
 - **Simpanan:** pengaturan, progres kampanye, pencapaian, mod, dan arena buatanmu disimpan di `%APPDATA%\DjancoegTournament` di Windows dan `~/.config/DjancoegTournament` di Linux/macOS, jadi tetap aman saat memperbarui atau menghapus game. Versi portabel menyimpan mod di sebelah game.
 - **Memeriksa unduhan:** setiap rilis menyertakan `SHA256SUMS.txt` untuk verifikasi.

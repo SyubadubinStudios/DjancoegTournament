@@ -5,7 +5,7 @@ public static class GameInfo
 {
     public const string Name = "Djancoeg Tournament";
     public const string Tagline = "Ultimate Indonesian Chaos Battle Arena";
-    public const string Version = "2.2.0";
+    public const string Version = "2.3.0";
     public const string Studio = "Syubadubin Studios";
     public const string Creator = "Ariana Mischa Fadhila";
 

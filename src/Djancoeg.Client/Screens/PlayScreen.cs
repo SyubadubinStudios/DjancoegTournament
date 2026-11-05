@@ -19,6 +19,8 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     public bool ShowScoreboardForShot { get; init; }
     /// <summary>Set when this match is a Tur Nusantara stage.</summary>
     public CampaignRun? Campaign { get; init; }
+    /// <summary>The run being tracked: our own stage, or a co-op stage we joined as a guest.</summary>
+    private CampaignRun? _run;
     /// <summary>Where "leave match" goes (e.g. back to the level editor).</summary>
     public Func<Screen>? ReturnTo { get; init; }
     public override bool ReadyForScreenshot =>
@@ -33,7 +35,8 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     {
         _suspended = false;
         _view.ForceScoreboard = ShowScoreboardForShot;
-        if (Campaign is { } run)
+        _run ??= Campaign;
+        if (_run is { } run)
         {
             _view.BossKind = run.Stage.IsBoss ? session.Content.CreepIndexOf(run.Stage.Boss) : -1;
             _view.CreepKilledHook = kind => run.OnCreepKilled(kind, session.Content);
@@ -75,13 +78,22 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
         }
         _view.Update(dt, inputAllowed: true);
         if (App.Options.Shot == "ragdoll" && !_ragdollThrown && _age > 6f) { _view.DebugThrowRagdolls(); _ragdollThrown = true; _ragdollAt = _age; }
-        if (Campaign is { } run)
+        // Joined someone else's co-op stage: track it so this player earns stars too.
+        if (_run is null && session.Kind == SessionKind.Join && session.Client.CampaignStage is { Length: > 0 } stageId
+            && Core.Content.Campaign.Stage(stageId) is { } guestStage)
+        {
+            _run = new CampaignRun(guestStage, coop: true, guest: true);
+            _view.BossKind = guestStage.IsBoss ? session.Content.CreepIndexOf(guestStage.Boss) : -1;
+            _view.CreepKilledHook = kind => _run.OnCreepKilled(kind, session.Content);
+            _view.Banner = S.T(guestStage.Name);
+        }
+        if (_run is { } run)
         {
             run.Update(dt, session);
             if (run.EndedFor > 4f)
             {
                 var (won, deaths) = run.Result(session);
-                App.Go(new CampaignResultScreen(App, run.Stage, won, deaths, run.Seconds, run.Coop));
+                App.Go(new CampaignResultScreen(App, run.Stage, won, deaths, run.Seconds, run.Coop, run.Guest));
             }
         }
     }
@@ -119,7 +131,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
                     case 2: session.ThirdPerson = !session.ThirdPerson; break;
                     case 3: _showBoard = !_showBoard; if (_showBoard) session.Client.RequestLeaderboard(); break;
                     case 4: Suspend(new SettingsScreen(App, this)); break;
-                    case 5: App.Go(ReturnTo?.Invoke() ?? (Campaign is null ? new MainMenuScreen(App) : new CampaignScreen(App))); break;
+                    case 5: App.Go(ReturnTo?.Invoke() ?? (session.Kind == SessionKind.Join ? new BrowserScreen(App) : Campaign is null ? new MainMenuScreen(App) : new CampaignScreen(App))); break;
                 }
             }
             y += 70 * u;

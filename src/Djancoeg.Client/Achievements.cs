@@ -49,6 +49,8 @@ public sealed class Achievements
     private float _toastTime;
     private bool _dirty;
     private int _streak;
+    /// <summary>Raised once per newly unlocked achievement (storefront mirroring).</summary>
+    public event Action<string>? Unlocked;
 
     public Achievements(string? path = null)
     {
@@ -84,6 +86,7 @@ public sealed class Achievements
         _data.Unlocked[id] = DateTime.UtcNow;
         _data.Progress[id] = def.Goal;
         _toasts.Enqueue(def);
+        Unlocked?.Invoke(id);
         _dirty = true;
         Save();
     }
