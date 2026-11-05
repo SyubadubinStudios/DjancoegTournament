@@ -3,7 +3,7 @@
 # Usage: installer/make-manifests.sh <version> <dist-dir-with-installers>
 # Submitting them is a manual step: winget -> PR to microsoft/winget-pkgs, Homebrew -> your own tap.
 set -euo pipefail
-version="$1"; dist="$2"
+version="$1"; dist="$(cd "$2" && pwd)"
 base="https://github.com/SyubadubinStudios/DjancoegTournament/releases/download/v$version"
 sha() { sha256sum "$dist/$1" | cut -d' ' -f1; }
 m="$dist/manifests"
