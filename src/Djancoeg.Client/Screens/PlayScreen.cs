@@ -17,6 +17,8 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
     public bool ShowScoreboardForShot { get; init; }
     /// <summary>Set when this match is a Tur Nusantara stage.</summary>
     public CampaignRun? Campaign { get; init; }
+    /// <summary>Where "leave match" goes (e.g. back to the level editor).</summary>
+    public Func<Screen>? ReturnTo { get; init; }
     public override bool ReadyForScreenshot =>
         (session.Client.IsSpectator && _age > 8f) ||
         (App.Options.Shot == "creeps" && _age > 14f && session.Client.Latest is { CreepCount: > 2 }) ||
@@ -113,7 +115,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
                     case 2: session.ThirdPerson = !session.ThirdPerson; break;
                     case 3: _showBoard = !_showBoard; if (_showBoard) session.Client.RequestLeaderboard(); break;
                     case 4: Suspend(new SettingsScreen(App, this)); break;
-                    case 5: App.Go(Campaign is null ? new MainMenuScreen(App) : new CampaignScreen(App)); break;
+                    case 5: App.Go(ReturnTo?.Invoke() ?? (Campaign is null ? new MainMenuScreen(App) : new CampaignScreen(App))); break;
                 }
             }
             y += 70 * u;

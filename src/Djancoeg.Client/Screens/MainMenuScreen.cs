@@ -50,15 +50,15 @@ public sealed class MainMenuScreen(App app) : Screen(app)
             new Vector2(80 * u, 256 * u), 22 * u, Theme.Kapur);
 
         // Sticker menu.
-        string[] keys = ["menu.campaign", "menu.practice", "menu.host", "menu.find", "menu.fighters", "menu.workshop", "menu.leaderboard", "menu.settings", "menu.credits", "menu.quit"];
-        float[] tilts = [2f, -3f, 2f, -1.5f, 2.5f, -2f, 2f, 1.5f, -2.5f, 1.8f];
+        string[] keys = ["menu.campaign", "menu.practice", "menu.host", "menu.find", "menu.fighters", "menu.workshop", "menu.editor", "menu.leaderboard", "menu.settings", "menu.credits", "menu.quit"];
+        float[] tilts = [2f, -3f, 2f, -1.5f, 2.5f, -2f, -1f, 2f, 1.5f, -2.5f, 1.8f];
         float y = 300 * u;
         for (int i = 0; i < keys.Length; i++)
         {
-            var r = new Rectangle(96 * u, y, 420 * u, 40 * u);
+            var r = new Rectangle(96 * u, y, 420 * u, 37 * u);
             var fill = i == 0 ? Theme.Kuning : Theme.Kapur;
-            if (Gui.Sticker(r, S.T(keys[i]).ToUpperInvariant(), tilts[i], fill, Theme.Aspal, 23 * u)) Activate(i);
-            y += 48 * u;
+            if (Gui.Sticker(r, S.T(keys[i]).ToUpperInvariant(), tilts[i], fill, Theme.Aspal, 22 * u)) Activate(i);
+            y += 45 * u;
         }
 
         // LED running text.
@@ -90,10 +90,11 @@ public sealed class MainMenuScreen(App app) : Screen(app)
             case 3: App.Go(new BrowserScreen(App)); break;
             case 4: App.Go(new FightersScreen(App)); break;
             case 5: App.Go(new WorkshopScreen(App)); break;
-            case 6: App.Go(new LeaderboardScreen(App)); break;
-            case 7: App.Go(new SettingsScreen(App)); break;
-            case 8: App.Go(new CreditsScreen(App)); break;
-            case 9: App.Quit(); break;
+            case 6: App.Go(new EditorScreen(App)); break;
+            case 7: App.Go(new LeaderboardScreen(App)); break;
+            case 8: App.Go(new SettingsScreen(App)); break;
+            case 9: App.Go(new CreditsScreen(App)); break;
+            case 10: App.Quit(); break;
         }
     }
 }

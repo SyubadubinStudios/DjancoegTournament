@@ -176,6 +176,7 @@ public sealed class App : IDisposable
             "controls" => new ControlsScreen(this),
             "credits" => new CreditsScreen(this),
             "campaign" => new CampaignScreen(this),
+            "editor" => new EditorScreen(this),
             "achievements" => new AchievementsScreen(this, new MainMenuScreen(this)),
             "boss" => StartShotBoss(),
             "game" or "game-tps" or "scoreboard" or "spectate" or "creeps" => StartShotGame(),
