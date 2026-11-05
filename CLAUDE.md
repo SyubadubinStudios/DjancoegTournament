@@ -50,4 +50,5 @@ The GUI exe is `WinExe`: from PowerShell use `Start-Process -Wait` or it returns
 
 - Fighters: `tools/blender/build_characters.py` (run via Blender MCP `execute_blender_code` with `exec(open(path).read(), g)`, or `blender -b --python ... -- all`). Shared 12-bone rig, clips `idle/run/shoot/die` as NLA tracks, vertex colours as raw sRGB FLOAT_COLOR, face −Y. Game loads `assets/models/characters/<id>.glb` and `assets/art/portraits/<id>.png` by id.
 - Don't call `bpy.ops.wm.read_factory_settings` through the MCP — it unloads the MCP addon.
+- Marketing/press kit: `docs/marketing` (text-free key art in `art/`, lettering added by `tools/marketing/make_marketing.py` with the game fonts; Steam capsule sizes in `steam/`).
 - Rodin MCP (`.mcp.json`) generates images, 3D props (decimate in Blender before use) and voice lines; parallel voice requests tend to fail, send them one at a time.

@@ -19,8 +19,10 @@ printf '#!/bin/sh\nexec /app/lib/djancoeg-tournament/DjancoegTournament "$@"\n' 
 printf '#!/bin/sh\nexec /app/lib/djancoeg-tournament/djancoeg-server "$@"\n' > "$src/djancoeg-server.sh"
 
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# Install the runtime + SDK non-interactively (flatpak-builder --install-deps-from can stop at a [Y/n] prompt).
+flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
 work="$root/artifacts/flatpak-build"
-flatpak-builder --user --install-deps-from=flathub --force-clean --disable-rofiles-fuse --repo="$root/artifacts/flatpak-repo" "$work" "$here/flatpak/com.syubadubin.DjancoegTournament.yml"
+flatpak-builder --user --force-clean --disable-rofiles-fuse --repo="$root/artifacts/flatpak-repo" "$work" "$here/flatpak/com.syubadubin.DjancoegTournament.yml"
 flatpak build-bundle "$root/artifacts/flatpak-repo" "$out/DjancoegTournament-x86_64.flatpak" com.syubadubin.DjancoegTournament \
   --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
 ls -la "$out"/*.flatpak

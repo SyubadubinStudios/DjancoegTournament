@@ -1,11 +1,13 @@
 # Djancoeg Tournament
 
+![Djancoeg Tournament](docs/marketing/banner-1920x820-en.jpg)
+
 **Ultimate Indonesian Chaos Battle Arena** — a first- and third-person multiplayer arena shooter where wayang heroes, ride-hailing drivers, pocong and orange cats settle things at the night market.
 
 > **Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios**
 > *Made by Ariana Mischa Fadhila of Syubadubin Studios*
 
-**[⬇ Download / Unduh](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest)** · [English](#english) · [Bahasa Indonesia](#bahasa-indonesia) · Docs: [EN](docs/en/README.md) / [ID](docs/id/README.md) · [Roadmap](PLAN.md) · [Progress](Progress.md)
+**[⬇ Download / Unduh](https://github.com/SyubadubinStudios/DjancoegTournament/releases/latest)** · [English](#english) · [Bahasa Indonesia](#bahasa-indonesia) · Docs: [EN](docs/en/README.md) / [ID](docs/id/README.md) · [Roadmap](PLAN.md) · [Progress](Progress.md) · [Press kit / Kit promosi](docs/marketing/README.md)
 
 ![Main menu](docs/screenshots/menu-en.png)
 
@@ -93,6 +95,7 @@ Then choose **Tur Nusantara** for the campaign, or **Practice vs bots**, pick yo
 | [Gameplay](docs/en/gameplay.md) | Fighters, weapons, pickups, arenas, modes |
 | [Multiplayer & servers](docs/en/multiplayer.md) | Hosting, LAN, online master server, dedicated server, ports |
 | [Modding](docs/en/modding.md) | Make fighters, weapons and arenas; package and share `.djmod` |
+| [Press kit](docs/marketing/README.md) | Banners, social posts, Steam capsules, logo, fact sheet |
 | [Campaign, editor & achievements](docs/en/campaign-and-editor.md) | Tur Nusantara, the level editor, destruction, achievements, distribution |
 | [Architecture](docs/en/architecture.md) | Projects, simulation, netcode, performance and memory |
 | [Art pipeline](docs/en/assets.md) | Blender sculpt/rig/animate, Rodin 3D & 2D art, screenshots |
@@ -193,6 +196,7 @@ Pilih **Tur Nusantara** untuk kampanye, atau **Latihan lawan bot**, pilih jagoan
 | [Gameplay](docs/id/gameplay.md) | Jagoan, senjata, item, arena, mode |
 | [Multiplayer & server](docs/id/multiplayer.md) | Buka server, LAN, master server online, dedicated server, port |
 | [Modding](docs/id/modding.md) | Bikin jagoan, senjata, dan arena; paketkan dan bagikan `.djmod` |
+| [Kit promosi](docs/marketing/README.md) | Banner, postingan media sosial, kapsul Steam, logo, lembar fakta |
 | [Kampanye, editor & pencapaian](docs/id/kampanye-dan-editor.md) | Tur Nusantara, editor arena, kehancuran, pencapaian, distribusi |
 | [Arsitektur](docs/id/arsitektur.md) | Proyek, simulasi, netcode, performa, dan memori |
 | [Pipeline aset](docs/id/aset.md) | Sculpt/rig/animasi Blender, aset 3D & 2D Rodin, screenshot |

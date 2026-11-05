@@ -9,5 +9,6 @@
 5. [Architecture](architecture.md) — how the code fits together, netcode, performance and memory
 6. [Art pipeline](assets.md) — Blender characters, Rodin art, regenerating screenshots
 7. [Campaign, editor & achievements](campaign-and-editor.md) — Tur Nusantara, level editor, destruction, achievements, distribution
+8. [Press kit](../marketing/README.md) — banners, social posts, Steam capsules, logo, fact sheet
 
 ![Third person in the Kampung Rooftops](../screenshots/game-tps-id-atap-kampung.png)
