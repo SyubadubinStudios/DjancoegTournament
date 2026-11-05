@@ -81,7 +81,7 @@ public sealed class PlayScreen(App app, Session session) : Screen(app)
             if (run.EndedFor > 4f)
             {
                 var (won, deaths) = run.Result(session);
-                App.Go(new CampaignResultScreen(App, run.Stage, won, deaths, run.Seconds));
+                App.Go(new CampaignResultScreen(App, run.Stage, won, deaths, run.Seconds, run.Coop));
             }
         }
     }

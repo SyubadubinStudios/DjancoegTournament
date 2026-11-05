@@ -71,6 +71,43 @@ The editing logic (`ArenaEditor` in `src/Djancoeg.Modding`) has no window code, 
   - It breaks into big chunks that tumble and lie on the ground until the box comes back after 45 seconds (unless someone is standing in it).
 - **Physics corpses.** Fighters and creeps leave a physics corpse that is thrown by the hit, bounces off the world, splats blood (or confetti) and settles before fading.
 
+## v2.2 additions
+
+### Story stills
+
+Every island opens with an illustrated still and three caption lines the first time you play it. Winning the final boss (Giant Earthworm, Nusa Tenggara) plays the finale. Press Enter or click to continue, and Esc to skip. Replay an island's story with **Story** on the map. The images are in `assets/ui/cutscenes/` and the captions in `Campaign.cs`.
+
+![Story still](../screenshots/cutscene-id.png)
+
+### Co-op over LAN
+
+Switch on **Co-op LAN** at the bottom of the campaign map, then pick a stage.
+
+- **Hosting:** you host the stage as a LAN server on your usual host port. Friends join it from **Find a game**.
+- **Teams:** all humans play together on one team against the bots.
+  - Free-for-all stages become humans vs bots with a doubled score limit.
+  - In King of the Warung and race stages, any human winning clears the stage.
+  - Bosses get 50% more health.
+- **Progress:** stars and progress are recorded for the host.
+
+### Level editor 2
+
+| Action | How |
+|---|---|
+| Move with gizmo | Drag the red/green/blue arrows on the selection (each drag is one undo step) |
+| Resize with gizmo | Ctrl + drag an arrow |
+| Copy / paste | Ctrl+C, then Ctrl+V at the cursor. The clipboard survives switching arenas, so you can copy between arenas |
+| Open other arenas | F6 / Shift+F6 cycles your saved arenas, then editable copies of every built-in and mod arena |
+
+### Partial destruction & ragdolls
+
+- **Breakable pieces:** long breakable boxes are cut into up to 4 pieces (about 1.1 m each) when an arena loads. A stall table loses one end at a time, and each piece breaks into chunks and respawns on its own.
+  - Up to 128 pieces per arena are replicated (protocol v7).
+  - In the editor you still work with whole boxes.
+- **Ragdolls:** fighters fall as per-limb ragdolls. The joints are physics points with a rigid torso and floppy head, arms and legs, and they collide with the arena. Creeps keep the simpler rigid corpse.
+
+![Ragdolls](../screenshots/ragdoll-id.png)
+
 ## Achievements
 
 ![Achievements](../screenshots/achievements-id.png)

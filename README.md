@@ -17,9 +17,9 @@
 
 | | |
 |---|---|
-| **Campaign** | *Tur Nusantara*: 20 stages across Java, Sumatra, Borneo, Sulawesi and Nusa Tenggara, 3 stars each, 6 boss fights |
-| **Level editor** | Build arenas in the game, rotate, pick the sky, save as a mod, test-play with F5, export `.djmod` |
-| **Destruction** | Breakable stalls, benches, counters and water tanks; physics corpses that tumble and bounce |
+| **Campaign** | *Tur Nusantara*: 20 stages across Java, Sumatra, Borneo, Sulawesi and Nusa Tenggara, 3 stars each, 6 boss fights, illustrated story stills, **co-op over LAN** |
+| **Level editor** | Build arenas in the game with drag gizmos, copy/paste between arenas, open built-in arenas as templates, pick the sky, test-play with F5, export `.djmod` |
+| **Destruction** | Stalls, benches, counters and water tanks break piece by piece; per-limb ragdolls |
 | **Achievements** | 12 local achievements with toasts (Steam mapping included) |
 | **Modes** | Free-for-All Brawl (*Tawuran Bebas*), Village vs Village team deathmatch (*Perang Kampung*), King of the Warung (*Raja Warung*), Snack Snatch capture-the-flag (*Rebutan Gorengan*), Greased Pole Race (*Panjat Pinang*) |
 | **Views** | First person and third person — press **V** at any time |
@@ -45,6 +45,7 @@
 | Tur Nusantara | Level editor |
 |---|---|
 | ![Campaign map](docs/screenshots/campaign-en.png) | ![Level editor](docs/screenshots/editor-en.png) |
+| ![Story still](docs/screenshots/cutscene-id.png) | ![Ragdolls](docs/screenshots/ragdoll-id.png) |
 
 ![Fighter select](docs/screenshots/fighters-en.png)
 
@@ -120,9 +121,9 @@ distribution/          itch.io (butler) and Steam (ContentBuilder) templates, ac
 
 | | |
 |---|---|
-| **Kampanye** | *Tur Nusantara*: 20 tahap di Jawa, Sumatera, Kalimantan, Sulawesi, dan Nusa Tenggara, 3 bintang per tahap, 6 pertarungan bos |
-| **Editor arena** | Bikin arena di dalam game, putar, pilih suasana langit, simpan sebagai mod, uji main dengan F5, ekspor `.djmod` |
-| **Kehancuran** | Lapak, bangku, loket, dan toren yang bisa hancur; mayat berfisika yang terlempar dan memantul |
+| **Kampanye** | *Tur Nusantara*: 20 tahap di Jawa, Sumatera, Kalimantan, Sulawesi, dan Nusa Tenggara, 3 bintang per tahap, 6 pertarungan bos, gambar cerita, **main bareng lewat LAN** |
+| **Editor arena** | Bikin arena dengan gizmo seret, salin/tempel antar arena, buka arena bawaan sebagai templat, pilih suasana langit, uji main dengan F5, ekspor `.djmod` |
+| **Kehancuran** | Lapak, bangku, loket, dan toren hancur sepotong demi sepotong; ragdoll per anggota tubuh |
 | **Pencapaian** | 12 pencapaian lokal dengan notifikasi (sudah ada pemetaan Steam) |
 | **Mode** | Tawuran Bebas, Perang Kampung (tim), Raja Warung (kuasai zona), Rebutan Gorengan (capture the flag), Panjat Pinang (balapan ke puncak) |
 | **Kamera** | Orang pertama dan orang ketiga — tekan **V** kapan saja |

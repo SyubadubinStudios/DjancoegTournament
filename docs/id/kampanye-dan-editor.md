@@ -71,6 +71,43 @@ Logika penyuntingan (`ArenaEditor` di `src/Djancoeg.Modding`) tidak memakai kode
   - Kotak pecah jadi bongkahan besar yang terguling dan tergeletak di tanah sampai kotak kembali setelah 45 detik (kecuali ada yang berdiri di tempatnya).
 - **Mayat berfisika.** Jagoan dan makhluk meninggalkan mayat berfisika yang terlempar oleh pukulan, memantul di dunia, mencipratkan darah (atau konfeti), lalu rebah sebelum memudar.
 
+## Tambahan v2.2
+
+### Gambar cerita
+
+Setiap pulau dibuka dengan gambar ilustrasi dan tiga baris cerita saat pertama kali dimainkan. Mengalahkan bos terakhir (Cacing Tanah Raksasa, Nusa Tenggara) memutar penutup. Tekan Enter atau klik untuk lanjut, dan Esc untuk melewati. Ulangi cerita pulau lewat tombol **Cerita** di peta. Gambarnya ada di `assets/ui/cutscenes/` dan teksnya di `Campaign.cs`.
+
+![Gambar cerita](../screenshots/cutscene-id.png)
+
+### Main bareng lewat LAN
+
+Nyalakan **Main bareng** di bagian bawah peta kampanye, lalu pilih tahap.
+
+- **Host:** kamu menjadi host tahap itu sebagai server LAN di port host biasa. Teman masuk lewat **Cari server**.
+- **Tim:** semua manusia satu tim melawan bot.
+  - Tahap tawuran bebas menjadi manusia lawan bot dengan batas skor dua kali lipat.
+  - Di tahap Raja Warung dan balapan, cukup salah satu manusia yang menang.
+  - Nyawa bos ditambah 50%.
+- **Progres:** bintang dan progres dicatat di komputer host.
+
+### Editor arena 2
+
+| Aksi | Cara |
+|---|---|
+| Geser dengan gizmo | Seret panah merah/hijau/biru pada pilihan (satu seretan = satu langkah batal) |
+| Ubah ukuran dengan gizmo | Ctrl + seret panah |
+| Salin / tempel | Ctrl+C, lalu Ctrl+V di kursor. Papan klip tetap ada saat ganti arena, jadi bisa disalin antar arena |
+| Buka arena lain | F6 / Shift+F6 berganti antara arena simpananmu, lalu salinan yang bisa disunting dari semua arena bawaan dan mod |
+
+### Kehancuran sebagian & ragdoll
+
+- **Potongan yang bisa hancur:** kotak panjang yang bisa hancur dipotong jadi sampai 4 bagian (sekitar 1,1 m) saat arena dimuat. Meja lapak hancur satu ujung demi satu ujung, dan setiap bagian pecah jadi bongkahan lalu muncul lagi sendiri-sendiri.
+  - Sampai 128 bagian per arena direplikasi (protokol v7).
+  - Di editor kamu tetap menyunting kotak utuh.
+- **Ragdoll:** jagoan jatuh sebagai ragdoll per anggota tubuh. Sendinya adalah titik fisika dengan badan kaku serta kepala, tangan, dan kaki yang lemas, dan semuanya bertabrakan dengan arena. Makhluk tetap memakai mayat kaku yang lebih sederhana.
+
+![Ragdoll](../screenshots/ragdoll-id.png)
+
 ## Pencapaian
 
 ![Pencapaian](../screenshots/achievements-id.png)

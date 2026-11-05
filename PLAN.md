@@ -72,11 +72,18 @@ Status legend / Keterangan: ✅ done/selesai · 🚧 in progress/dikerjakan · �
 - ✅ Breakage chunks that tumble and rest until the stall respawns / *bongkahan puing*
 - ✅ Editor: rotate 90°, sky presets, export `.djmod` / *editor: putar, suasana langit, ekspor*
 
-## Ideas after 2.1 / Ide setelah 2.1
+## v2.2 — "Bhinneka" (story, co-op, physics) ✅
 
-- Multi-bone ragdolls (per-limb) and partial destruction (chunks instead of whole boxes)
-- Editor: drag gizmos, copy between arenas, Workshop upload (needs an authenticated upload endpoint)
-- Campaign: cutscene stills, co-op campaign over LAN
+- ✅ Per-limb ragdolls for fighters (Verlet joints, rigid torso, hinge limits, arena collision) / *ragdoll per anggota tubuh*
+- ✅ Partial destruction: breakable boxes split into up to 4 pieces; 128-bit destroyed mask (protocol v7) / *kehancuran sebagian*
+- ✅ Editor: drag gizmos (move/resize, one undo per drag), copy/paste between arenas, open saved/built-in arenas (F6) / *editor: gizmo, salin antar arena*
+- ✅ Campaign: illustrated story stills per island + finale (Rodin), LAN co-op (humans vs bots) / *gambar cerita, main bareng LAN*
+
+## Ideas after 2.2 / Ide setelah 2.2
+
+- Ragdolls for creeps with their own rigs; vertical splitting of tall breakables
+- Editor: multi-select, Workshop upload (needs an authenticated upload endpoint)
+- Campaign: online (master server) co-op, campaign progress for co-op guests, voiced story lines
 - Code signing (Authenticode) and Apple notarization for the installers; Flatpak; winget/Homebrew manifests
 - Steamworks SDK integration (achievements/stats/rich presence) behind a build flag
 

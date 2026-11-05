@@ -50,7 +50,7 @@ public sealed class Session : IDisposable
         ThirdPerson = settings.ThirdPerson;
     }
 
-    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master, bool spectator = false, bool persistStats = true)
+    public static Session StartLocal(ContentRegistry content, ClientSettings settings, MatchSettings match, bool host, string? master, bool spectator = false, bool persistStats = true, bool rotate = true)
     {
         var config = new ServerConfig
         {
@@ -60,7 +60,7 @@ public sealed class Session : IDisposable
             MasterServer = host ? master : null,
             Password = host && settings.HostPassword.Length > 0 ? settings.HostPassword : null,
             DataDirectory = persistStats ? ClientSettings.ServerDataFolder : null,
-            ArenaRotation = host ? [.. content.Arenas.Select(a => a.Id)] : [],
+            ArenaRotation = host && rotate ? [.. content.Arenas.Select(a => a.Id)] : [],
         };
         var server = new GameServer(content, config);
         server.Start();

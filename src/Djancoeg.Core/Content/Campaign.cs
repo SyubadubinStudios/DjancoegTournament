@@ -25,13 +25,24 @@ public sealed record CampaignStage
 
     public bool IsBoss => Boss.Length > 0;
 
-    public MatchSettings ToMatch() => new()
+    public MatchSettings ToMatch(bool coop = false)
     {
-        ArenaId = ArenaId, Mode = Mode, BotCount = Bots, BotSkill = BotSkill,
-        ScoreLimit = IsBoss ? 999 : ScoreLimit, TimeLimitSeconds = TimeLimitSeconds,
-        ServerName = "Tur Nusantara", Creeps = Creeps && !IsBoss, CreepIntervalMin = 20, CreepIntervalMax = 40,
-        BossCreepId = Boss, BossHealthScale = BossHealthScale,
-    };
+        var mode = Mode;
+        int score = IsBoss ? 999 : ScoreLimit;
+        if (coop && mode == GameModeKind.FreeForAll)
+        {
+            // Free-for-all becomes humans vs bots; the team needs a few more knockouts than one player would.
+            mode = GameModeKind.TeamDeathmatch;
+            if (!IsBoss) score = ScoreLimit * 2;
+        }
+        return new()
+        {
+            ArenaId = ArenaId, Mode = mode, BotCount = coop ? Bots + 1 : Bots, BotSkill = BotSkill,
+            ScoreLimit = score, TimeLimitSeconds = TimeLimitSeconds,
+            ServerName = coop ? "Tur Nusantara co-op" : "Tur Nusantara", Creeps = Creeps && !IsBoss, CreepIntervalMin = 20, CreepIntervalMax = 40,
+            BossCreepId = Boss, BossHealthScale = coop ? BossHealthScale * 1.5f : BossHealthScale, CoopHumans = coop,
+        };
+    }
 
     /// <summary>0 = lost; 1 = won; 2 = won with few deaths; 3 = also under par time.</summary>
     public int Stars(bool won, int deaths, float seconds)
@@ -54,7 +65,13 @@ public sealed record CampaignIsland
     /// <summary>Total stars needed to open this island.</summary>
     public int StarsToUnlock { get; init; }
     public required IReadOnlyList<CampaignStage> Stages { get; init; }
+    /// <summary>Intro cutscene: still image (relative to assets) and caption lines.</summary>
+    public string IntroImage => $"ui/cutscenes/{Id}.jpg";
+    public IReadOnlyList<LocalizedText> Intro { get; init; } = [];
 }
+
+/// <summary>A short slideshow: one still and a few caption lines.</summary>
+public sealed record Cutscene(string Id, string Image, LocalizedText Title, IReadOnlyList<LocalizedText> Lines);
 
 /// <summary>The built-in island tour: four islands, four stages each, a boss at the end of every island.</summary>
 public static class Campaign
@@ -68,6 +85,12 @@ public static class Campaign
         {
             Id = "jawa", Name = T("Java", "Jawa"), MapX = 0.45f, MapY = 0.76f, Color = "#FFC93C", StarsToUnlock = 0,
             Blurb = T("Where it all started: night markets, bus terminals and a gorilla nobody invited.", "Tempat semua bermula: pasar malam, terminal bus, dan gorila yang tak diundang."),
+            Intro =
+            [
+                T("The invitation said: 'Djancoeg Tournament. Bring your own frying pan.'", "Undangannya bilang: 'Djancoeg Tournament. Bawa wajan sendiri.'"),
+                T("The bus arrives at the night market just as the satay smoke rises.", "Bus tiba di pasar malam tepat saat asap sate mengepul."),
+                T("Somewhere behind the ferris wheel, something big and white is hungry.", "Di balik bianglala, sesuatu yang besar dan putih sedang lapar."),
+            ],
             Stages =
             [
                 new() { Id = "jawa-1", ArenaId = "pasar-malam", Bots = 3, BotSkill = 0.25f, ScoreLimit = 8, ParSeconds = 150,
@@ -84,6 +107,12 @@ public static class Campaign
         {
             Id = "sumatera", Name = T("Sumatra", "Sumatera"), MapX = 0.23f, MapY = 0.45f, Color = "#FF7043", StarsToUnlock = 6,
             Blurb = T("Rice terraces, harbour cranes and a one-eyed strongman.", "Sawah berundak, derek pelabuhan, dan si mata satu yang kekar."),
+            Intro =
+            [
+                T("Sumatra at sunrise. The rice is green, the coffee is strong.", "Sumatera saat fajar. Padinya hijau, kopinya kental."),
+                T("The night watch beats the slit drum: someone is stealing the harvest.", "Peronda memukul kentongan: ada yang mencuri hasil panen."),
+                T("Someone with one very big eye.", "Seseorang dengan satu mata yang sangat besar."),
+            ],
             Stages =
             [
                 new() { Id = "sumatera-1", ArenaId = "sawah-ronda", Bots = 4, BotSkill = 0.4f, ScoreLimit = 10, ParSeconds = 180,
@@ -100,6 +129,12 @@ public static class Campaign
         {
             Id = "kalimantan", Name = T("Borneo", "Kalimantan"), MapX = 0.54f, MapY = 0.34f, Color = "#66BB6A", StarsToUnlock = 14,
             Blurb = T("Old railways, long platforms and a head that floats where it likes.", "Rel tua, peron panjang, dan kepala yang melayang sesukanya."),
+            Intro =
+            [
+                T("Deep in the Borneo forest, the old station still sells tickets.", "Jauh di hutan Kalimantan, stasiun tua itu masih menjual tiket."),
+                T("Nobody has seen the train leave for forty years.", "Sudah empat puluh tahun tak ada yang melihat keretanya berangkat."),
+                T("Because a giant head keeps screaming at it.", "Karena sebuah kepala raksasa terus meneriakinya."),
+            ],
             Stages =
             [
                 new() { Id = "kalimantan-1", ArenaId = "stasiun-kereta", Bots = 5, BotSkill = 0.5f, ScoreLimit = 12, ParSeconds = 200,
@@ -116,6 +151,12 @@ public static class Campaign
         {
             Id = "sulawesi", Name = T("Sulawesi", "Sulawesi"), MapX = 0.73f, MapY = 0.47f, Color = "#4FC3F7", StarsToUnlock = 24,
             Blurb = T("The final leg. Everything at once, then the green giant himself.", "Etape terakhir. Semua sekaligus, lalu sang raksasa hijau."),
+            Intro =
+            [
+                T("The harbour of Sulawesi. Storm clouds, tall ships, wet gorengan.", "Pelabuhan Sulawesi. Awan badai, kapal layar, gorengan basah."),
+                T("The fishermen say the sea grew a giant.", "Kata para nelayan, laut menumbuhkan seorang raksasa."),
+                T("A green one. With tusks. And opinions about tourists.", "Yang hijau. Bertaring. Dan tidak suka turis."),
+            ],
             Stages =
             [
                 new() { Id = "sulawesi-1", ArenaId = "atap-kampung", Bots = 6, BotSkill = 0.6f, ScoreLimit = 15, ParSeconds = 220,
@@ -132,6 +173,12 @@ public static class Campaign
         {
             Id = "nusa-tenggara", Name = T("Nusa Tenggara", "Nusa Tenggara"), MapX = 0.70f, MapY = 0.83f, Color = "#BA68C8", StarsToUnlock = 34,
             Blurb = T("The bonus tour east: dry savanna winds, a lanky stalker and something huge under the ground.", "Tur bonus ke timur: angin sabana, si jangkung penguntit, dan sesuatu yang besar di bawah tanah."),
+            Intro =
+            [
+                T("East, past the last bus stop, the savanna hums in the heat.", "Ke timur, melewati halte terakhir, sabana berdengung dalam panas."),
+                T("Something very tall stands on the horizon. It wasn't there a minute ago.", "Sesuatu yang sangat tinggi berdiri di cakrawala. Tadi belum ada."),
+                T("And the ground... the ground is rumbling.", "Dan tanahnya... tanahnya bergemuruh."),
+            ],
             Stages =
             [
                 new() { Id = "nusa-1", ArenaId = "sawah-ronda", Mode = GameModeKind.KingOfTheHill, Bots = 7, BotSkill = 0.65f, ScoreLimit = 90, ParSeconds = 260,
@@ -147,6 +194,18 @@ public static class Campaign
     ];
 
     public static IEnumerable<CampaignStage> AllStages => Islands.SelectMany(i => i.Stages);
+
+    /// <summary>Stage whose first win plays the finale.</summary>
+    public const string FinaleStage = "nusa-boss-2";
+
+    public static readonly Cutscene Finale = new("finale", "ui/cutscenes/finale.jpg", T("Champions of Nusantara", "Juara Nusantara"),
+    [
+        T("Five islands. Six monsters. One very tired bus.", "Lima pulau. Enam monster. Satu bus yang sangat lelah."),
+        T("The golden wok is yours. Even the gorilla is clapping.", "Wajan emas jadi milikmu. Gorilanya pun ikut tepuk tangan."),
+        T("Same time next year? The night market never really closes.", "Tahun depan lagi? Pasar malam tak pernah benar-benar tutup."),
+    ]);
+
+    public static Cutscene IntroOf(CampaignIsland island) => new(island.Id, island.IntroImage, island.Name, island.Intro);
 
     public static CampaignStage? Stage(string id) => AllStages.FirstOrDefault(s => s.Id == id);
 

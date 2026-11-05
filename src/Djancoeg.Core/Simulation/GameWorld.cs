@@ -117,7 +117,7 @@ public sealed partial class GameWorld
             Players[i] = new Player
             {
                 Active = true, IsBot = isBot, Name = Sanitize(name), CharacterIndex = characterIndex,
-                Team = (byte)(IsTeamMode ? SmallerTeam() : 0), LastAttacker = -1,
+                Team = (byte)(!IsTeamMode ? 0 : Settings.CoopHumans ? (isBot ? 1 : 0) : SmallerTeam()), LastAttacker = -1,
             };
             if (isBot) _bots[i].Reset(Settings.BotSkill);
             Respawn(i);

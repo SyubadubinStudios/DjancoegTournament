@@ -190,6 +190,8 @@ public sealed class App : IDisposable
             "controls" => new ControlsScreen(this),
             "credits" => new CreditsScreen(this),
             "campaign" => new CampaignScreen(this),
+            "cutscene" => new CutsceneScreen(this, Core.Content.Campaign.IntroOf(Core.Content.Campaign.Islands[0]), () => new MainMenuScreen(this)),
+            "finale" => new CutsceneScreen(this, Core.Content.Campaign.Finale, () => new MainMenuScreen(this)),
             "editor" => new EditorScreen(this),
             "achievements" => new AchievementsScreen(this, new MainMenuScreen(this)),
             "boss" => StartShotBoss(),

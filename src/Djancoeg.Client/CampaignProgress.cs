@@ -10,6 +10,8 @@ public sealed class CampaignProgress
     public Dictionary<string, int> Stars { get; set; } = [];
     public Dictionary<string, float> BestSeconds { get; set; } = [];
     public string LastIsland { get; set; } = "jawa";
+    /// <summary>Cutscenes already shown (they play once; the map can replay them).</summary>
+    public List<string> SeenCutscenes { get; set; } = [];
 
     [JsonIgnore] public static string FilePath => Path.Combine(ClientSettings.Folder, "campaign.json");
 

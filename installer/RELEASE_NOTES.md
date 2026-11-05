@@ -23,14 +23,13 @@ Tidak perlu memasang .NET. Installer belum ditandatangani:
 - **Windows:** pilih *More info → Run anyway*.
 - **macOS:** klik kanan aplikasi → *Open*.
 
-## What's new / Yang baru (v2.1 "Timur Jauh")
+## What's new / Yang baru (v2.2 "Bhinneka")
 
-- Installers for Windows, Linux (AppImage, .deb) and macOS (Apple Silicon + Intel) / *installer untuk semua platform*
-- Bonus island **Nusa Tenggara** with two new bosses: Si Jangkung and the Giant Earthworm (60 stars total) / *pulau bonus dengan dua bos baru*
-- Bosses keep their damage when they wander off and come back / *luka bos tetap terbawa saat muncul lagi*
-- Broken stalls fall apart into chunks that stay until the stall respawns / *lapak pecah jadi bongkahan*
-- Level editor: rotate (R), sky presets (F3), export `.djmod` (Ctrl+E) / *editor: putar, suasana langit, ekspor*
-- Installed builds keep mods and editor arenas in your user folder / *mod disimpan di folder pengguna*
+- **Co-op campaign over LAN:** turn on *Co-op LAN* on the campaign map and friends join from *Find a game*. Humans team up against the bots / *main bareng lewat LAN*
+- **Story stills:** illustrated intro for every island plus a finale / *gambar cerita tiap pulau dan penutup*
+- **Ragdolls:** fighters fall per limb / *ragdoll per anggota tubuh*
+- **Partial destruction:** stalls and counters break piece by piece / *kehancuran sebagian*
+- **Level editor:** drag gizmos, copy/paste between arenas, open built-in arenas as templates (F6) / *gizmo seret, salin antar arena, templat arena bawaan*
 
-Also in 2.0 "Nusantara Raya": Tur Nusantara campaign, in-game level editor, destructible stalls, physics corpses, achievements.
+Earlier: v2.1 installers and the Nusa Tenggara island; v2.0 Tur Nusantara campaign, level editor and achievements.
 Full history: [Progress.md](https://github.com/SyubadubinStudios/DjancoegTournament/blob/main/Progress.md)

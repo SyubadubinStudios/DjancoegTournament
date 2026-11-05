@@ -2,14 +2,14 @@
 
 *Djancoeg Tournament · Dibuat oleh Ariana Mischa Fadhila dari Syubadubin Studios.*
 
-Current version / Versi sekarang: **2.1.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
+Current version / Versi sekarang: **2.2.0** · Roadmap / Peta jalan: [PLAN.md](PLAN.md)
 
 ## Summary / Ringkasan
 
 | Metric | Value |
 |---|---|
 | Projects / Proyek | 6 (Core, Net, Modding, Server, Client, Tests) |
-| Automated tests / Tes otomatis | 127 passing / lulus |
+| Automated tests / Tes otomatis | 138 passing / lulus |
 | Fighters / Jagoan | 17 built-in + 1 mod, all rigged and animated (idle/run/shoot/die) |
 | Weapons / Senjata | 10 built-in + 1 mod |
 | Arenas | 7 built-in + 1 mod |
@@ -20,6 +20,15 @@ Current version / Versi sekarang: **2.1.0** · Roadmap / Peta jalan: [PLAN.md](P
 | Performance | ~200 FPS (Release, VSync off, 1366×768 integrated GPU, 8 fighters); zero allocations per simulation tick |
 
 ## Log
+
+### 2026-11-06 — v2.2.0 "Bhinneka"
+
+- [x] Per-limb ragdolls: `Core/Simulation/Ragdoll.cs` (15 Verlet joints for the shared 12-bone rig, rigid torso cluster, hinge limits, swept arena collision, sleeping) driven into the skinned model through a one-frame synthetic `ModelAnimation`; rigid fallback for creeps and unknown rigs
+- [x] Partial destruction: `ArenaPieces` splits breakable boxes into up to 4 pieces when an arena enters the registry (same on server and client); `MaxDestructibles` 128 with a `UInt128` mask, protocol v7
+- [x] Editor: X/Y/Z drag gizmos (move, Ctrl+drag resize, one undo per drag via gestures), Ctrl+C/Ctrl+V clipboard shared across arenas, F6 opens saved arenas and editable copies of built-in/mod arenas
+- [x] Campaign story: 6 illustrated stills (Rodin) with EN/ID captions, typewriter `CutsceneScreen` with Ken Burns pan, island intros once + finale, **Story** replay button
+- [x] Co-op over LAN: `MatchSettings.CoopHumans` puts humans on team 0 vs bots; FFA stages become humans-vs-bots, bosses +50% health; host records progress
+- [x] Tests: ragdoll settling/shape/pose, piece splitting/registry/neighbours/128-bit mask, drag undo, cross-arena paste, built-in copies, co-op teams, story assets (138 tests)
 
 ### 2026-11-06 — v2.1.0 "Timur Jauh"
 
